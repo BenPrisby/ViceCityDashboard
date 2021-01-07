@@ -2,9 +2,6 @@
 #include <QFontDatabase>
 #include <QQmlApplicationEngine>
 
-#include <QFile>
-#include <QCryptographicHash>
-
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
