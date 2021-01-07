@@ -1,0 +1,4 @@
+module VCStyles
+singleton VCColor 1.0 colors.qml
+singleton VCFont 1.0 fonts.qml
+singleton VCMargin 1.0 margins.qml

@@ -1,0 +1,125 @@
+{
+    "VCHub.Hue.bridgeUsername": "<BRIDGE_USERNAME>",
+    "VCHub.Hue.mapModel": {
+        "<LIGHT NAME 1>": [0.0, 0.0],
+        "<LIGHT NAME 2>": [1.0, 1.0]
+    },
+
+    "VCHub.Nanoleaf.authToken": "<AUTH_TOKEN>",
+    "VCHub.Nanoleaf.mapPoint": [0.5, 0.5],
+
+    "VCHub.PiHole.serverHostname": "<HOSTNAME>",
+
+    "VCHub.Weather.latitude": 42.0,
+    "VCHub.Weather.longitude": -71.0,
+    "VCHub.Weather.apiKey": "<API_KEY>",
+
+    "VCHub.Spotify.clientID": "<CLIENT_ID>",
+    "VCHub.Spotify.clientSecret": "<CLIENT_SECRET>",
+    "VCHub.Spotify.refreshToken": "<REFRESH_TOKEN>",
+    "VCHub.Spotify.preferredDevice": "<SPEAKERS_NAME>",
+
+    "VCHub.homeMap": "vcmap.svg",
+    "VCHub.scenes": {
+        "Vice City": [
+            {
+                "device": {
+                    "class": "hue",
+                    "name": "<HUE_DEVICE_NAME>"
+                },
+                "state": {
+                    "on": true
+                }
+            },
+            {
+                "device": {
+                    "class": "nanoleaf",
+                    "name": "<NANOLEAF_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "effect": "Neon Pink"
+                }
+            },
+            {
+                "device": {
+                    "class": "hue",
+                    "name": "<HUE_LIGHT_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "brightness": 100,
+                    "xy": [0.4009, 0.1738]
+                }
+            }
+        ],
+        "Daytime": [
+            {
+                "device": {
+                    "class": "nanoleaf",
+                    "name": "<NANOLEAF_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "effect": "Sparrows"
+                }
+            },
+            {
+                "device": {
+                    "class": "hue",
+                    "name": "<HUE_LIGHT_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "brightness": 70,
+                    "xy": [0.2247, 0.1141]
+                }
+            }
+        ],
+        "Nighttime": [
+            {
+                "device": {
+                    "class": "nanoleaf",
+                    "name": "<NANOLEAF_NAME>"
+                },
+                "state": {
+                    "on": false
+                }
+            },
+            {
+                "device": {
+                    "class": "hue",
+                    "name": "<HUE_LIGHT_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "brightness": 10,
+                    "xy": [0.5474, 0.3977]
+                }
+            }
+        ],
+        "Movie": [
+            {
+                "device": {
+                    "class": "nanoleaf",
+                    "name": "<NANOLEAF_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "effect": "Flames"
+                }
+            },
+            {
+                "device": {
+                    "class": "hue",
+                    "name": "<HUE_LIGHT_NAME>"
+                },
+                "state": {
+                    "on": true,
+                    "brightness": 50,
+                    "xy": [0.5474, 0.3977]
+                }
+            }
+        ]
+    }
+}
