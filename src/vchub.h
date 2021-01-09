@@ -62,6 +62,8 @@ public:
     const QString & homeMap() const { return m_HomeMap; }
     bool isRunningScene() const { return m_bIsRunningScene; }
 
+    bool loadConfig( const QString & Path );
+
 signals:
     void currentDateTimeChanged();
     void ethernetIPAddressChanged();
@@ -89,7 +91,6 @@ private slots:
 
 private:
     explicit VCHub( QObject * pParent = nullptr );
-    void loadConfig( const QString & Path );
 
     QDateTime m_CurrentDateTime;
     QTimer m_CurrentDateTimeRefreshTimer;

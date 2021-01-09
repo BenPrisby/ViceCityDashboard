@@ -71,9 +71,13 @@ A configuration file specifies property values for the various classes. It is st
 
 ## Building and Running
 
+```
+./ViceCityDashboard -c /path/to/vcconfig.json
+```
+
 ### Development
 
-The simplest way to build and run is to open the project file `ViceCityDashboard.pro` in the Qt Creator IDE. Static building and linking to the required dependency library `QtZeroConf` is handled by this file.
+The simplest way to build and run is to open the project file `ViceCityDashboard.pro` in the Qt Creator IDE. Static building and linking to the required dependency library `QtZeroConf` is handled by this file. The configuration file command line argument above must be specified under Projects > Run.
 
 **NOTE:** At least Qt 5.15 is recommended to build against.
 

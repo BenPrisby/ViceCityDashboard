@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QFontDatabase>
 #include <QQmlApplicationEngine>
 
@@ -23,6 +24,29 @@ int main( int argc, char * argv[] )
     QApplication App( argc, argv );
     App.setObjectName( "app" );
 
+    // Register command line options.
+    QCommandLineParser Parser;
+    Parser.setApplicationDescription( "Smart home integration dashboard for Vice City" );
+    Parser.addHelpOption();
+    Parser.addVersionOption();
+    Parser.addOption( { { "c", "config" }, "Load configuration from <file>.", "file" } );
+
+    // Process the command line options.
+    Parser.process( App );
+
+    // Ensure a config file was specified.
+    if ( !Parser.isSet( "config" ) )
+    {
+        qWarning() << "No configuration file specified\n";
+        Parser.showHelp( 1 );
+    }
+
+    // Load the specified config file.
+    if ( !VCHub::instance()->loadConfig( Parser.value( "config" ) ) )
+    {
+        return 2;
+    }
+
     // Register the fonts for the application.
     QFontDatabase::addApplicationFont( ":/fonts/Lato-Bold.ttf" );
     QFontDatabase::addApplicationFont( ":/fonts/Lato-Regular.ttf" );
@@ -40,7 +64,7 @@ int main( int argc, char * argv[] )
     Engine.load( "qrc:/main.qml" );
     if ( Engine.rootObjects().isEmpty() )
     {
-        return -1;
+        return 3;
     }
 
     return App.exec();
