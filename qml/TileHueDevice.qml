@@ -24,6 +24,7 @@ Tile {
         anchors.topMargin: VCMargin.tiny
         anchors.left: deviceName.left
         font.pixelSize: VCFont.label
+        font.capitalization: Font.Capitalize
         color: VCColor.white
         text: root.device ? root.device[ "productName" ] : ""
     }
