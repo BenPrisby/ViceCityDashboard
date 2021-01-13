@@ -30,7 +30,7 @@ Tile {
             verticalAlignment: Text.AlignVCenter
             color: VCColor.white
             font.pixelSize: VCFont.body
-            text: qsTr( VCHub.hue.onDevicesCount + " Hue lights on" )
+            text: qsTr( VCHub.hue.onDevicesCount + " Hue Lights On" )
         }
 
         Image {
@@ -49,7 +49,7 @@ Tile {
             verticalAlignment: Text.AlignVCenter
             color: VCColor.white
             font.pixelSize: VCFont.body
-            text: qsTr( "Nanoleaf " + ( VCHub.nanoleaf.isOn ? "on" : "off" ) )
+            text: qsTr( "Nanoleaf " + ( VCHub.nanoleaf.isOn ? "On" : "Off" ) )
         }
     }
 }

@@ -64,14 +64,14 @@ Tile {
             id: sentQueries
             color: VCColor.green
             font.pixelSize: VCFont.body
-            text: qsTr( VCHub.formatInt( VCHub.piHole.totalQueries - VCHub.piHole.blockedQueries ) + " sent" )
+            text: qsTr( VCHub.formatInt( VCHub.piHole.totalQueries - VCHub.piHole.blockedQueries ) + " Sent" )
         }
 
         Text {
             id: blockedQueries
             color: VCColor.red
             font.pixelSize: VCFont.body
-            text: qsTr( VCHub.formatInt( VCHub.piHole.blockedQueries ) + " blocked" )
+            text: qsTr( VCHub.formatInt( VCHub.piHole.blockedQueries ) + " Blocked" )
         }
 
         Rectangle {
@@ -93,7 +93,7 @@ Tile {
             id: blockedDomains
             color: VCColor.white
             font.pixelSize: VCFont.body
-            text: qsTr( VCHub.formatInt( VCHub.piHole.blockedDomains ) + " domains" )
+            text: qsTr( VCHub.formatInt( VCHub.piHole.blockedDomains ) + " Domains" )
         }
     }
 }
