@@ -53,7 +53,7 @@ GridLayout {
         introAnimationDelay: 50
     }
 
-    TileInsults {
+    TileFacts {
         Layout.row: 2
         Layout.column: 0
         Layout.fillWidth: true

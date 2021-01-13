@@ -6,8 +6,8 @@
 #include <QSettings>
 #include <QTimer>
 
+#include "vcfacts.h"
 #include "vchue.h"
-#include "vcinsults.h"
 #include "vcnanoleaf.h"
 #include "vcpihole.h"
 #include "vcspotify.h"
@@ -30,7 +30,7 @@ class VCHub : public QObject
     Q_PROPERTY( VCNanoleaf * nanoleaf      READ nanoleaf                                         CONSTANT )
     Q_PROPERTY( VCPiHole * piHole          READ piHole                                           CONSTANT )
     Q_PROPERTY( VCWeather * weather        READ weather                                          CONSTANT )
-    Q_PROPERTY( VCInsults * insults        READ insults                                          CONSTANT )
+    Q_PROPERTY( VCFacts * facts            READ facts                                            CONSTANT )
     Q_PROPERTY( VCSpotify * spotify        READ spotify                                          CONSTANT )
     Q_PROPERTY( QVariantMap scenes         READ scenes              MEMBER m_Scenes              NOTIFY scenesChanged )
     Q_PROPERTY( QString homeMap            READ homeMap             MEMBER m_HomeMap             NOTIFY homeMapChanged )
@@ -55,7 +55,7 @@ public:
     VCHue * hue() const { return m_pHue; }
     VCNanoleaf * nanoleaf() const { return m_pNanoleaf; }
     VCPiHole * piHole() const { return m_pPiHole; }
-    VCInsults * insults() const { return m_pInsults; }
+    VCFacts * facts() const { return m_pFacts; }
     VCWeather * weather() const { return m_pWeather; }
     VCSpotify * spotify() const { return m_pSpotify; }
     const QVariantMap & scenes() const { return m_Scenes; }
@@ -105,7 +105,7 @@ private:
     VCNanoleaf * m_pNanoleaf;
     VCPiHole * m_pPiHole;
     VCWeather * m_pWeather;
-    VCInsults * m_pInsults;
+    VCFacts * m_pFacts;
     VCSpotify * m_pSpotify;
     QVariantMap m_Scenes;
     QString m_HomeMap;

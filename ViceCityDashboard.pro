@@ -20,9 +20,9 @@ SOURCES += \
         src/huelight.cpp \
         src/main.cpp \
         src/networkinterface.cpp \
+        src/vcfacts.cpp \
         src/vchub.cpp \
         src/vchue.cpp \
-        src/vcinsults.cpp \
         src/vcnanoleaf.cpp \
         src/vcpihole.cpp \
         src/vcplugin.cpp \
@@ -35,9 +35,9 @@ HEADERS += \
     src/huedevice.h \
     src/huelight.h \
     src/networkinterface.h \
+    src/vcfacts.h \
     src/vchub.h \
     src/vchue.h \
-    src/vcinsults.h \
     src/vcnanoleaf.h \
     src/vcpihole.h \
     src/vcplugin.h \

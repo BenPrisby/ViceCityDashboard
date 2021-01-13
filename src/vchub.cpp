@@ -24,7 +24,7 @@ VCHub::VCHub( QObject * pParent ) :
     m_pNanoleaf( new VCNanoleaf( "Nanoleaf", this ) ),
     m_pPiHole( new VCPiHole( "PiHole", this ) ),
     m_pWeather( new VCWeather( "Weather", this ) ),
-    m_pInsults( new VCInsults( "Insults", this ) ),
+    m_pFacts( new VCFacts( "Facts", this ) ),
     m_pSpotify( new VCSpotify( "Spotify", this ) ),
     m_bIsRunningScene( false )
 {

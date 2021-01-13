@@ -57,9 +57,9 @@ A Raspberry Pi running [Pi-hole](https://pi-hole.net) serves as the DNS server f
 
 To fetch current weather forecast information, the dashboard connects to the [OpenWeather](https://openweathermap.org) API. Current conditions as well as hourly and daily forecasts are displayed on the home screen.
 
-### Evil Insults
+### Fun Facts
 
-While not practical, the [Evil Insult](https://evilinsult.com) API drives a small tile on the dashboard home screen to provide the occasional laugh.
+While not practical, the [Random Useless Facts](https://uselessfacts.jsph.pl) API drives a small tile on the dashboard home screen to provide the occasional interesting tidbit.
 
 ## Architecture
 

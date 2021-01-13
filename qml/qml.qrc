@@ -8,7 +8,7 @@
         <file>VCStyles/fonts.qml</file>
         <file>VCStyles/margins.qml</file>
         <file>VCStyles/qmldir</file>
-        <file>TileInsults.qml</file>
+        <file>TileFacts.qml</file>
         <file>VCSwitch.qml</file>
         <file>VCSlider.qml</file>
         <file>TileHueDevice.qml</file>
