@@ -40,13 +40,11 @@ GridLayout {
                 Layout.fillHeight: true
                 spacing: VCMargin.bigger
 
-                Image {
+                TrackAlbumArt {
                     id: albumArt
                     Layout.preferredHeight: 180
                     Layout.preferredWidth: height
                     Layout.alignment: Qt.AlignVCenter
-                    sourceSize: Qt.size( Layout.preferredWidth, Layout.preferredHeight )
-                    source: VCHub.spotify.isActive ? VCHub.spotify.trackAlbumArt : ""
                 }
 
                 ColumnLayout {

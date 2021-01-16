@@ -444,6 +444,12 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                                         }
                                     }
                                 }
+                                else if ( !m_TrackAlbumArt.isEmpty() )
+                                {
+                                    // No artwork for the track, clear any previous value.
+                                    m_TrackAlbumArt.clear();
+                                    emit trackAlbumArtChanged();
+                                }
                             }
                         }
                         if ( ItemObject.contains( "artists" ) )

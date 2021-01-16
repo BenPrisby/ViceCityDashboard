@@ -48,5 +48,6 @@
         <file>keyboard/style/QtQuick/VirtualKeyboard/Styles/vc/images/textmode-868482.svg</file>
         <file>TileMusicSearch.qml</file>
         <file>TilePlaylists.qml</file>
+        <file>TrackAlbumArt.qml</file>
     </qresource>
 </RCC>

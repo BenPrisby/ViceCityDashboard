@@ -14,14 +14,12 @@ Tile {
         spacing: VCMargin.medium
         visible: VCHub.spotify.isActive
 
-        Image {
+        TrackAlbumArt {
             id: albumArt
             Layout.fillHeight: true
             Layout.maximumHeight: parent.height
             Layout.preferredWidth: height
             Layout.alignment: Qt.AlignVCenter
-            sourceSize: Qt.size( width, height )
-            source: VCHub.spotify.isActive ? VCHub.spotify.trackAlbumArt : ""
         }
 
         ColumnLayout {
