@@ -32,9 +32,9 @@ Tile {
     VCSwitch {
         id: powerSwitch
         anchors.top: parent.top
-        anchors.topMargin: VCMargin.small
+        anchors.topMargin: VCMargin.tiny
         anchors.right: parent.right
-        anchors.rightMargin: anchors.topMargin
+        anchors.rightMargin: VCMargin.small
         enabled: root.device
 
         property bool on: enabled && root.device[ "isOn" ]
@@ -130,7 +130,7 @@ Tile {
             Layout.fillWidth: true
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
-            visible: root.device && ( undefined !== root.device[ "colorTemperature" ] )
+            visible: root.device && ( undefined !== root.device[ "colorTemperature" ] ) && ( !colorSlider.visible )
             from: visible ? root.device[ "minColorTemperature" ] : 0
             to: visible ? root.device[ "maxColorTemperature" ] : 0
             stepSize: 1
