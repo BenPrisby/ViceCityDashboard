@@ -7,16 +7,23 @@ import com.benprisby.vc.vchub 1.0
 Tile {
     id: root
 
-    Text {
-        id: fact
+    Flickable {
         anchors.fill: parent
         anchors.margins: VCMargin.small
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        color: VCColor.white
-        font.pixelSize: VCFont.paragraph
-        wrapMode: Text.WordWrap
-        elide: Text.ElideRight
-        text: VCHub.facts.fact
+        contentWidth: width
+        contentHeight: Math.max( height, fact.implicitHeight )
+        interactive: contentHeight > height
+        clip: true
+
+        Text {
+            id: fact
+            anchors.fill: parent
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            color: VCColor.white
+            font.pixelSize: VCFont.paragraph
+            wrapMode: Text.WordWrap
+            text: VCHub.facts.fact
+        }
     }
 }
