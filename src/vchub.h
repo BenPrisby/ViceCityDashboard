@@ -78,12 +78,12 @@ signals:
 public slots:
     void runScene( const QString & Scene );
 
-    QString dayOfWeek( const QDateTime & DateTime );
-    QString formatTime( const QDateTime & DateTime );
-    QString formatInt( int iValue, const QString & Unit = QString() );
-    QString formatDecimal( double dValue, const QString & Unit = QString() );
-    QString formatPercentage( double dValue, bool bWholeNumber = false );
-    QUrl localFileToURL( const QString & Path ) { return QUrl::fromLocalFile( Path ); }
+    QString dayOfWeek( const QDateTime & DateTime ) const;
+    QString formatTime( const QDateTime & DateTime ) const;
+    QString formatInt( int iValue, const QString & Unit = QString() ) const;
+    QString formatDecimal( double dValue, const QString & Unit = QString() ) const;
+    QString formatPercentage( double dValue, bool bWholeNumber = false ) const;
+    QUrl localFileToURL( const QString & Path ) const { return QUrl::fromLocalFile( Path ); }
     QString screenshotPath() const;
 
 private slots:

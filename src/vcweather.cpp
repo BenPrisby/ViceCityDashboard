@@ -53,13 +53,13 @@ void VCWeather::refresh()
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCWeather::localHour( const QDateTime & DateTime )
+QString VCWeather::localHour( const QDateTime & DateTime ) const
 {
     return DateTime.toString( VCHub::instance()->use24HourClock() ? "hh:00" : "h AP" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QUrl VCWeather::iconURL( const QString & Key )
+QUrl VCWeather::iconURL( const QString & Key ) const
 {
     if ( !Key.isEmpty() )
     {

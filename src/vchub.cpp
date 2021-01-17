@@ -397,19 +397,19 @@ void VCHub::runScene( const QString & Scene )
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::dayOfWeek( const QDateTime & DateTime )
+QString VCHub::dayOfWeek( const QDateTime & DateTime ) const
 {
     return DateTime.toString( "dddd" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatTime( const QDateTime & DateTime )
+QString VCHub::formatTime( const QDateTime & DateTime ) const
 {
     return DateTime.toString( use24HourClock() ? "hh:mm" : "h:mm AP" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatInt( int iValue, const QString & Unit )
+QString VCHub::formatInt( int iValue, const QString & Unit ) const
 {
     QString Display = QLocale::system().toString( iValue );
     if ( !Unit.isEmpty() )
@@ -420,7 +420,7 @@ QString VCHub::formatInt( int iValue, const QString & Unit )
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatDecimal( double dValue, const QString & Unit )
+QString VCHub::formatDecimal( double dValue, const QString & Unit ) const
 {
     QString Display = QLocale::system().toString( dValue, 'f', 1 );  // 1 decimal place
     if ( !Unit.isEmpty() )
@@ -431,7 +431,7 @@ QString VCHub::formatDecimal( double dValue, const QString & Unit )
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatPercentage( double dValue, bool bWholeNumber )
+QString VCHub::formatPercentage( double dValue, bool bWholeNumber ) const
 {
     return QString( "%1%" ).arg( QLocale::system().toString( dValue, 'f', bWholeNumber ? 0 : 1 ) );
 }

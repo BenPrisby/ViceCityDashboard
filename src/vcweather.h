@@ -114,8 +114,8 @@ public:
 
 public slots:
     void refresh() override;
-    QString localHour( const QDateTime & DateTime );
-    QUrl iconURL( const QString & Key );
+    QString localHour( const QDateTime & DateTime ) const;
+    QUrl iconURL( const QString & Key ) const;
 
 signals:
     void latitudeChanged();
