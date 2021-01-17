@@ -56,7 +56,6 @@ void NetworkInterface::sendRequest( const QUrl & Destination,
     if ( Destination.isValid() )
     {
         QNetworkRequest Request( Destination );
-        QByteArray Data;
 
         // Attach the application information to the request.
         static QByteArray ApplicationInfo = QString( "%1 %2" )
