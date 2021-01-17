@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QLocale>
 #include <QNetworkInterface>
+#include <QStandardPaths>
 #include <QSysInfo>
 
 #include "vchub.h"
@@ -433,6 +434,14 @@ QString VCHub::formatDecimal( double dValue, const QString & Unit )
 QString VCHub::formatPercentage( double dValue, bool bWholeNumber )
 {
     return QString( "%1%" ).arg( QLocale::system().toString( dValue, 'f', bWholeNumber ? 0 : 1 ) );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+QString VCHub::screenshotPath() const
+{
+    QString Format = QString( "yyyy-MM-dd %1" ).arg( use24HourClock() ? "hh.mm.ss" : "h.mm.ss AP" );
+    QString Filename = QString( "VC Screenshot %1.png" ).arg( QDateTime::currentDateTime().toString( Format ) );
+    return QDir( QStandardPaths::writableLocation( QStandardPaths::DesktopLocation ) ).absoluteFilePath( Filename );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

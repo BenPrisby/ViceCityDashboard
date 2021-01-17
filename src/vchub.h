@@ -84,6 +84,7 @@ public slots:
     QString formatDecimal( double dValue, const QString & Unit = QString() );
     QString formatPercentage( double dValue, bool bWholeNumber = false );
     QUrl localFileToURL( const QString & Path ) { return QUrl::fromLocalFile( Path ); }
+    QString screenshotPath() const;
 
 private slots:
     void updateCurrentDateTime();
