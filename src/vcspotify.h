@@ -4,7 +4,7 @@
 #include "vcplugin.h"
 #include "networkinterface.h"
 
-class VCSpotify : public VCPlugin
+class VCSpotify final : public VCPlugin
 {
     Q_OBJECT
     Q_PROPERTY( QString userName            READ userName                                    NOTIFY userNameChanged )

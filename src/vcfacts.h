@@ -5,7 +5,7 @@
 
 #include "vcplugin.h"
 
-class VCFacts : public VCPlugin
+class VCFacts final : public VCPlugin
 {
     Q_OBJECT
     Q_PROPERTY( QString fact  READ fact  NOTIFY factChanged )

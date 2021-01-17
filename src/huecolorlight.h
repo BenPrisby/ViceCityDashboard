@@ -3,7 +3,7 @@
 
 #include "hueambiancelight.h"
 
-class HueColorLight : public HueAmbianceLight
+class HueColorLight final : public HueAmbianceLight
 {
     Q_OBJECT
     Q_PROPERTY( QColor color  READ color  NOTIFY colorChanged )

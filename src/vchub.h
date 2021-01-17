@@ -13,7 +13,7 @@
 #include "vcspotify.h"
 #include "vcweather.h"
 
-class VCHub : public QObject
+class VCHub final : public QObject
 {
     Q_OBJECT
     Q_PROPERTY( QDateTime currentDateTime  READ currentDateTime     MEMBER m_CurrentDateTime     NOTIFY currentDateTimeChanged )

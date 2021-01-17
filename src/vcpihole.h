@@ -6,7 +6,7 @@
 
 #include "vcplugin.h"
 
-class VCPiHole : public VCPlugin
+class VCPiHole final : public VCPlugin
 {
     Q_OBJECT
     Q_PROPERTY( QString serverHostname      READ serverHostname      MEMBER m_ServerHostname  NOTIFY serverHostnameChanged )

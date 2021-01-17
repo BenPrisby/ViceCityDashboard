@@ -5,7 +5,7 @@
 
 #include "vcplugin.h"
 
-class VCNanoleaf : public VCPlugin
+class VCNanoleaf final : public VCPlugin
 {
     Q_OBJECT
     Q_PROPERTY( QString name            READ name            NOTIFY nameChanged )

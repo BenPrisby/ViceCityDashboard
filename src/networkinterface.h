@@ -8,7 +8,7 @@
 #include <QTimer>
 #include <QtZeroConf/qzeroconf.h>
 
-class NetworkInterface : public QObject
+class NetworkInterface final : public QObject
 {
     Q_OBJECT
 

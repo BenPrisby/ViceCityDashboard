@@ -6,7 +6,7 @@
 
 #include "vcplugin.h"
 
-class VCWeather : public VCPlugin
+class VCWeather final : public VCPlugin
 {
     Q_OBJECT
     Q_PROPERTY( double latitude            READ latitude            MEMBER m_dLatitude            NOTIFY latitudeChanged )
