@@ -66,11 +66,27 @@ Tile {
                 Layout.preferredHeight: 40
                 Layout.alignment: Qt.AlignVCenter
                 Layout.rightMargin: playlistsList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
-                iconSource: "qrc:/images/play.svg"
-                enabled: VCHub.spotify.playlistName !== modelData[ "name" ]
+                iconSource: ( isCurrentPlaylist && VCHub.spotify.isPlaying ) ? "qrc:/images/pause.svg"
+                                                                             : "qrc:/images/play.svg"
+
+                readonly property bool isCurrentPlaylist: VCHub.spotify.playlistName === modelData[ "name" ]
 
                 onClicked: {
-                    VCHub.spotify.play( modelData[ "uri" ] )
+                    if ( isCurrentPlaylist )
+                    {
+                        if ( VCHub.spotify.isPlaying )
+                        {
+                            VCHub.spotify.pause()
+                        }
+                        else
+                        {
+                            VCHub.spotify.play()
+                        }
+                    }
+                    else
+                    {
+                        VCHub.spotify.play( modelData[ "uri" ] )
+                    }
                     root.played()
                 }
             }
