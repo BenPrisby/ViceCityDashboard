@@ -422,7 +422,9 @@ GridLayout {
                 anchors.fill: parent
                 anchors.margins: VCMargin.small
                 spacing: VCMargin.small
-                cacheBuffer: ( 60 * count ) + ( VCMargin.small * ( Math.min( 0, count ) ) )
+                cacheBuffer: contentHeight
+                interactive: contentHeight > height
+                ScrollBar.vertical: ScrollBar { policy: devicesList.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
                 model: VCHub.spotify.devices
                 delegate: RowLayout {
                     width: parent.width
@@ -466,6 +468,7 @@ GridLayout {
                         id: deviceDelegateTransferButton
                         Layout.fillHeight: true
                         Layout.preferredWidth: height
+                        Layout.rightMargin: devicesList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
                         iconSource: "qrc:/images/transfer.svg"
                         enabled: VCHub.spotify.deviceName !== modelData[ "name" ]
 
