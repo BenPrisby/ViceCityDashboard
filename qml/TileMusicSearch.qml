@@ -75,7 +75,9 @@ Tile {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: VCMargin.small
-            cacheBuffer: ( 70 * count ) + ( VCMargin.small * ( Math.min( 0, count ) ) )
+            cacheBuffer: Math.max( 0, contentHeight )
+            interactive: contentHeight > height
+            ScrollBar.vertical: ScrollBar { policy: searchResultsList.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
             clip: true
             model: VCHub.spotify.searchResults
             delegate: RowLayout {
@@ -119,6 +121,7 @@ Tile {
                     Layout.preferredWidth: 120
                     Layout.preferredHeight: 50
                     Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: searchResultsList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
                     text: qsTr( "Queue" )
                     enabled: VCHub.spotify.isActive && ( !queued )
 

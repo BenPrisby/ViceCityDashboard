@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
 import VCStyles 1.0
 
@@ -14,7 +15,9 @@ Tile {
         anchors.fill: parent
         anchors.margins: VCMargin.small
         spacing: VCMargin.small
-        cacheBuffer: ( 50 * count ) + ( VCMargin.small * ( Math.min( 0, count ) ) )
+        cacheBuffer: Math.max( 0, contentHeight )
+        interactive: contentHeight > height
+        ScrollBar.vertical: ScrollBar { policy: playlistsList.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
         model: VCHub.spotify.playlists
         delegate: RowLayout {
             width: parent.width
@@ -62,6 +65,7 @@ Tile {
                 Layout.preferredWidth: 80
                 Layout.preferredHeight: 40
                 Layout.alignment: Qt.AlignVCenter
+                Layout.rightMargin: playlistsList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
                 iconSource: "qrc:/images/play.svg"
                 enabled: VCHub.spotify.playlistName !== modelData[ "name" ]
 

@@ -422,7 +422,7 @@ GridLayout {
                 anchors.fill: parent
                 anchors.margins: VCMargin.small
                 spacing: VCMargin.small
-                cacheBuffer: contentHeight
+                cacheBuffer: Math.max( 0, contentHeight )
                 interactive: contentHeight > height
                 ScrollBar.vertical: ScrollBar { policy: devicesList.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
                 model: VCHub.spotify.devices
