@@ -49,5 +49,8 @@
         <file>TileMusicSearch.qml</file>
         <file>TilePlaylists.qml</file>
         <file>TrackAlbumArt.qml</file>
+        <file>TabLightsMap.qml</file>
+        <file>TabScenes.qml</file>
+        <file>SceneShortcutButton.qml</file>
     </qresource>
 </RCC>

@@ -93,6 +93,7 @@ void VCHub::setUse24HourClock( const bool bValue )
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
+
 bool VCHub::loadConfig( const QString & Path )
 {
     bool bReturn = VCConfig::instance()->load( Path );
@@ -114,14 +115,14 @@ bool VCHub::loadConfig( const QString & Path )
 
 void VCHub::runScene( const QString & Scene )
 {
-    if ( m_Scenes.contains( Scene ) )
+    QVariantList Steps = extractSceneSteps( Scene );
+    if ( !Steps.isEmpty() )
     {
         // Indicate that execution is starting.
         m_bIsRunningScene = true;
         emit isRunningSceneChanged();
 
-        // Scenes are constructed as a list of objects that contain device and state information.
-        QVariantList Steps = m_Scenes.value( Scene ).toList();
+        // Scenes steps are constructed as a list of objects that contain device and state information.
         qDebug() << "Processing scene " << Scene << " with " << Steps.size() << " steps";
         for ( int i = 0; i < Steps.size(); i++ )
         {
@@ -296,8 +297,53 @@ void VCHub::runScene( const QString & Scene )
     }
     else
     {
+        // No steps, assume this means the scene was not found.
         qDebug() << "Ignoring request to run unknown scene: " << Scene;
     }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+QStringList VCHub::parseSceneColors( const QString & Scene )
+{
+    QStringList Colors;
+
+    // Pull any called-out colors from the step states.
+    const QVariantList Steps = extractSceneSteps( Scene );
+    if ( !Steps.isEmpty() )
+    {
+        for ( const auto & Step : Steps )
+        {
+            QVariantMap State = Step.toMap().value( "state" ).toMap();
+            if ( State.contains( "xy" ) )
+            {
+                QVariantList XY = State.value( "xy" ).toList();
+                if ( 2  == XY.size() )
+                {
+                    QColor Color = HueColorLight::xyToColor( XY.at( 0 ).toDouble(), XY.at( 1 ).toDouble() );
+                    if ( Color.isValid() )
+                    {
+                        Colors.append( Color.name() );
+                    }
+                }
+            }
+            if ( State.contains( "hue" ) )
+            {
+                QColor Color = HueColorLight::hueToColor( State.value( "hue" ).toInt() );
+                if ( Color.isValid() )
+                {
+                    Colors.append( Color.name() );
+                }
+            }
+        }
+    }
+
+    // Sort the list alphabetically so duplicate colors are adjacent.
+    if ( !Colors.isEmpty() )
+    {
+        std::sort( Colors.begin(), Colors.end() );
+    }
+
+    return Colors;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -386,6 +432,26 @@ void VCHub::refreshIPAddresses()
             }
         }
     }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+QVariantList VCHub::extractSceneSteps( const QString & Scene )
+{
+    QVariantList Steps;
+
+    // Find the scene in the list and extract its steps.
+    for ( const auto & SceneItem : qAsConst( m_Scenes ) )
+    {
+        QVariantMap SceneMap = SceneItem.toMap();
+        QString Name = SceneMap.value( "name" ).toString();
+        if ( ( !Name.isEmpty() ) && ( Scene == Name ) )
+        {
+            Steps = SceneMap.value( "steps" ).toList();
+            break;
+        }
+    }
+
+    return Steps;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

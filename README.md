@@ -28,7 +28,9 @@ Similar to the Hue Bridge, the dashboard uses Zeroconf to find the [Nanoleaf](ht
 
 #### Scenes
 
-Scenes describe a collective state of many lights across different product types that can be set at the press of a button on the home screen. Currently, scenes are available for Vice City (neon pink everything), Daytime, Nighttime, and Movie.
+Scenes describe a collective state of many lights across different product types that can be set at the press of a button (e.g. Daytime, Nighttime, Vice City [neon pink everything], Movie, etc.). The scene list is loaded dynamically from the configuration file and displayed in a dedicated tab as well as on the home screen as shortcut buttons to the first 4.
+
+![](resources/screenshots/scenes.png)
 
 ### Spotify
 
@@ -67,7 +69,7 @@ As aforementioned, the dashboard is a Qt application with a QML view and C++ bac
 
 While the default (and perhaps preferred) window size of the application is 1024x600 (to suit my personal deployment as mentioned later), it was designed with the mindset of being responsive across different screen resolutions. I do plan on expanding to larger screen sizes in future experiements, though.
 
-A configuration file specifies property values for the various classes. It is structured as a JSON file with keys that denote paths within the Qt object heirarchy (based on object and property names), providing a generic way of loading configuration data into the application at startup. JSON value types correlate to property data types specified in the respective header files. A template header file `vcconfig.json` is included in the root of the project, where placeholder values can be substituted with real ones.
+A configuration file specifies property values for the various classes. It is structured as a JSON file with keys that denote paths within the Qt object heirarchy (based on object and property names), providing a generic way of representing application configuration data in a persistent fashion. The file is live, with save operations being driven by property change events. JSON value types correlate to property data types specified in the respective header files. A template header file `vcconfig.json` is included in the root of the project as a starting point while also enumerating all intended configurable properties, where placeholder values can be substituted with real ones.
 
 ## Building and Running
 

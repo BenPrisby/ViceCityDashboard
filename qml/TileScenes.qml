@@ -15,48 +15,32 @@ Tile {
         columnSpacing: VCMargin.medium
         rowSpacing: VCMargin.medium
 
-        VCButton {
+        SceneShortcutButton {
             id: daytimeSceneButton
             Layout.preferredWidth: ( parent.width / 2 ) - ( parent.columnSpacing / 2 )
             Layout.fillHeight: true
-            text: qsTr( "Daytime" )
-            iconSource: "qrc:/images/sun.svg"
-            enabled: !VCHub.isRunningScene
-
-            onClicked: VCHub.runScene( "Daytime" )
+            index: 0
         }
 
-        VCButton {
+        SceneShortcutButton {
             id: viceCitySceneButton
             Layout.preferredWidth: ( parent.width / 2 ) - ( parent.columnSpacing / 2 )
             Layout.fillHeight: true
-            text: qsTr( "Vice City" )
-            iconSource: "qrc:/images/beer.svg"
-            enabled: !VCHub.isRunningScene
-
-            onClicked: VCHub.runScene( "Vice City" )
+            index: 1
         }
 
-        VCButton {
+        SceneShortcutButton {
             id: nighttimeSceneButton
             Layout.preferredWidth: ( parent.width / 2 ) - ( parent.columnSpacing / 2 )
             Layout.fillHeight: true
-            text: qsTr( "Nighttime" )
-            iconSource: "qrc:/images/moon.svg"
-            enabled: !VCHub.isRunningScene
-
-            onClicked: VCHub.runScene( "Nighttime" )
+            index: 2
         }
 
-        VCButton {
+        SceneShortcutButton {
             id: movieSceneButton
             Layout.preferredWidth: ( parent.width / 2 ) - ( parent.columnSpacing / 2 )
             Layout.fillHeight: true
-            text: qsTr( "Movie" )
-            iconSource: "qrc:/images/movie.svg"
-            enabled: !VCHub.isRunningScene
-
-            onClicked: VCHub.runScene( "Movie" )
+            index: 3
         }
     }
 }

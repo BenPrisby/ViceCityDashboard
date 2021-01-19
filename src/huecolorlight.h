@@ -15,6 +15,9 @@ public:
     const QColor & color() const { return m_Color; }
     int hue() const { return m_Color.hue(); }
 
+    static QColor xyToColor( double dX, double dY );
+    static QColor hueToColor( int iHue );
+
 signals:
     void colorChanged();
 

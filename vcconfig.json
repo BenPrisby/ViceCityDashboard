@@ -23,106 +23,122 @@
     "Hub.darkerBackground": false,
     "Hub.screensaverEnabled": true,
     "Hub.homeMap": "vcmap.svg",
-    "Hub.scenes": {
-        "Vice City": [
-            {
-                "device": {
-                    "class": "hue",
-                    "name": "<HUE_DEVICE_NAME>"
+    "Hub.scenes": [
+        {
+            "name": "Vice City",
+            "icon": "beer",
+            "steps": [
+                {
+                    "device": {
+                        "class": "hue",
+                        "name": "<HUE_DEVICE_NAME>"
+                    },
+                    "state": {
+                        "on": true
+                    }
                 },
-                "state": {
-                    "on": true
-                }
-            },
-            {
-                "device": {
-                    "class": "nanoleaf",
-                    "name": "<NANOLEAF_NAME>"
+                {
+                    "device": {
+                        "class": "nanoleaf",
+                        "name": "<NANOLEAF_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "effect": "Neon Pink"
+                    }
                 },
-                "state": {
-                    "on": true,
-                    "effect": "Neon Pink"
+                {
+                    "device": {
+                        "class": "hue",
+                        "name": "<HUE_LIGHT_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "brightness": 100,
+                        "xy": [0.4009, 0.1738]
+                    }
                 }
-            },
-            {
-                "device": {
-                    "class": "hue",
-                    "name": "<HUE_LIGHT_NAME>"
+            ]
+        },
+        {
+            "name": "Daytime",
+            "icon": "sun",
+            "steps": [
+                {
+                    "device": {
+                        "class": "nanoleaf",
+                        "name": "<NANOLEAF_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "effect": "Sparrows"
+                    }
                 },
-                "state": {
-                    "on": true,
-                    "brightness": 100,
-                    "xy": [0.4009, 0.1738]
+                {
+                    "device": {
+                        "class": "hue",
+                        "name": "<HUE_LIGHT_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "brightness": 70,
+                        "xy": [0.2247, 0.1141]
+                    }
                 }
-            }
-        ],
-        "Daytime": [
-            {
-                "device": {
-                    "class": "nanoleaf",
-                    "name": "<NANOLEAF_NAME>"
+            ]
+        },
+        {
+            "name": "Nighttime",
+            "icon": "moon",
+            "steps": [
+                {
+                    "device": {
+                        "class": "nanoleaf",
+                        "name": "<NANOLEAF_NAME>"
+                    },
+                    "state": {
+                        "on": false
+                    }
                 },
-                "state": {
-                    "on": true,
-                    "effect": "Sparrows"
+                {
+                    "device": {
+                        "class": "hue",
+                        "name": "<HUE_LIGHT_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "brightness": 10,
+                        "xy": [0.5474, 0.3977]
+                    }
                 }
-            },
-            {
-                "device": {
-                    "class": "hue",
-                    "name": "<HUE_LIGHT_NAME>"
+            ]
+        },
+        {
+            "name": "Movie",
+            "icon": "movie",
+            "steps": [
+                {
+                    "device": {
+                        "class": "nanoleaf",
+                        "name": "<NANOLEAF_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "effect": "Flames"
+                    }
                 },
-                "state": {
-                    "on": true,
-                    "brightness": 70,
-                    "xy": [0.2247, 0.1141]
+                {
+                    "device": {
+                        "class": "hue",
+                        "name": "<HUE_LIGHT_NAME>"
+                    },
+                    "state": {
+                        "on": true,
+                        "brightness": 50,
+                        "xy": [0.5474, 0.3977]
+                    }
                 }
-            }
-        ],
-        "Nighttime": [
-            {
-                "device": {
-                    "class": "nanoleaf",
-                    "name": "<NANOLEAF_NAME>"
-                },
-                "state": {
-                    "on": false
-                }
-            },
-            {
-                "device": {
-                    "class": "hue",
-                    "name": "<HUE_LIGHT_NAME>"
-                },
-                "state": {
-                    "on": true,
-                    "brightness": 10,
-                    "xy": [0.5474, 0.3977]
-                }
-            }
-        ],
-        "Movie": [
-            {
-                "device": {
-                    "class": "nanoleaf",
-                    "name": "<NANOLEAF_NAME>"
-                },
-                "state": {
-                    "on": true,
-                    "effect": "Flames"
-                }
-            },
-            {
-                "device": {
-                    "class": "hue",
-                    "name": "<HUE_LIGHT_NAME>"
-                },
-                "state": {
-                    "on": true,
-                    "brightness": 50,
-                    "xy": [0.5474, 0.3977]
-                }
-            }
-        ]
-    }
+            ]
+        }
+    ]
 }

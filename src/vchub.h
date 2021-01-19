@@ -31,7 +31,7 @@ class VCHub final : public QObject
     Q_PROPERTY( VCWeather * weather        READ weather                                           CONSTANT )
     Q_PROPERTY( VCFacts * facts            READ facts                                             CONSTANT )
     Q_PROPERTY( VCSpotify * spotify        READ spotify                                           CONSTANT )
-    Q_PROPERTY( QVariantMap scenes         READ scenes              MEMBER m_Scenes               NOTIFY scenesChanged )
+    Q_PROPERTY( QVariantList scenes        READ scenes              MEMBER m_Scenes               NOTIFY scenesChanged )
     Q_PROPERTY( QString homeMap            READ homeMap             MEMBER m_HomeMap              NOTIFY homeMapChanged )
     Q_PROPERTY( bool isRunningScene        READ isRunningScene                                    NOTIFY isRunningSceneChanged )
 
@@ -55,7 +55,7 @@ public:
     VCFacts * facts() const { return m_pFacts; }
     VCWeather * weather() const { return m_pWeather; }
     VCSpotify * spotify() const { return m_pSpotify; }
-    const QVariantMap & scenes() const { return m_Scenes; }
+    const QVariantList & scenes() const { return m_Scenes; }
     const QString & homeMap() const { return m_HomeMap; }
     bool isRunningScene() const { return m_bIsRunningScene; }
 
@@ -74,6 +74,7 @@ signals:
 
 public slots:
     void runScene( const QString & Scene );
+    QStringList parseSceneColors( const QString & Scene );
 
     QString dayOfWeek( const QDateTime & DateTime ) const;
     QString formatTime( const QDateTime & DateTime ) const;
@@ -108,9 +109,11 @@ private:
     VCWeather * m_pWeather;
     VCFacts * m_pFacts;
     VCSpotify * m_pSpotify;
-    QVariantMap m_Scenes;
+    QVariantList m_Scenes;
     QString m_HomeMap;
     bool m_bIsRunningScene;
+
+    QVariantList extractSceneSteps( const QString & Scene );
 
     Q_DISABLE_COPY_MOVE( VCHub )
 };
