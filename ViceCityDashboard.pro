@@ -20,6 +20,7 @@ SOURCES += \
         src/huelight.cpp \
         src/main.cpp \
         src/networkinterface.cpp \
+        src/vcconfig.cpp \
         src/vcfacts.cpp \
         src/vchub.cpp \
         src/vchue.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     src/huedevice.h \
     src/huelight.h \
     src/networkinterface.h \
+    src/vcconfig.h \
     src/vcfacts.h \
     src/vchub.h \
     src/vchue.h \

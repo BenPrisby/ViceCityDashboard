@@ -9,6 +9,7 @@
 
 #include "vchub.h"
 #include "networkinterface.h"
+#include "vcconfig.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static VCHub * m_pInstance = nullptr;
@@ -29,7 +30,7 @@ VCHub::VCHub( QObject * pParent ) :
     m_pSpotify( new VCSpotify( "Spotify", this ) ),
     m_bIsRunningScene( false )
 {
-    setObjectName( "VCHub" );
+    setObjectName( "Hub" );
     qDebug() << "Initializing dashboard hub";
 
     // Take ownership of the network interface.
@@ -130,78 +131,17 @@ void VCHub::setScreensaverEnabled( const bool bValue )
 
 bool VCHub::loadConfig( const QString & Path )
 {
-    bool bReturn = false;
-    QFile ConfigFile( Path );
-    if ( ConfigFile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+    bool bReturn = VCConfig::instance()->load( Path );
+
+    if ( bReturn )
     {
-        qDebug() << "Applying config file: " << ConfigFile.fileName();
-        QJsonDocument ConfigDocument = QJsonDocument::fromJson( ConfigFile.readAll() );
-        if ( ConfigDocument.isObject() )
+        // Translate the home map path if it is relative.
+        if ( ( !m_HomeMap.isEmpty() ) && QFileInfo( m_HomeMap ).isRelative() )
         {
-            QJsonObject Config = ConfigDocument.object();
-            const QStringList Settings = Config.keys();
-            for ( const auto & Setting : Settings )
-            {
-                // Keys are paths into the Meta Object system using object names, with the property to set at the end.
-                QStringList Parts = Setting.split( QChar( '.' ) );
-                if ( ( 2 <= Parts.length() ) && ( objectName() == Parts.takeFirst() ) )
-                {
-                    QString Property = Parts.takeLast();
-                    QObject * pObject = this;  // Treat ourselves as the top-most item in the heirarchy
-
-                    // If necessary, recurse down into the children.
-                    for ( QString ObjectName; ( nullptr != pObject ) && ( !Parts.isEmpty() ); /* Advanced in loop. */ )
-                    {
-                        ObjectName = Parts.takeFirst();
-                        pObject = pObject->findChild<QObject *>( ObjectName );
-                    }
-
-                    // Was the object found in the heirarchy?
-                    if ( nullptr != pObject )
-                    {
-                        // Ensure the property exists.
-                        if ( pObject->property( Property.toStdString().c_str() ).isValid() )
-                        {
-                            // Set the property to the value specified in the file.
-                            pObject->setProperty( Property.toStdString().c_str(), Config.value( Setting ).toVariant() );
-                        }
-                        else
-                        {
-                            qWarning() << "Ignoring setting path because the property does not exist: " << Setting;
-                        }
-                    }
-                    else
-                    {
-                        qWarning() << "Ignoring setting path because it does not reference a valid object: " << Setting;
-                    }
-                }
-                else
-                {
-                    qWarning() << "Ignorning invalid setting path structure: " << Setting;
-                }
-            }
-
-            // Translate the home map path if it is relative.
-            if ( ( !m_HomeMap.isEmpty() ) && QFileInfo( m_HomeMap ).isRelative() )
-            {
-                // Assume the same directory as the config file.
-                m_HomeMap = QFileInfo( Path ).dir().filePath( m_HomeMap );
-                emit homeMapChanged();
-            }
-
-            bReturn = true;
+            // Assume the same directory as the config file.
+            m_HomeMap = QFileInfo( Path ).dir().filePath( m_HomeMap );
+            emit homeMapChanged();
         }
-        else
-        {
-            qWarning() << "Failed to parse config file structure: " << ConfigFile.fileName();
-            bReturn = false;
-        }
-        ConfigFile.close();
-    }
-    else
-    {
-        qWarning() << "Failed to open config file: " << ConfigFile.fileName();
-        bReturn = false;
     }
 
     return bReturn;
