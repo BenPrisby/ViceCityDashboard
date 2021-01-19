@@ -19,6 +19,9 @@
     "Spotify.refreshToken": "<REFRESH_TOKEN>",
     "Spotify.preferredDevice": "<SPEAKERS_NAME>",
 
+    "Hub.use24HourClock": false,
+    "Hub.darkerBackground": false,
+    "Hub.screensaverEnabled": true,
     "Hub.homeMap": "vcmap.svg",
     "Hub.scenes": {
         "Vice City": [

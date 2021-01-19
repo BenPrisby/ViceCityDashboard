@@ -22,6 +22,9 @@ VCHub::VCHub( QObject * pParent ) :
     m_Platform( QSysInfo::prettyProductName().split( QChar( '(' ) ).first().trimmed() ),
     m_Architecture( QSysInfo::currentCpuArchitecture() ),
     m_QtVersion( qVersion() ),
+    m_bUse24HourClock( false ),
+    m_bDarkerBackground( false ),
+    m_bScreensaverEnabled( true ),
     m_pHue( new VCHue( "Hue", this ) ),
     m_pNanoleaf( new VCNanoleaf( "Nanoleaf", this ) ),
     m_pPiHole( new VCPiHole( "PiHole", this ) ),
@@ -62,17 +65,11 @@ VCHub * VCHub::instance()
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-bool VCHub::use24HourClock() const
-{
-    return m_PersistentSettings.value( "use24HourClock", QVariant( false ) ).toBool();
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void VCHub::setUse24HourClock( const bool bValue )
 {
-    if ( use24HourClock() != bValue )
+    if ( m_bUse24HourClock != bValue )
     {
-        m_PersistentSettings.setValue( "use24HourClock", QVariant( bValue ) );
+        m_bUse24HourClock = bValue;
         emit use24HourClockChanged();
 
         // Update the time display right away.
@@ -96,39 +93,6 @@ void VCHub::setUse24HourClock( const bool bValue )
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-
-bool VCHub::darkerBackground() const
-{
-    return m_PersistentSettings.value( "darkerBackground", QVariant( false ) ).toBool();
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCHub::setDarkerBackground( const bool bValue )
-{
-    if ( darkerBackground() != bValue )
-    {
-        m_PersistentSettings.setValue( "darkerBackground", QVariant( bValue ) );
-        emit darkerBackgroundChanged();
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-bool VCHub::screensaverEnabled() const
-{
-    return m_PersistentSettings.value( "screensaverEnabled", QVariant( true ) ).toBool();
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCHub::setScreensaverEnabled( const bool bValue )
-{
-    if ( screensaverEnabled() != bValue )
-    {
-        m_PersistentSettings.setValue( "screensaverEnabled", QVariant( bValue ) );
-        emit screensaverEnabledChanged();
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 bool VCHub::loadConfig( const QString & Path )
 {
     bool bReturn = VCConfig::instance()->load( Path );
