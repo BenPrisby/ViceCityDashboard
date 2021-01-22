@@ -43,9 +43,19 @@ Rectangle {
     }
 
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
 
         onClicked: root.clicked()
+    }
+
+    Rectangle {
+        id: pressedIndicator
+        anchors.fill: parent
+        color: VCColor.white
+        opacity: 0.3
+        radius: parent.radius
+        visible: mouseArea.pressed
     }
 
     Behavior on color {
