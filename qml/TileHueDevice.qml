@@ -35,12 +35,25 @@ Tile {
         anchors.topMargin: VCMargin.tiny
         anchors.right: parent.right
         anchors.rightMargin: VCMargin.small
-        enabled: root.device
+        enabled: root.device && ( !notReachableWarning.visible )
 
         property bool on: enabled && root.device[ "isOn" ]
         onOnChanged: checked = on
 
         onClicked: root.device.commandPower( checked )
+    }
+
+    Text {
+        id: notReachableWarning
+        anchors.verticalCenter: powerSwitch.verticalCenter
+        anchors.right: powerSwitch.left
+        anchors.rightMargin: VCMargin.medium
+        font.pixelSize: VCFont.label
+        font.capitalization: Font.AllUppercase
+        font.bold: true
+        color: VCColor.red
+        text: qsTr( "Not Reachable" )
+        visible: root.device && ( !root.device[ "isReachable" ] )
     }
 
     GridLayout {
@@ -70,6 +83,7 @@ Tile {
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
             visible: root.device && ( undefined !== root.device[ "brightness" ] )
+            enabled: root.device && ( !notReachableWarning.visible )
 
             property int currentValue: visible ? root.device[ "brightness" ] : 0
             onCurrentValueChanged: {
@@ -131,6 +145,7 @@ Tile {
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
             visible: root.device && ( undefined !== root.device[ "colorTemperature" ] ) && ( !colorSlider.visible )
+            enabled: root.device && ( !notReachableWarning.visible )
             from: visible ? root.device[ "minColorTemperature" ] : 0
             to: visible ? root.device[ "maxColorTemperature" ] : 0
             stepSize: 1
@@ -195,6 +210,7 @@ Tile {
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
             visible: root.device && ( undefined !== root.device[ "color" ] )
+            enabled: root.device && ( !notReachableWarning.visible )
             from: 0
             to: 359
             stepSize: 1
