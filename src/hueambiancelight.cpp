@@ -4,10 +4,8 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static constexpr int MIN_CAPABLE_CT_K = 2200;
-static constexpr int MIN_CAPABLE_CT = 500;
-static constexpr int MAX_CAPABLE_CT_K = 6500;
-static constexpr int MAX_CAPABLE_CT = 153;
+static constexpr int WARMEST_CAPABLE_CT = 500;
+static constexpr int COLDEST_CAPABLE_CT = 153;
 static const QHash<int, QColor> COLOR_TEMPERATURE_MAP = {
     { 2200, QColor( 255, 147, 44 ) },  { 2300, QColor( 255, 152, 54 ) },  { 2400, QColor( 255, 157, 63 ) },
     { 2500, QColor( 255, 161, 72 ) },  { 2600, QColor( 255, 165, 79 ) },  { 2700, QColor( 255, 169, 87 ) },
@@ -35,13 +33,13 @@ HueAmbianceLight::HueAmbianceLight( int iID, QObject * pParent ) : HueLight( iID
 
 int HueAmbianceLight::minColorTemperature() const
 {
-    return MIN_CAPABLE_CT_K;
+    return qRound( 1.0e6 / WARMEST_CAPABLE_CT );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 int HueAmbianceLight::maxColorTemperature() const
 {
-    return MAX_CAPABLE_CT_K;
+    return qRound( 1.0e6 / COLDEST_CAPABLE_CT );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -61,14 +59,10 @@ QColor HueAmbianceLight::ambientColor() const
 
 void HueAmbianceLight::commandColorTemperature( int iColorTemperature )
 {
-    if ( ( MIN_CAPABLE_CT_K <= iColorTemperature ) && ( MAX_CAPABLE_CT_K >= iColorTemperature ) )
+    if ( ( minColorTemperature() <= iColorTemperature ) && ( maxColorTemperature() >= iColorTemperature ) )
     {
-        // Scale the friendly color temperature into the capable range, accounting for it being reversed.
-        iColorTemperature = ( ( 1.0
-                                - ( static_cast<double>( iColorTemperature ) - MIN_CAPABLE_CT_K )
-                                      / ( MAX_CAPABLE_CT_K - MIN_CAPABLE_CT_K ) )
-                              * ( MIN_CAPABLE_CT - MAX_CAPABLE_CT ) )
-                            + MAX_CAPABLE_CT;
+        // Scale from kelvins to mirek.
+        iColorTemperature = qRound( 1.0e6 / iColorTemperature );
         VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "ct", iColorTemperature } } );
     }
     else
@@ -85,11 +79,8 @@ void HueAmbianceLight::handleStateData( const QJsonObject & State )
 
     if ( State.contains( "ct" ) )
     {
-        // Scale the reported value in the friendly display range, accounting for it being reversed.
-        int iColorTemperature =
-            ( ( 1.0 - ( ( State.value( "ct" ).toDouble() - MAX_CAPABLE_CT ) / ( MIN_CAPABLE_CT - MAX_CAPABLE_CT ) ) )
-              * ( MAX_CAPABLE_CT_K - MIN_CAPABLE_CT_K ) )
-            + MIN_CAPABLE_CT_K;  // Account for the reversed range
+        // Scale from mirek to kelvins.
+        int iColorTemperature = qRound( 1.0e6 / State.value( "ct" ).toInt() );
         if ( m_iColorTemperature != iColorTemperature )
         {
             m_iColorTemperature = iColorTemperature;
