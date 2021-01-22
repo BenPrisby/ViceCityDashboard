@@ -63,9 +63,13 @@ Item {
                     {
                         return modelData[ "ambientColor" ]
                     }
+                    if ( modelData[ "productName" ].toLowerCase().includes( "filament" ) )
+                    {
+                        return "#ffbf00"  // Amber
+                    }
                     if ( modelData[ "brightness" ] )
                     {
-                        return VCColor.yellow
+                        return "#f6e9b0"  // Soft white (2800K)
                     }
                     return VCColor.green
                 }
