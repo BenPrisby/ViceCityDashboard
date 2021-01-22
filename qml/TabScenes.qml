@@ -46,7 +46,7 @@ Item {
                         Layout.preferredHeight: width
                         Layout.alignment: Qt.AlignHCenter
                         Layout.topMargin: VCMargin.tiny
-                        sourceSize: Qt.size( width, height )
+                        sourceSize: Qt.size( Layout.preferredWidth, Layout.preferredHeight )
                         source: "qrc:/images/" + modelData[ "icon" ] + ".svg"
                     }
 
