@@ -10,7 +10,7 @@ class VCNanoleaf final : public VCPlugin
     Q_OBJECT
     Q_PROPERTY( QString name            READ name            NOTIFY nameChanged )
     Q_PROPERTY( bool isOn               READ isOn            NOTIFY isOnChanged )
-    Q_PROPERTY( QStringList effects     READ effects         NOTIFY effectsChanged )
+    Q_PROPERTY( QVariantList effects    READ effects         NOTIFY effectsChanged )
     Q_PROPERTY( QString selectedEffect  READ selectedEffect  NOTIFY selectedEffectChanged )
     Q_PROPERTY( QString ipAddress       READ ipAddress       NOTIFY ipAddressChanged )
     Q_PROPERTY( QString authToken       MEMBER m_AuthToken   NOTIFY authTokenChanged )
@@ -21,7 +21,7 @@ public:
 
     const QString & name() const { return m_Name; }
     bool isOn() const { return m_bIsOn; }
-    const QStringList & effects() const { return m_Effects; }
+    const QVariantList & effects() const { return m_Effects; }
     const QString & selectedEffect() const { return m_SelectedEffect; }
     const QString & ipAddress() const { return m_IPAddress; }
 
@@ -43,12 +43,14 @@ private slots:
     void handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
     void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
     void updateBaseURL();
+    void refreshEffects();
 
 private:
     QString Name;
     bool m_bIsOn;
     int m_iCommandedPower;
-    QStringList m_Effects;
+    QVariantList m_Effects;
+    QTimer m_EffectsRefreshTimer;
     QString m_SelectedEffect;
     QString m_CommandedEffect;
     QString m_IPAddress;

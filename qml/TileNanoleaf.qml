@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
 import VCStyles 1.0
 
@@ -25,7 +26,7 @@ Tile {
         anchors.left: productName.left
         font.pixelSize: VCFont.label
         color: VCColor.white
-        text: VCHub.nanoleaf.name
+        text: VCHub.nanoleaf.selectedEffect ? VCHub.nanoleaf.selectedEffect : qsTr( "No Effect Selected" )
     }
 
     VCSwitch {
@@ -42,59 +43,81 @@ Tile {
         onClicked: VCHub.nanoleaf.commandPower( checked )
     }
 
-    Rectangle {
+    ListView {
+        id: effectsView
         anchors.top: deviceName.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: VCMargin.small
-        color: VCColor.transparent
-        border.width: 2
-        border.color: VCColor.grayLighter
+        orientation: ListView.Horizontal
+        spacing: VCMargin.tiny
+        cacheBuffer: Math.max( 0, contentWidth )
+        interactive: contentWidth > width
+        ScrollBar.horizontal: ScrollBar { policy: effectsView.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
+        snapMode: ListView.SnapToItem
         clip: true
+        model: VCHub.nanoleaf.effects
+        delegate: Rectangle {
+            width: ( effectsView.width / 4 ) - effectsView.spacing
+            height: effectsView.height - ( effectsView.interactive ? VCMargin.medium : 0 )  // Leave room for the scrollbar
+            color: ( VCHub.nanoleaf.selectedEffect === modelData[ "name" ] ) ? VCColor.green : VCColor.grayLight
+            radius: 4
 
-        GridView {
-            id: effectsDisplay
-            anchors.fill: parent
-            cellWidth: width / 3
-            cellHeight: height / 3
-            interactive: 9 < count
-            model: VCHub.nanoleaf.effects
-            delegate: Rectangle {
-                id: effectsDelegate
-                width: effectsDisplay.cellWidth
-                height: effectsDisplay.cellHeight
-                color: ( VCHub.nanoleaf.selectedEffect === modelData ) ? VCColor.green : VCColor.transparent
-                border.width: 1
-                border.color: VCColor.grayLighter
+            Text {
+                id: effectName
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.leftMargin: VCMargin.tiny
+                anchors.rightMargin: anchors.leftMargin
+                anchors.right: parent.right
+                anchors.bottom: colorPalette.top
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                elide: Text.ElideRight
+                font.pixelSize: VCFont.paragraph
+                font.bold: ( VCHub.nanoleaf.selectedEffect === modelData[ "name" ] )
+                color: VCColor.white
+                text: modelData[ "name" ]
+            }
 
-                Text {
-                    id: effectName
-                    width: parent.width
-                    height: parent.height
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: VCFont.label
-                    font.bold: ( VCHub.nanoleaf.selectedEffect === modelData )
-                    color: VCColor.white
-                    text: modelData
-                }
+            Rectangle {
+                id: colorPalette
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: VCMargin.tiny
+                height: 12
+                color: VCColor.gray
 
-                Rectangle {
-                    id: pressedIndicator
+                ListView {
+                    id: colorsView
                     anchors.fill: parent
-                    color: VCColor.white
-                    opacity: 0.3
-                    visible: effectsDelegateMouseArea.pressed
+                    orientation: ListView.Horizontal
+                    model: modelData[ "colors" ]
+                    delegate: Rectangle {
+                        width: colorsView.width / colorsView.count
+                        height: colorsView.height
+                        color: modelData
+                    }
                 }
+            }
 
-                MouseArea {
-                    id: effectsDelegateMouseArea
-                    anchors.fill: parent
+            Rectangle {
+                id: pressedIndicator
+                anchors.fill: parent
+                color: VCColor.white
+                opacity: 0.3
+                radius: parent.radius
+                visible: effectsDelegateMouseArea.pressed
+            }
 
-                    onClicked: VCHub.nanoleaf.selectEffect( modelData )
-                }
+            MouseArea {
+                id: effectsDelegateMouseArea
+                anchors.fill: parent
+
+                onClicked: VCHub.nanoleaf.selectEffect( modelData[ "name" ] )
             }
         }
     }
