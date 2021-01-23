@@ -2,7 +2,9 @@
 #define VCHUB_H_
 
 #include <QDateTime>
+#ifdef QT_DEBUG
 #include <QFileSystemWatcher>
+#endif
 #include <QQmlEngine>
 #include <QTimer>
 
@@ -113,7 +115,9 @@ private:
     QVariantList m_Scenes;
     QString m_HomeMap;
     bool m_bIsRunningScene;
+#ifdef QT_DEBUG
     QFileSystemWatcher m_ConfigFileWatcher;
+#endif
 
     QVariantList extractSceneSteps( const QString & Scene );
 
