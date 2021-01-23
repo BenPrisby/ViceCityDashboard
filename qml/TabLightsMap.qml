@@ -89,9 +89,64 @@ Item {
 
         DeviceDot {
             id: nanoleafDot
-            color: VCHub.nanoleaf.isOn ? VCColor.green : VCColor.grayLighter
             x: VCHub.nanoleaf.mapPoint[ 0 ] * floorPlanMap.width
             y: VCHub.nanoleaf.mapPoint[ 1 ] * floorPlanMap.height
+            color: {
+                if ( VCHub.nanoleaf.isOn )
+                {
+                    if ( 0 <= colorsIndex )
+                    {
+                        return colors[ colorsIndex ]
+                    }
+                    return VCColor.green
+                }
+                return VCColor.grayLighter
+            }
+
+            property int colorsIndex: -1
+            readonly property var colors: {
+                for ( var i = 0; i < VCHub.nanoleaf.effects.length; i++ )
+                {
+                    var effect = VCHub.nanoleaf.effects[ i ]
+                    if ( ( VCHub.nanoleaf.selectedEffect === effect.name ) && effect.colors )
+                    {
+                        return effect.colors
+                    }
+                }
+                return []
+            }
+
+            onColorsChanged: {
+                if ( nanoleafColorRotationTimer.running )
+                {
+                    nanoleafColorRotationTimer.restart()
+                    colorsIndex = 0
+                }
+                else
+                {
+                    colorsIndex = -1
+                }
+            }
+
+            Timer {
+                id: nanoleafColorRotationTimer
+                running: visible && ( 0 < nanoleafDot.colors.length )
+                repeat: true
+                interval: 5000
+
+                onTriggered: {
+                    if ( ( nanoleafDot.colors.length - 1 ) > nanoleafDot.colorsIndex )
+                    {
+                        nanoleafDot.colorsIndex++
+                    }
+                    else
+                    {
+                        nanoleafDot.colorsIndex = 0
+                    }
+                }
+
+                onRunningChanged: nanoleafDot.colorsIndex = running ? 0 : -1
+            }
 
             onClicked: {
                 hueDevicesRepeater.selectedIndex = -1
