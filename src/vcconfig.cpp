@@ -67,13 +67,8 @@ bool VCConfig::load( const QString & Path )
                         // Ensure the property exists.
                         if ( pObject->property( Property.toStdString().c_str() ).isValid() )
                         {
-                            // Set the property to the value specified in the file.
-                            pObject->setProperty( Property.toStdString().c_str(), Config.value( Key ).toVariant() );
-
-                            // Save the key name to track it now that is has been validated.
-                            m_Keys.append( Key );
-
-                            // Use the property's NOTIFY signal to drive saving back the file.
+                            // Find the property's NOTIFY signal to drive saving back the file.
+                            QMetaMethod NotifySignal;
                             const QMetaObject * pMetaObject = pObject->metaObject();
                             for ( int i = 0; i < pMetaObject->propertyCount(); i++ )
                             {
@@ -82,9 +77,10 @@ bool VCConfig::load( const QString & Path )
                                 {
                                     if ( MetaProperty.hasNotifySignal() )
                                     {
-                                        // Ensure connections are not duplicated.
-                                        connect( pObject, MetaProperty.notifySignal(),
-                                                 this, m_SaveMethod, Qt::UniqueConnection );
+                                        NotifySignal = MetaProperty.notifySignal();
+
+                                        // Break any existing connection to prevent an unintended save while loading.
+                                        disconnect( pObject, NotifySignal, this, m_SaveMethod );
                                         break;
                                     }
                                     else
@@ -92,6 +88,18 @@ bool VCConfig::load( const QString & Path )
                                         qWarning() << "No NOTIFY signal for property in config key: " << Key;
                                     }
                                 }
+                            }
+
+                            // Set the property to the value specified in the file.
+                            pObject->setProperty( Property.toStdString().c_str(), Config.value( Key ).toVariant() );
+
+                            // Save the key name to track it now that is has been validated.
+                            m_Keys.append( Key );
+
+                            // Connect or reconnect the notify signal.
+                            if ( NotifySignal.isValid() )
+                            {
+                                connect( pObject, NotifySignal, this, m_SaveMethod );
                             }
                         }
                         else

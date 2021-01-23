@@ -39,6 +39,12 @@ VCHub::VCHub( QObject * pParent ) :
     // Take ownership of the network interface.
     NetworkInterface::instance()->setParent( this );
 
+    // Reload the config file if it changes externally.
+    connect( &m_ConfigFileWatcher, &QFileSystemWatcher::fileChanged, this, [=]( const QString & Path ) {
+        qDebug() << "Reloading config file because it has changed externally";
+        ( void )loadConfig( Path );
+    } );
+
     // Periodically refresh the current date and time.
     m_CurrentDateTimeRefreshTimer.setInterval( 10 * 1000 );
     m_CurrentDateTimeRefreshTimer.setSingleShot( false );
@@ -106,6 +112,12 @@ bool VCHub::loadConfig( const QString & Path )
             // Assume the same directory as the config file.
             m_HomeMap = QFileInfo( Path ).dir().filePath( m_HomeMap );
             emit homeMapChanged();
+        }
+
+        // Watch the config file on disk.
+        if ( m_ConfigFileWatcher.files().isEmpty() )
+        {
+            m_ConfigFileWatcher.addPath( Path );
         }
     }
 
