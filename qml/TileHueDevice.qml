@@ -29,6 +29,15 @@ Tile {
         text: root.device ? root.device[ "productName" ] : ""
     }
 
+    Text {
+        id: roomName
+        anchors.verticalCenter: productName.verticalCenter
+        anchors.left: productName.right
+        font.pixelSize: productName.font.pixelSize
+        color: productName.color
+        text: ( root.device && root.device[ "room" ] ) ? ( qsTr( " in " ) + root.device[ "room" ] ) : ""
+    }
+
     VCSwitch {
         id: powerSwitch
         anchors.top: parent.top

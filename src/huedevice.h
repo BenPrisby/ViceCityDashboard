@@ -7,12 +7,13 @@
 class HueDevice : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY( int id               READ id           NOTIFY idChanged )
-    Q_PROPERTY( QString name         READ name         NOTIFY nameChanged )
-    Q_PROPERTY( QString type         READ type         NOTIFY typeChanged )
-    Q_PROPERTY( QString productName  READ productName  NOTIFY productNameChanged )
-    Q_PROPERTY( bool isReachable     READ isReachable  NOTIFY isReachableChanged )
-    Q_PROPERTY( bool isOn            READ isOn         NOTIFY isOnChanged )
+    Q_PROPERTY( int id               READ id                          NOTIFY idChanged )
+    Q_PROPERTY( QString name         READ name                        NOTIFY nameChanged )
+    Q_PROPERTY( QString type         READ type                        NOTIFY typeChanged )
+    Q_PROPERTY( QString productName  READ productName                 NOTIFY productNameChanged )
+    Q_PROPERTY( bool isReachable     READ isReachable                 NOTIFY isReachableChanged )
+    Q_PROPERTY( bool isOn            READ isOn                        NOTIFY isOnChanged )
+    Q_PROPERTY( QString room         READ room         WRITE setRoom  NOTIFY roomChanged )
 
 public:
     explicit HueDevice( int iID, QObject * pParent = nullptr );
@@ -23,6 +24,8 @@ public:
     const QString & productName() const { return m_ProductName; }
     bool isReachable() const { return m_bIsReachable; }
     bool isOn() const { return m_bIsOn; }
+    const QString & room() const { return m_Room; }
+    void setRoom( const QString & Value );
 
 signals:
     void idChanged();
@@ -31,6 +34,7 @@ signals:
     void productNameChanged();
     void isReachableChanged();
     void isOnChanged();
+    void roomChanged();
 
 public slots:
     void commandPower( bool bOn );
@@ -43,6 +47,7 @@ protected:
     QString m_ProductName;
     bool m_bIsReachable;
     bool m_bIsOn;
+    QString m_Room;
 
     virtual void handleStateData( const QJsonObject & State );
 

@@ -14,6 +14,16 @@ HueDevice::HueDevice( int iID, QObject * pParent ) :
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+void HueDevice::setRoom( const QString & Value )
+{
+    if ( m_Room != Value )
+    {
+        m_Room = Value;
+        emit roomChanged();
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 void HueDevice::commandPower( const bool bOn )
 {
     VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "on", bOn } } );
