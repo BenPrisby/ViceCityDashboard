@@ -16,6 +16,12 @@ void HueLight::commandBrightness( const double dBrightness )
 {
     if ( ( !qIsNaN( dBrightness ) ) && ( 0.0 <= dBrightness ) && ( 100.0 >= dBrightness ) )
     {
+        // If the light is not on, turn it on or else the command will fail.
+        if ( !m_bIsOn )
+        {
+            commandPower( true );
+        }
+
         // Scale from a percentage into the capable range of the light.
         int iBrightness = qRound( ( ( dBrightness / 100.0 ) * ( MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS ) )
                                   + MIN_CAPABLE_BRIGHTNESS );

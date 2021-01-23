@@ -103,6 +103,12 @@ void HueColorLight::commandColor( const double dX, const double dY )
 {
     if ( ( !qIsNaN( dX ) ) && ( !qIsNaN( dY ) ) )
     {
+        // If the light is not on, turn it on or else the command will fail.
+        if ( !m_bIsOn )
+        {
+            commandPower( true );
+        }
+
         // BDP: Updated color temperature may not be reported back for several seconds.
         VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "xy", QJsonArray { dX, dY } } } );
     }

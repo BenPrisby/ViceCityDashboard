@@ -62,6 +62,12 @@ void HueAmbianceLight::commandColorTemperature( int iColorTemperature )
 {
     if ( ( minColorTemperature() <= iColorTemperature ) && ( maxColorTemperature() >= iColorTemperature ) )
     {
+        // If the light is not on, turn it on or else the command will fail.
+        if ( !m_bIsOn )
+        {
+            commandPower( true );
+        }
+
         // Scale from kelvins to mirek.
         iColorTemperature = qRound( 1.0e6 / iColorTemperature );
         VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "ct", iColorTemperature } } );
