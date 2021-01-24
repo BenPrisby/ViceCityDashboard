@@ -26,6 +26,8 @@ private:
     QMetaMethod m_SaveMethod;
 
     KeyContext keyToContext( const QString & Key );
+
+    Q_DISABLE_COPY_MOVE( VCConfig )
 };
 
 #endif  // VCCONFIG_H_

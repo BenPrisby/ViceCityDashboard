@@ -61,6 +61,8 @@ private:
     QUrl m_SummaryDestination;
     QTimer m_HistoricalDataRefreshTimer;
     QUrl m_HistoricalDataDestination;
+
+    Q_DISABLE_COPY_MOVE( VCPiHole )
 };
 
 #endif  // VCPIHOLE_H_
