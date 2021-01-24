@@ -36,6 +36,7 @@ signals:
 
 public slots:
     void refresh() override;
+    void refreshEffects();
     void commandPower( bool bOn );
     void selectEffect( const QString & Effect );
 
@@ -43,14 +44,12 @@ private slots:
     void handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
     void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
     void updateBaseURL();
-    void refreshEffects();
 
 private:
     QString Name;
     bool m_bIsOn;
     int m_iCommandedPower;
     QVariantList m_Effects;
-    QTimer m_EffectsRefreshTimer;
     QString m_SelectedEffect;
     QString m_CommandedEffect;
     QString m_IPAddress;

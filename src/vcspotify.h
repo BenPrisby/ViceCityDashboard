@@ -91,6 +91,9 @@ signals:
 
 public slots:
     void refresh() override;
+    void refreshDevices();
+    void refreshUserProfile();
+    void refreshPlaylists();
 
     void play( const QString & URI = QString() );
     void pause();
@@ -103,15 +106,12 @@ public slots:
     void search( const QString & Query );
     void queue( const QString & URI );
     void transfer( const QString & DeviceID );
-    void refreshDevices();
 
     QString formatDuration( int iValue );
 
 private slots:
     void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
     void refreshAccessToken();
-    void refreshUserProfile();
-    void refreshPlaylists();
 
 private:
     QString m_UserName;
@@ -146,9 +146,6 @@ private:
 
     QString m_Market;
     QByteArray m_AccessTokenAuthorization;
-    QTimer m_UserProfileRefreshTimer;
-    QTimer m_PlaylistsRefreshTimer;
-    QTimer m_DevicesRefreshTimer;
     QTimer m_AccessTokenRefreshTimer;
     QTimer m_InactivityTimer;
     QTimer m_ActionSubmissionTimer;

@@ -10,6 +10,13 @@ Tile {
 
     signal played()
 
+    onVisibleChanged: {
+        if ( visible )
+        {
+            VCHub.spotify.refreshPlaylists()
+        }
+    }
+
     ListView {
         id: playlistsList
         anchors.fill: parent

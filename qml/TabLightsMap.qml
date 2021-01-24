@@ -7,7 +7,12 @@ Item {
     id: root
 
     onVisibleChanged: {
-        if ( !visible )
+        if ( visible )
+        {
+            VCHub.hue.refreshGroups()
+            VCHub.nanoleaf.refreshEffects()
+        }
+        else
         {
             // Clear out any selections when navigating away from this tab.
             hueDevicesRepeater.selectedIndex = -1

@@ -12,7 +12,11 @@ GridLayout {
     rowSpacing: columnSpacing
 
     onVisibleChanged: {
-        if ( !visible )
+        if ( visible )
+        {
+            VCHub.spotify.refreshUserProfile()
+        }
+        else
         {
             selectionMask.visible = false
         }

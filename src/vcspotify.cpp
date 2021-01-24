@@ -31,21 +31,6 @@ VCSpotify::VCSpotify( const QString & Name, QObject * pParent ) :
     connect( this, &VCSpotify::clientSecretChanged, this, &VCSpotify::refreshAccessToken );
     connect( this, &VCSpotify::refreshTokenChanged, this, &VCSpotify::refreshAccessToken );
 
-    // Configure a timer to periodically refresh the user profile information.
-    m_UserProfileRefreshTimer.setInterval( 15 * 60 * 1000 );
-    m_UserProfileRefreshTimer.setSingleShot( false );
-    connect( &m_UserProfileRefreshTimer, &QTimer::timeout, this, &VCSpotify::refreshUserProfile );
-
-    // Configure a timer to periodically refresh the user's playlists.
-    m_PlaylistsRefreshTimer.setInterval( 5 * 60 * 1000 );
-    m_PlaylistsRefreshTimer.setSingleShot( false );
-    connect( &m_PlaylistsRefreshTimer, &QTimer::timeout, this, &VCSpotify::refreshPlaylists );
-
-    // Configure a timer to periodically refresh the available device information.
-    m_DevicesRefreshTimer.setInterval( 5 * 60 * 1000 );
-    m_DevicesRefreshTimer.setSingleShot( false );
-    connect( &m_DevicesRefreshTimer, &QTimer::timeout, this, &VCSpotify::refreshDevices );
-
     // Configure a timer to periodically refresh the access token.
     m_AccessTokenRefreshTimer.setInterval( 59 * 60 * 1000 );  // 1 minute less than the standard expiry time
     m_AccessTokenRefreshTimer.setSingleShot( false );
@@ -83,6 +68,36 @@ void VCSpotify::refresh()
     // Refresh current playback information.
     static QUrl Destination( QString( "%1?market=%2" ).arg( PLAYER_BASE_URL, m_Market ) );
     sendRequest( Destination );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshDevices()
+{
+    if ( !m_AccessTokenAuthorization.isEmpty() )
+    {
+        static QUrl Destination( QString( "%1/devices" ).arg( PLAYER_BASE_URL ) );
+        sendRequest( Destination );
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshUserProfile()
+{
+    if ( !m_AccessTokenAuthorization.isEmpty() )
+    {
+        static QUrl Destination( "https://api.spotify.com/v1/me" );
+        sendRequest( Destination );
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshPlaylists()
+{
+    if ( !m_AccessTokenAuthorization.isEmpty() )
+    {
+        static QUrl Destination( "https://api.spotify.com/v1/me/playlists" );
+        sendRequest( Destination );
+    }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -267,9 +282,6 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                     // Start/restart timers since we just got a fresh access token.
                     m_UpdateTimer.start();
                     m_AccessTokenRefreshTimer.start();
-                    m_UserProfileRefreshTimer.start();
-                    m_PlaylistsRefreshTimer.start();
-                    m_DevicesRefreshTimer.start();
 
                     // Refresh data right away in case a previous request was rejected.
                     refresh();
@@ -630,6 +642,7 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                                 if ( m_PreferredDeviceID != ID )
                                 {
                                     m_PreferredDeviceID = ID;
+                                    qDebug() << "Received ID of preferred Spotify device: " << m_PreferredDevice;
                                 }
                             }
 
@@ -722,9 +735,6 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
             m_AccessTokenAuthorization.clear();
             m_UpdateTimer.stop();
             m_AccessTokenRefreshTimer.stop();
-            m_UserProfileRefreshTimer.stop();
-            m_PlaylistsRefreshTimer.stop();
-            m_DevicesRefreshTimer.stop();
             refreshAccessToken();
         }
         else
@@ -750,36 +760,6 @@ void VCSpotify::refreshAccessToken()
                                                    Query.toString( QUrl::FullyEncoded ).toUtf8(),
                                                    "application/x-www-form-urlencoded",
                                                    Authorization );
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshUserProfile()
-{
-    if ( !m_AccessTokenAuthorization.isEmpty() )
-    {
-        static QUrl Destination( "https://api.spotify.com/v1/me" );
-        sendRequest( Destination );
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshPlaylists()
-{
-    if ( !m_AccessTokenAuthorization.isEmpty() )
-    {
-        static QUrl Destination( "https://api.spotify.com/v1/me/playlists" );
-        sendRequest( Destination );
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshDevices()
-{
-    if ( !m_AccessTokenAuthorization.isEmpty() )
-    {
-        static QUrl Destination( QString( "%1/devices" ).arg( PLAYER_BASE_URL ) );
-        sendRequest( Destination );
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

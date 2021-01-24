@@ -25,11 +25,6 @@ VCHue::VCHue( const QString & Name, QObject * pParent ) :
     connect( this, &VCHue::bridgeIPAddressChanged, this, &VCHue::updateBaseURL );
     connect( this, &VCHue::bridgeUsernameChanged, this, &VCHue::updateBaseURL );
 
-    // Configure a timer for periodically refreshing groups information.
-    m_GroupsRefreshTimer.setInterval( 5 * 60 * 1000 );
-    m_GroupsRefreshTimer.setSingleShot( false );
-    connect( &m_GroupsRefreshTimer, &QTimer::timeout, this, &VCHue::refreshGroups );
-
     // Look for the Bridge.
     NetworkInterface::instance()->browseZeroConf( HUE_SERVICE_TYPE );
 }
@@ -54,6 +49,12 @@ int VCHue::onDevicesCount() const
 void VCHue::refresh()
 {
     NetworkInterface::instance()->sendJSONRequest( m_LightsURL, this );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCHue::refreshGroups()
+{
+    NetworkInterface::instance()->sendJSONRequest( m_GroupsURL, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -247,17 +248,10 @@ void VCHue::updateBaseURL()
         m_LightsURL = QUrl( QString( "%1/lights" ).arg( BaseURL ) );
         m_GroupsURL = QUrl( QString( "%1/groups" ).arg( BaseURL ) );
 
-        // With the IP address known, start the update timers and refesh immediately.
+        // With the IP address known, start the update timer and refesh immediately.
         m_UpdateTimer.start();
-        m_GroupsRefreshTimer.start();
         refresh();
         refreshGroups();
     }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCHue::refreshGroups()
-{
-    NetworkInterface::instance()->sendJSONRequest( m_GroupsURL, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

@@ -33,13 +33,13 @@ signals:
 
 public slots:
     void refresh() override;
+    void refreshGroups();
     void commandDeviceState( int iID, const QJsonObject & Parameters );
 
 private slots:
     void handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
     void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
     void updateBaseURL();
-    void refreshGroups();
 
 private:
     QList<HueDevice *> m_Devices;
@@ -47,7 +47,6 @@ private:
     QString m_BridgeIPAddress;
     QString m_BridgeUsername;
     QVariantMap m_MapModel;
-    QTimer m_GroupsRefreshTimer;
 
     QUrl m_LightsURL;
     QUrl m_GroupsURL;

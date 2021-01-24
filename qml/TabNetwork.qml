@@ -11,6 +11,13 @@ ColumnLayout {
 
     readonly property int graphTimeRange: 60 * 60  // 1 hour
 
+    onVisibleChanged: {
+        if ( visible )
+        {
+            VCHub.piHole.refreshHistoricalData()
+        }
+    }
+
     RowLayout {
         id: tilesLayout
         Layout.fillWidth: true
@@ -316,5 +323,14 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    Timer {
+        id: historicalDataRefreshTimer
+        running: root.visible
+        repeat: true
+        interval: 60 * 1000
+
+        onTriggered: VCHub.piHole.refreshHistoricalData()
     }
 }

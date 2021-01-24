@@ -16,7 +16,7 @@ VCNanoleaf::VCNanoleaf( const QString & Name, QObject * pParent ) :
 {
     // Don't start refreshing until the Nanoleaf has been found.
     m_UpdateTimer.stop();
-    setUpdateInterval( 1000 );
+    setUpdateInterval( 3 * 1000 );
 
     // Handle network responses.
     connect( NetworkInterface::instance(),
@@ -29,11 +29,6 @@ VCNanoleaf::VCNanoleaf( const QString & Name, QObject * pParent ) :
     connect( this, &VCNanoleaf::ipAddressChanged, this, &VCNanoleaf::updateBaseURL );
     connect( this, &VCNanoleaf::authTokenChanged, this, &VCNanoleaf::updateBaseURL );
 
-    // Configure a timer to periodically refresh installed effects information.
-    m_EffectsRefreshTimer.setInterval( 60 * 1000 );
-    m_EffectsRefreshTimer.setSingleShot( false );
-    connect( &m_EffectsRefreshTimer, &QTimer::timeout, this, &VCNanoleaf::refreshEffects );
-
     // Look for the Nanoleaf.
     NetworkInterface::instance()->browseZeroConf( NANOLEAF_SERVICE_TYPE );
 }
@@ -42,6 +37,20 @@ VCNanoleaf::VCNanoleaf( const QString & Name, QObject * pParent ) :
 void VCNanoleaf::refresh()
 {
     NetworkInterface::instance()->sendJSONRequest( QUrl( m_BaseURL ), this );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCNanoleaf::refreshEffects()
+{
+    QUrl Destination( QString( "%1/effects" ).arg( m_BaseURL ) );
+    QJsonObject Write { { "command", "requestAll" } };
+    QJsonObject Body { { "write", Write } };
+
+    // BDP: A put request containing a command to the write endpoint is actually just a query? Really?
+    NetworkInterface::instance()->sendJSONRequest( Destination,
+                                                   this,
+                                                   QNetworkAccessManager::PutOperation,
+                                                   QJsonDocument( Body ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -243,25 +252,10 @@ void VCNanoleaf::updateBaseURL()
     {
         m_BaseURL = QString( "http://%1:16021/api/v1/%2" ).arg( m_IPAddress, m_AuthToken );
 
-        // With the IP address known, start the update timers and refesh immediately.
+        // With the IP address known, start the update timer and refesh immediately.
         m_UpdateTimer.start();
-        m_EffectsRefreshTimer.start();
         refresh();
         refreshEffects();
     }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCNanoleaf::refreshEffects()
-{
-    QUrl Destination( QString( "%1/effects" ).arg( m_BaseURL ) );
-    QJsonObject Write { { "command", "requestAll" } };
-    QJsonObject Body { { "write", Write } };
-
-    // BDP: A put request containing a command to the write endpoint is actually just a query? Really?
-    NetworkInterface::instance()->sendJSONRequest( Destination,
-                                                   this,
-                                                   QNetworkAccessManager::PutOperation,
-                                                   QJsonDocument( Body ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

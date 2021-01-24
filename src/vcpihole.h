@@ -42,11 +42,11 @@ signals:
 
 public slots:
     void refresh() override;
+    void refreshHistoricalData();
 
 private slots:
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
     void handleHostLookup( const QHostInfo & Host );
-    void refreshHistoricalData();
+    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
 
 private:
     QString m_ServerHostname;
@@ -59,7 +59,6 @@ private:
     QVariantMap m_HistoricalData;
 
     QUrl m_SummaryDestination;
-    QTimer m_HistoricalDataRefreshTimer;
     QUrl m_HistoricalDataDestination;
 
     Q_DISABLE_COPY_MOVE( VCPiHole )

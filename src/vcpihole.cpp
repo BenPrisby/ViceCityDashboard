@@ -26,17 +26,52 @@ VCPiHole::VCPiHole( const QString & Name, QObject * pParent ) :
             ( void )QHostInfo::lookupHost( m_ServerHostname, this, &VCPiHole::handleHostLookup );
         }
     } );
-
-    // Set up a less frequent timer for fetching historical data.
-    m_HistoricalDataRefreshTimer.setInterval( 60 * 1000 );
-    m_HistoricalDataRefreshTimer.setSingleShot( false );
-    connect( &m_HistoricalDataRefreshTimer, &QTimer::timeout, this, &VCPiHole::refreshHistoricalData );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCPiHole::refresh()
 {
     NetworkInterface::instance()->sendJSONRequest( m_SummaryDestination, this );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCPiHole::refreshHistoricalData()
+{
+    NetworkInterface::instance()->sendJSONRequest( m_HistoricalDataDestination, this );
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCPiHole::handleHostLookup( const QHostInfo & Host )
+{
+    if ( QHostInfo::NoError == Host.error() )
+    {
+        const QList<QHostAddress> Addresses = Host.addresses();
+        for ( const auto & Address : Addresses )
+        {
+            if ( QAbstractSocket::IPv4Protocol == Address.protocol() )
+            {
+                m_ServerIPAddress = Address.toString();
+                qDebug() << "Pi Hole server found at IP address: " << m_ServerIPAddress;
+
+                // Update the destination URL and start refreshing information.
+                QString BaseURL = QString( "http://%1/admin/api.php" ).arg( m_ServerIPAddress );
+                m_SummaryDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "summaryRaw" ) );
+                m_HistoricalDataDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "overTimeData10mins" ) );
+                m_UpdateTimer.start();
+                refresh();
+                refreshHistoricalData();
+                break;
+            }
+            else
+            {
+                // IPv6 is the protocol of the future and always will be.
+            }
+        }
+    }
+    else
+    {
+        qDebug() << "Failed to find Pi Hole server on the local network with error: " << Host.errorString();
+    }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -170,46 +205,5 @@ void VCPiHole::handleNetworkReply( int iStatusCode, QObject * pSender, const QJs
     {
         // Not for us, ignore.
     }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCPiHole::handleHostLookup( const QHostInfo & Host )
-{
-    if ( QHostInfo::NoError == Host.error() )
-    {
-        const QList<QHostAddress> Addresses = Host.addresses();
-        for ( const auto & Address : Addresses )
-        {
-            if ( QAbstractSocket::IPv4Protocol == Address.protocol() )
-            {
-                m_ServerIPAddress = Address.toString();
-                qDebug() << "Pi Hole server found at IP address: " << m_ServerIPAddress;
-
-                // Update the destination URL and start refreshing information.
-                QString BaseURL = QString( "http://%1/admin/api.php" ).arg( m_ServerIPAddress );
-                m_SummaryDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "summaryRaw" ) );
-                m_HistoricalDataDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "overTimeData10mins" ) );
-                m_UpdateTimer.start();
-                m_HistoricalDataRefreshTimer.start();
-                refresh();
-                refreshHistoricalData();
-                break;
-            }
-            else
-            {
-                // IPv6 is the protocol of the future and always will be.
-            }
-        }
-    }
-    else
-    {
-        qDebug() << "Failed to find Pi Hole server on the local network with error: " << Host.errorString();
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCPiHole::refreshHistoricalData()
-{
-    NetworkInterface::instance()->sendJSONRequest( m_HistoricalDataDestination, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
