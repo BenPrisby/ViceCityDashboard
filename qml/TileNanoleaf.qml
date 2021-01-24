@@ -95,6 +95,7 @@ Tile {
                     id: colorsView
                     anchors.fill: parent
                     orientation: ListView.Horizontal
+                    interactive: false
                     model: modelData[ "colors" ]
                     delegate: Rectangle {
                         width: colorsView.width / colorsView.count

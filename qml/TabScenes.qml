@@ -71,6 +71,7 @@ Item {
                             id: colorsView
                             anchors.fill: parent
                             orientation: ListView.Horizontal
+                            interactive: false
                             model: VCHub.parseSceneColors( modelData[ "name" ] )
                             delegate: Rectangle {
                                 width: colorsView.width / colorsView.count
