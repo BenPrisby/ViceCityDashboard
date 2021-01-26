@@ -17,6 +17,7 @@ static VCHub * m_pInstance = nullptr;
 
 VCHub::VCHub( QObject * pParent ) :
     QObject( pParent ),
+    m_bIsActive( true ),
     m_CurrentDateTime( QDateTime::currentDateTime() ),
     m_Hostname( QHostInfo::localHostName() ),
     m_Platform( QSysInfo::prettyProductName().split( QChar( '(' ) ).first().trimmed() ),
@@ -70,6 +71,24 @@ VCHub * VCHub::instance()
     }
 
     return m_pInstance;
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCHub::setActive( const bool bValue )
+{
+    static const QList<VCPlugin *> Plugins { m_pHue, m_pNanoleaf, m_pPiHole, m_pWeather, m_pFacts, m_pSpotify };
+
+    if ( m_bIsActive != bValue )
+    {
+        m_bIsActive = bValue;
+        emit isActiveChanged();
+
+        // Propagate the active state to each plugin.
+        for ( auto * pPlugin : Plugins )
+        {
+            pPlugin->setActive( bValue );
+        }
+    }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

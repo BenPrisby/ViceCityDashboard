@@ -18,6 +18,7 @@
 class VCHub final : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY( bool isActive              READ isActive            WRITE setActive               NOTIFY isActiveChanged )
     Q_PROPERTY( QDateTime currentDateTime  READ currentDateTime     MEMBER m_CurrentDateTime      NOTIFY currentDateTimeChanged )
     Q_PROPERTY( QString ethernetIPAddress  READ ethernetIPAddress                                 NOTIFY ethernetIPAddressChanged )
     Q_PROPERTY( QString wifiIPAddress      READ wifiIPAddress                                     NOTIFY wifiIPAddressChanged )
@@ -41,6 +42,8 @@ class VCHub final : public QObject
 public:
     static VCHub * instance();
 
+    bool isActive() const { return m_bIsActive; }
+    void setActive( bool bValue );
     const QDateTime & currentDateTime() const { return m_CurrentDateTime; }
     const QString & ethernetIPAddress() const { return m_EthernetIPAddress; }
     const QString & wifiIPAddress() const { return m_WifiIPAddress; }
@@ -65,6 +68,7 @@ public:
     bool loadConfig( const QString & Path );
 
 signals:
+    void isActiveChanged();
     void currentDateTimeChanged();
     void ethernetIPAddressChanged();
     void wifiIPAddressChanged();
@@ -94,6 +98,7 @@ private slots:
 private:
     explicit VCHub( QObject * pParent = nullptr );
 
+    bool m_bIsActive;
     QDateTime m_CurrentDateTime;
     QTimer m_CurrentDateTimeRefreshTimer;
     QString m_EthernetIPAddress;

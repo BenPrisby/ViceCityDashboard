@@ -52,6 +52,9 @@ Item {
         color: "black"
         visible: false
 
+        // Drive the active state based on the screensaver being visible.
+        onVisibleChanged: VCHub.isActive = !visible
+
         // Consume the mouse event to not affect whatever is underneath the screensaver.
         MouseArea {
             id: screensaverDismisser

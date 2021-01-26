@@ -4,7 +4,7 @@
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCPlugin::VCPlugin( const QString & Name, QObject * pParent ) :
-    QObject( pParent ), m_Name( Name ), m_iUpdateInterval( 10 * 1000 )
+    QObject( pParent ), m_Name( Name ), m_iUpdateInterval( 10 * 1000 ), m_bIsActive( true )
 {
     if ( !m_Name.isEmpty() )
     {
@@ -31,6 +31,26 @@ void VCPlugin::setUpdateInterval( const int iValue )
         m_iUpdateInterval = iValue;
         m_UpdateTimer.setInterval( m_iUpdateInterval );
         emit updateIntervalChanged();
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCPlugin::setActive( const bool bValue )
+{
+    if ( m_bIsActive != bValue )
+    {
+        m_bIsActive = bValue;
+        emit isActiveChanged();
+
+        if ( m_bIsActive )
+        {
+            m_UpdateTimer.start();
+            refresh();
+        }
+        else
+        {
+            m_UpdateTimer.stop();
+        }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
