@@ -46,7 +46,7 @@ private slots:
     void updateBaseURL();
 
 private:
-    QString Name;
+    QString m_Name;
     bool m_bIsOn;
     int m_iCommandedPower;
     QVariantList m_Effects;

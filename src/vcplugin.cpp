@@ -4,12 +4,12 @@
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCPlugin::VCPlugin( const QString & Name, QObject * pParent ) :
-    QObject( pParent ), m_Name( Name ), m_iUpdateInterval( 10 * 1000 ), m_bIsActive( true )
+    QObject( pParent ), m_PluginName( Name ), m_iUpdateInterval( 10 * 1000 ), m_bIsActive( true )
 {
-    if ( !m_Name.isEmpty() )
+    if ( !m_PluginName.isEmpty() )
     {
-        setObjectName( m_Name );
-        qDebug() << "Initializing plugin: " << m_Name;
+        setObjectName( m_PluginName );
+        qDebug() << "Initializing plugin: " << m_PluginName;
 
         // Configure the update timer for periodically refreshing any attached data.
         m_UpdateTimer.setInterval( m_iUpdateInterval );
