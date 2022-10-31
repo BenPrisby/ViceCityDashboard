@@ -1,7 +1,13 @@
 #ifndef VCSPOTIFY_H_
 #define VCSPOTIFY_H_
 
-#include "networkinterface.h"
+#include <QByteArray>
+#include <QJsonDocument>
+#include <QList>
+#include <QNetworkAccessManager>
+#include <QUrl>
+#include <QVariant>
+
 #include "vcplugin.h"
 
 class VCSpotify final : public VCPlugin {

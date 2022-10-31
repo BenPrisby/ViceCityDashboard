@@ -9,6 +9,9 @@
 #include <QStandardPaths>
 #include <QSysInfo>
 
+#include "hueambiancelight.h"
+#include "huecolorlight.h"
+#include "huelight.h"
 #include "networkinterface.h"
 #include "vcconfig.h"
 /*--------------------------------------------------------------------------------------------------------------------*/

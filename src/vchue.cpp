@@ -2,6 +2,9 @@
 
 #include <QJsonArray>
 
+#include "hueambiancelight.h"
+#include "huecolorlight.h"
+#include "huelight.h"
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 

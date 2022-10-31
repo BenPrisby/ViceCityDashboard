@@ -1,7 +1,8 @@
 #include "vcfacts.h"
 
+#include <QJsonObject>
+
 #include "networkinterface.h"
-#include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCFacts::VCFacts(const QString& name, QObject* parent)

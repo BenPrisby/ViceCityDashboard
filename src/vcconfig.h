@@ -1,7 +1,10 @@
 #ifndef VCCONFIG_H_
 #define VCCONFIG_H_
 
+#include <QList>
 #include <QMetaMethod>
+#include <QObject>
+#include <QString>
 #include <QVariant>
 
 using KeyContext = QPair<QObject *, QString>;  // Object, property name

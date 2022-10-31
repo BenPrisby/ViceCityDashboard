@@ -1,10 +1,7 @@
 #ifndef VCHUE_H_
 #define VCHUE_H_
 
-#include "hueambiancelight.h"
-#include "huecolorlight.h"
 #include "huedevice.h"
-#include "huelight.h"
 #include "vcplugin.h"
 
 class VCHue : public VCPlugin {

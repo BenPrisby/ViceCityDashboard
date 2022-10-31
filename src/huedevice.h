@@ -3,6 +3,8 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QObject>
+#include <QString>
 
 class HueDevice : public QObject {
     Q_OBJECT

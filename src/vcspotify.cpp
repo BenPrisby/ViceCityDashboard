@@ -3,6 +3,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QUrlQuery>
+
+#include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static const QString PLAYER_BASE_URL = "https://api.spotify.com/v1/me/player";

@@ -1,6 +1,8 @@
 #ifndef VCPLUGIN_H_
 #define VCPLUGIN_H_
 
+#include <QObject>
+#include <QString>
 #include <QTimer>
 
 class VCPlugin : public QObject {

@@ -2,6 +2,7 @@
 #define VCWEATHER_H_
 
 #include <QDateTime>
+#include <QJsonDocument>
 #include <QUrl>
 
 #include "vcplugin.h"

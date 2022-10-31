@@ -3,10 +3,13 @@
 
 #include <QtZeroConf/qzeroconf.h>
 
+#include <QByteArray>
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QObject>
 #include <QQueue>
+#include <QString>
 #include <QTimer>
 
 class NetworkInterface final : public QObject {
