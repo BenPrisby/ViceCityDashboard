@@ -7,7 +7,7 @@
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static const QString PLAYER_BASE_URL = "https://api.spotify.com/v1/me/player";
+static constexpr const char* PLAYER_BASE_URL = "https://api.spotify.com/v1/me/player";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCSpotify::VCSpotify(const QString& name, QObject* parent)

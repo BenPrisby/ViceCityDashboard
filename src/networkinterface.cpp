@@ -3,8 +3,10 @@
 #include <QCoreApplication>
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+static constexpr const char* JSON_CONTENT_TYPE = "application/json";
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 static NetworkInterface* instance_ = nullptr;
-static QByteArray JSON_CONTENT_TYPE = "application/json";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 NetworkInterface::NetworkInterface(QObject* parent)

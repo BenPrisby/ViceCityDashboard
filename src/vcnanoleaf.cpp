@@ -7,7 +7,7 @@
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static const QString NANOLEAF_SERVICE_TYPE = "_nanoleafapi._tcp";
+static constexpr const char* NANOLEAF_SERVICE_TYPE = "_nanoleafapi._tcp";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCNanoleaf::VCNanoleaf(const QString& name, QObject* parent)
