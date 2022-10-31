@@ -1,0 +1,4 @@
+{
+    "markdown.extension.list.indentationSize": "inherit",
+    "markdown.extension.toc.slugifyMode": "github"
+}

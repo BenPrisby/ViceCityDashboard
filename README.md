@@ -1,8 +1,23 @@
-# Vice City Dashboard
+# Vice City Dashboard <!-- omit in toc -->
 
-Smart home integration dashboard for my apartment, affectionately nicknamed Vice City
+- [Overview](#overview)
+- [Features](#features)
+    - [Smart Home](#smart-home)
+        - [Philips Hue](#philips-hue)
+        - [Nanoleaf](#nanoleaf)
+        - [Scenes](#scenes)
+    - [Spotify](#spotify)
+    - [Pi-hole](#pi-hole)
+    - [Weather](#weather)
+    - [Fun Facts](#fun-facts)
+- [Architecture](#architecture)
+- [Building and Running](#building-and-running)
+    - [Development](#development)
+    - [Deployment](#deployment)
 
 ## Overview
+
+This project is a smart home integration dashboard for my apartment, affectionately nicknamed Vice City.
 
 The motiviation for this project stemmed from a desire to have a centralized physical home hub in the form of a smart
 dashboard capable of interfacing with many of my smart home products while also providing useful functionality like
