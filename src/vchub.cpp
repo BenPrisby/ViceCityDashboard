@@ -269,7 +269,7 @@ void VCHub::runScene(const QString& scene) {
 
             // Insert a brief pause in between steps to prevent overloading the devices.
             QTime future = QTime::currentTime().addMSecs(200);
-            for (; future > QTime::currentTime(); /* Passage of time. */) {
+            while (future > QTime::currentTime()) {
                 QCoreApplication::processEvents(QEventLoop::AllEvents, 500);
             }
         }
