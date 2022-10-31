@@ -9,7 +9,7 @@ Item {
         id: screensaverTimer
         running: VCHub.screensaverEnabled
         repeat: false
-        interval: 5 * 60 * 1000  // 5 minutes
+        interval: 2 * 60 * 1000  // 2 minutes
 
         onTriggered: screensaver.visible = true
     }
