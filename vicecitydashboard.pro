@@ -66,5 +66,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 target.path = $$_PRO_FILE_PWD_/bin
 
 # QtZeroConf linking.
-include(QtZeroConf/qtzeroconf.pri)
+include($$_PRO_FILE_PWD_/external/QtZeroConf/qtzeroconf.pri)
+INCLUDEPATH += $$_PRO_FILE_PWD_/external
 DEFINES += QZEROCONF_STATIC
