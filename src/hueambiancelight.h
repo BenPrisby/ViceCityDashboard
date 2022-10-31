@@ -23,11 +23,10 @@ class HueAmbianceLight : public HueLight {
     int maxColorTemperature() const;
     QColor ambientColor() const;
 
+    Q_INVOKABLE void commandColorTemperature(int colorTemperature);
+
  signals:
     void colorTemperatureChanged();
-
- public slots:
-    void commandColorTemperature(int colorTemperature);
 
  protected:
     int colorTemperature_;

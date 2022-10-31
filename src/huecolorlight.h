@@ -17,16 +17,15 @@ class HueColorLight final : public HueAmbianceLight {
     const QColor& color() const { return color_; }
     int hue() const { return color_.hue(); }
 
+    Q_INVOKABLE void commandColor(const QColor& color);
+    Q_INVOKABLE void commandColor(int hue);
+    Q_INVOKABLE void commandColor(double x, double y);
+
     static QColor xyToColor(double x, double y);
     static QColor hueToColor(int hue);
 
  signals:
     void colorChanged();
-
- public slots:
-    void commandColor(const QColor& color);
-    void commandColor(int hue);
-    void commandColor(double x, double y);
 
  private:
     QColor color_;

@@ -65,37 +65,6 @@ VCSpotify::VCSpotify(const QString& name, QObject* parent)
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::refresh() {
-    // Refresh current playback information.
-    static QUrl destination(QString("%1?market=%2").arg(PLAYER_BASE_URL, market_));
-    sendRequest(destination);
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshDevices() {
-    if (!accessTokenAuthorization_.isEmpty()) {
-        static QUrl destination(QString("%1/devices").arg(PLAYER_BASE_URL));
-        sendRequest(destination);
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshUserProfile() {
-    if (!accessTokenAuthorization_.isEmpty()) {
-        static QUrl destination("https://api.spotify.com/v1/me");
-        sendRequest(destination);
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCSpotify::refreshPlaylists() {
-    if (!accessTokenAuthorization_.isEmpty()) {
-        static QUrl destination("https://api.spotify.com/v1/me/playlists");
-        sendRequest(destination);
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void VCSpotify::play(const QString& uri) {
     QString destination = QString("%1/play").arg(PLAYER_BASE_URL);
     if (!isActive_) {
@@ -218,6 +187,37 @@ QString VCSpotify::formatDuration(const int value) {
         secondsDisplay = secondsDisplay.rightJustified(2, '0');
     }
     return QString("%1:%2").arg(value / 60).arg(secondsDisplay);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refresh() {
+    // Refresh current playback information.
+    static QUrl destination(QString("%1?market=%2").arg(PLAYER_BASE_URL, market_));
+    sendRequest(destination);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshDevices() {
+    if (!accessTokenAuthorization_.isEmpty()) {
+        static QUrl destination(QString("%1/devices").arg(PLAYER_BASE_URL));
+        sendRequest(destination);
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshUserProfile() {
+    if (!accessTokenAuthorization_.isEmpty()) {
+        static QUrl destination("https://api.spotify.com/v1/me");
+        sendRequest(destination);
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCSpotify::refreshPlaylists() {
+    if (!accessTokenAuthorization_.isEmpty()) {
+        static QUrl destination("https://api.spotify.com/v1/me/playlists");
+        sendRequest(destination);
+    }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

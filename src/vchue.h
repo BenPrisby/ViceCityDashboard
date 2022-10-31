@@ -23,6 +23,8 @@ class VCHue : public VCPlugin {
     const QString& bridgeIPAddress() const { return bridgeIPAddress_; }
     const QString& bridgeUsername() const { return bridgeUsername_; }
 
+    void commandDeviceState(int id, const QJsonObject& parameters);
+
  signals:
     void devicesChanged();
     void onDevicesCountChanged();
@@ -33,7 +35,6 @@ class VCHue : public VCPlugin {
  public slots:
     void refresh() override;
     void refreshGroups();
-    void commandDeviceState(int id, const QJsonObject& parameters);
 
  private slots:
     void handleZeroConfServiceFound(const QString& serviceType, const QString& ipAddress);

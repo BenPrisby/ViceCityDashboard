@@ -47,16 +47,6 @@ int VCHue::onDevicesCount() const {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::refresh() {
-    NetworkInterface::instance()->sendJSONRequest(lightsURL_, this);
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCHue::refreshGroups() {
-    NetworkInterface::instance()->sendJSONRequest(groupsURL_, this);
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void VCHue::commandDeviceState(const int id, const QJsonObject& parameters) {
     HueDevice* device = deviceTable_.value(id, nullptr);
     if (device) {
@@ -66,6 +56,16 @@ void VCHue::commandDeviceState(const int id, const QJsonObject& parameters) {
     } else {
         qDebug() << "Ignoring request to command state of unknown device: " << id;
     }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCHue::refresh() {
+    NetworkInterface::instance()->sendJSONRequest(lightsURL_, this);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCHue::refreshGroups() {
+    NetworkInterface::instance()->sendJSONRequest(groupsURL_, this);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

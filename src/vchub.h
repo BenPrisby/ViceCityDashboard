@@ -69,6 +69,17 @@ class VCHub final : public QObject {
 
     bool loadConfig(const QString& path);
 
+    Q_INVOKABLE void runScene(const QString& scene);
+    Q_INVOKABLE QStringList parseSceneColors(const QString& scene);
+
+    Q_INVOKABLE QString dayOfWeek(const QDateTime& dateTime) const;
+    Q_INVOKABLE QString formatTime(const QDateTime& dateTime) const;
+    Q_INVOKABLE QString formatInt(int value, const QString& unit = {}) const;
+    Q_INVOKABLE QString formatDecimal(double value, const QString& unit = {}) const;
+    Q_INVOKABLE QString formatPercentage(double value, bool wholeNumber = false) const;
+    Q_INVOKABLE QUrl localFileToURL(const QString& path) const { return QUrl::fromLocalFile(path); }
+    Q_INVOKABLE QString screenshotPath() const;
+
  signals:
     void isActiveChanged();
     void currentDateTimeChanged();
@@ -80,18 +91,6 @@ class VCHub final : public QObject {
     void scenesChanged();
     void homeMapChanged();
     void isRunningSceneChanged();
-
- public slots:
-    void runScene(const QString& scene);
-    QStringList parseSceneColors(const QString& scene);
-
-    QString dayOfWeek(const QDateTime& dateTime) const;
-    QString formatTime(const QDateTime& dateTime) const;
-    QString formatInt(int value, const QString& unit = {}) const;
-    QString formatDecimal(double value, const QString& unit = {}) const;
-    QString formatPercentage(double value, bool wholeNumber = false) const;
-    QUrl localFileToURL(const QString& path) const { return QUrl::fromLocalFile(path); }
-    QString screenshotPath() const;
 
  private slots:
     void updateCurrentDateTime();

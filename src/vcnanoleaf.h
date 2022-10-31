@@ -27,6 +27,9 @@ class VCNanoleaf final : public VCPlugin {
     const QString& selectedEffect() const { return selectedEffect_; }
     const QString& ipAddress() const { return ipAddress_; }
 
+    Q_INVOKABLE void commandPower(bool on);
+    Q_INVOKABLE void selectEffect(const QString& effect);
+
  signals:
     void nameChanged();
     void isOnChanged();
@@ -39,8 +42,6 @@ class VCNanoleaf final : public VCPlugin {
  public slots:
     void refresh() override;
     void refreshEffects();
-    void commandPower(bool on);
-    void selectEffect(const QString& effect);
 
  private slots:
     void handleZeroConfServiceFound(const QString& serviceType, const QString& ipAddress);

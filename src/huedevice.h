@@ -31,6 +31,8 @@ class HueDevice : public QObject {
     const QString& room() const { return room_; }
     void setRoom(const QString& value);
 
+    Q_INVOKABLE void commandPower(bool on);
+
  signals:
     void idChanged();
     void nameChanged();
@@ -41,7 +43,6 @@ class HueDevice : public QObject {
     void roomChanged();
 
  public slots:
-    void commandPower(bool on);
     void handleResponse(const QJsonDocument& response);
 
  protected:

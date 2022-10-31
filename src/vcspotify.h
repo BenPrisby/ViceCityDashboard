@@ -69,6 +69,20 @@ class VCSpotify final : public VCPlugin {
     const QVariantList& searchResults() const { return searchResults_; }
     int deviceVolume() const { return deviceVolume_; }
 
+    Q_INVOKABLE void play(const QString& uri = {});
+    Q_INVOKABLE void pause();
+    Q_INVOKABLE void previous();
+    Q_INVOKABLE void next();
+    Q_INVOKABLE void seek(int position);
+    Q_INVOKABLE void enableShuffle(bool value);
+    Q_INVOKABLE void enableRepeat(bool value, bool all = true);
+    Q_INVOKABLE void commandDeviceVolume(int value);
+    Q_INVOKABLE void search(const QString& query);
+    Q_INVOKABLE void queue(const QString& uri);
+    Q_INVOKABLE void transfer(const QString& deviceID);
+
+    Q_INVOKABLE QString formatDuration(int value);
+
  signals:
     void userNameChanged();
     void userEmailChanged();
@@ -102,20 +116,6 @@ class VCSpotify final : public VCPlugin {
     void refreshDevices();
     void refreshUserProfile();
     void refreshPlaylists();
-
-    void play(const QString& uri = {});
-    void pause();
-    void previous();
-    void next();
-    void seek(int position);
-    void enableShuffle(bool value);
-    void enableRepeat(bool value, bool all = true);
-    void commandDeviceVolume(int value);
-    void search(const QString& query);
-    void queue(const QString& uri);
-    void transfer(const QString& deviceID);
-
-    QString formatDuration(int value);
 
  private slots:
     void handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body);

@@ -15,11 +15,10 @@ class HueLight : public HueDevice {
 
     double brightness() const { return brightness_; }
 
+    void commandBrightness(double brightness);
+
  signals:
     void brightnessChanged();
-
- public slots:
-    void commandBrightness(double brightness);
 
  protected:
     double brightness_;

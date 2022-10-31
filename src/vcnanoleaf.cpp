@@ -39,17 +39,6 @@ void VCNanoleaf::refresh() {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCNanoleaf::refreshEffects() {
-    QUrl destination(QString("%1/effects").arg(baseURL_));
-    QJsonObject write{{"command", "requestAll"}};
-    QJsonObject body{{"write", write}};
-
-    // BDP: A put request containing a command to the write endpoint is actually just a query? Really?
-    NetworkInterface::instance()->sendJSONRequest(
-        destination, this, QNetworkAccessManager::PutOperation, QJsonDocument(body));
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void VCNanoleaf::commandPower(const bool on) {
     QJsonObject command{{"on", QJsonObject{{"value", on}}}};
     QUrl destination(QString("%1/state").arg(baseURL_));
@@ -75,6 +64,17 @@ void VCNanoleaf::selectEffect(const QString& effect) {
 
     NetworkInterface::instance()->sendJSONRequest(
         destination, this, QNetworkAccessManager::PutOperation, QJsonDocument(command));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCNanoleaf::refreshEffects() {
+    QUrl destination(QString("%1/effects").arg(baseURL_));
+    QJsonObject write{{"command", "requestAll"}};
+    QJsonObject body{{"write", write}};
+
+    // BDP: A put request containing a command to the write endpoint is actually just a query? Really?
+    NetworkInterface::instance()->sendJSONRequest(
+        destination, this, QNetworkAccessManager::PutOperation, QJsonDocument(body));
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

@@ -11,45 +11,6 @@ HueColorLight::HueColorLight(int id, QObject* parent) : HueAmbianceLight(id, par
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QColor HueColorLight::xyToColor(const double xIn, const double yIn) {
-    // Calculate XYZ values.
-    double y = 1.0;  // Always use full brightness for visual purposes.
-    double x = (y / yIn) * xIn;
-    double z = (y / yIn) * (1.0f - xIn - yIn);
-
-    // Convert to RGB using Wide RGB D65 conversion.
-    double r = (x * 1.656492f) - (y * 0.354851) - (z * 0.255038);
-    double g = (-x * 0.707196) + (y * 1.655397) + (z * 0.036152);
-    double b = (x * 0.051713) - (y * 0.121364) + (z * 1.011530);
-
-    // Apply reverse gamma correction.
-    r = (r <= 0.0031308) ? (12.92 * r) : ((1.0 + 0.055) * qPow(r, (1.0 / 2.4)) - 0.055);
-    g = (g <= 0.0031308) ? (12.92 * g) : ((1.0 + 0.055) * qPow(g, (1.0 / 2.4)) - 0.055);
-    b = (b <= 0.0031308) ? (12.92 * b) : ((1.0 + 0.055) * qPow(b, (1.0 / 2.4)) - 0.055);
-
-    // Bring all negative components to 0.
-    r = qMax(r, 0.0);
-    g = qMax(g, 0.0);
-    b = qMax(b, 0.0);
-
-    // Scale the components to be in range if necessary.
-    double maxComponent = qMax(r, qMax(g, b));
-    if (1.0 < maxComponent) {
-        r = r / maxComponent;
-        g = g / maxComponent;
-        b = b / maxComponent;
-    }
-
-    // Construct the color object from the RGB components.
-    return QColor::fromRgbF(r, g, b);
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-QColor HueColorLight::hueToColor(const int hue) {
-    return QColor::fromHsv(hue, 255, 255);  // Assume maximum saturation and brightness
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void HueColorLight::commandColor(const QColor& color) {
     if (color.isValid()) {
         double rIn = color.redF();
@@ -99,6 +60,45 @@ void HueColorLight::commandColor(const double x, const double y) {
     } else {
         qDebug() << "Ignoring request to set invalid XY for light with ID: " << id_;
     }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+QColor HueColorLight::xyToColor(const double xIn, const double yIn) {
+    // Calculate XYZ values.
+    double y = 1.0;  // Always use full brightness for visual purposes.
+    double x = (y / yIn) * xIn;
+    double z = (y / yIn) * (1.0f - xIn - yIn);
+
+    // Convert to RGB using Wide RGB D65 conversion.
+    double r = (x * 1.656492f) - (y * 0.354851) - (z * 0.255038);
+    double g = (-x * 0.707196) + (y * 1.655397) + (z * 0.036152);
+    double b = (x * 0.051713) - (y * 0.121364) + (z * 1.011530);
+
+    // Apply reverse gamma correction.
+    r = (r <= 0.0031308) ? (12.92 * r) : ((1.0 + 0.055) * qPow(r, (1.0 / 2.4)) - 0.055);
+    g = (g <= 0.0031308) ? (12.92 * g) : ((1.0 + 0.055) * qPow(g, (1.0 / 2.4)) - 0.055);
+    b = (b <= 0.0031308) ? (12.92 * b) : ((1.0 + 0.055) * qPow(b, (1.0 / 2.4)) - 0.055);
+
+    // Bring all negative components to 0.
+    r = qMax(r, 0.0);
+    g = qMax(g, 0.0);
+    b = qMax(b, 0.0);
+
+    // Scale the components to be in range if necessary.
+    double maxComponent = qMax(r, qMax(g, b));
+    if (1.0 < maxComponent) {
+        r = r / maxComponent;
+        g = g / maxComponent;
+        b = b / maxComponent;
+    }
+
+    // Construct the color object from the RGB components.
+    return QColor::fromRgbF(r, g, b);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+QColor HueColorLight::hueToColor(const int hue) {
+    return QColor::fromHsv(hue, 255, 255);  // Assume maximum saturation and brightness
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
