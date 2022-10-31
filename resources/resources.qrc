@@ -50,5 +50,7 @@
         <file>images/transfer.svg</file>
         <file>images/star.svg</file>
         <file>images/back.svg</file>
+        <file>images/couch.svg</file>
+        <file>images/golf.svg</file>
     </qresource>
 </RCC>
