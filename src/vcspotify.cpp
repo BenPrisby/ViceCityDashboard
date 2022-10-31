@@ -40,7 +40,7 @@ VCSpotify::VCSpotify(const QString& name, QObject* parent)
     // Configure a timer to set the state as idle if a response is not received.
     inactivityTimer_.setInterval(5 * 1000);
     inactivityTimer_.setSingleShot(true);
-    connect(&inactivityTimer_, &QTimer::timeout, this, [=] {
+    connect(&inactivityTimer_, &QTimer::timeout, this, [this] {
         if (isActive_) {
             isActive_ = false;
             emit isActiveChanged();
@@ -535,7 +535,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                     if (!devicesModel.isEmpty()) {
                         // Arrange alphabetically.
                         std::sort(
-                            devicesModel.begin(), devicesModel.end(), [=](const QVariant& left, const QVariant& right) {
+                            devicesModel.begin(), devicesModel.end(), [](const QVariant& left, const QVariant& right) {
                                 return left.toMap().value("name").toString() < right.toMap().value("name").toString();
                             });
                     }

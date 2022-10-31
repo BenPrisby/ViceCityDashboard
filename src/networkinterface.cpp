@@ -19,7 +19,7 @@ NetworkInterface::NetworkInterface(QObject* parent)
     // Configure a timeout on browsing for ZeroConf services.
     zeroConfBrowseTimer_.setInterval(15 * 1000);
     zeroConfBrowseTimer_.setSingleShot(true);
-    connect(&zeroConfBrowseTimer_, &QTimer::timeout, this, [=] {
+    connect(&zeroConfBrowseTimer_, &QTimer::timeout, this, [this] {
         QString serviceType = zeroConfBrowseRequests_.dequeue();
         qDebug() << "Failed to find ZeroConf service type: " << serviceType;
         zeroConf_->stopBrowser();

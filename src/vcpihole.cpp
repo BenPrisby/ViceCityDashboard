@@ -20,7 +20,7 @@ VCPiHole::VCPiHole(const QString& name, QObject* parent)
     connect(NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCPiHole::handleNetworkReply);
 
     // Look for the Pi Hole server when the hostname is populated.
-    connect(this, &VCPiHole::serverHostnameChanged, this, [=] {
+    connect(this, &VCPiHole::serverHostnameChanged, this, [this] {
         if (!serverHostname_.isEmpty()) {
             (void)QHostInfo::lookupHost(serverHostname_, this, &VCPiHole::handleHostLookup);
         }

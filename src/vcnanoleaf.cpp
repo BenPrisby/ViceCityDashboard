@@ -107,7 +107,7 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
                         if (!commandedEffect_.isEmpty() && (commandedEffect_ != selected)) {
                             // Command the effect again after a short delay.
                             // TODO(BDP): Give up after a certain number of attempts?
-                            QTimer::singleShot(500, this, [=] { selectEffect(commandedEffect_); });
+                            QTimer::singleShot(500, this, [this] { selectEffect(commandedEffect_); });
                         } else {
                             commandedEffect_.clear();
 
@@ -128,7 +128,7 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
                             // BDP: Ensure the commanded power is applied.
                             if (((0 == commandedPower_) && on) || ((1 == commandedPower_) && !on)) {
                                 // Command again after a short delay.
-                                QTimer::singleShot(500, this, [=] { commandPower(1 == commandedPower_); });
+                                QTimer::singleShot(500, this, [this] { commandPower(1 == commandedPower_); });
                             } else {
                                 commandedPower_ = -1;
 

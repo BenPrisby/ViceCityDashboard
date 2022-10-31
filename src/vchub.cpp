@@ -45,7 +45,7 @@ VCHub::VCHub(QObject* pParent)
 
 #ifdef QT_DEBUG
     // Reload the config file if it changes externally.
-    connect(&configFileWatcher_, &QFileSystemWatcher::fileChanged, this, [=](const QString& Path) {
+    connect(&configFileWatcher_, &QFileSystemWatcher::fileChanged, this, [this](const QString& Path) {
         qDebug() << "Reloading config file because it has changed externally";
         (void)loadConfig(Path);
     });
