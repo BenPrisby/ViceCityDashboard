@@ -86,4 +86,3 @@ The simplest way to build and run is to open the project file `ViceCityDashboard
 ### Deployment
 
 Formal deployment scripts are to come, as they are platform-dependent. I deploy this project on a Raspberry Pi 4 with a connected 1024x600 touchscreen that I compiled Qt 5.15.1 on directly (with EGLFS). As such, I package the source code and build it directly on the target with a systemd service to handle running it to avoid needing to cross-compile.
-
