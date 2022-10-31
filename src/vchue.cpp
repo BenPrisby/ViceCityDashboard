@@ -78,17 +78,6 @@ void VCHue::handleZeroConfServiceFound(const QString& serviceType, const QString
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static bool sortDevice(const HueDevice* const left, const HueDevice* const right) {
-    if (!left) {
-        return false;
-    }
-    if (!right) {
-        return true;
-    }
-    return left->id() < right->id();
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
     // Check if this is for us or should be dispatched to a device.
     if (this == sender) {
@@ -126,7 +115,17 @@ void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocum
                                     // Record the device.
                                     deviceTable_.insert(id, device);
                                     devices_.append(device);
-                                    std::sort(devices_.begin(), devices_.end(), sortDevice);
+                                    std::sort(devices_.begin(),
+                                              devices_.end(),
+                                              [](const HueDevice* left, const HueDevice* right) {
+                                                  if (!left) {
+                                                      return false;
+                                                  }
+                                                  if (!right) {
+                                                      return true;
+                                                  }
+                                                  return left->id() < right->id();
+                                              });
                                     emit devicesChanged();
                                 }
 
