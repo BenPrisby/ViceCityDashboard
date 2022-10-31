@@ -3,29 +3,31 @@
 
 #include "huedevice.h"
 
-class HueLight : public HueDevice
-{
+class HueLight : public HueDevice {
     Q_OBJECT
-    Q_PROPERTY( double brightness  READ brightness  NOTIFY brightnessChanged )
 
-public:
-    explicit HueLight( int id, QObject * parent = nullptr );
+    // clang-format off
+    Q_PROPERTY(double brightness  READ brightness  NOTIFY brightnessChanged)
+    // clang-format on
+
+ public:
+    explicit HueLight(int id, QObject* parent = nullptr);
 
     double brightness() const { return brightness_; }
 
-signals:
+ signals:
     void brightnessChanged();
 
-public slots:
-    void commandBrightness( double brightness );
+ public slots:
+    void commandBrightness(double brightness);
 
-protected:
+ protected:
     double brightness_;
 
-    void handleStateData( const QJsonObject & state ) override;
+    void handleStateData(const QJsonObject& state) override;
 
-private:
-    Q_DISABLE_COPY_MOVE( HueLight )
+ private:
+    Q_DISABLE_COPY_MOVE(HueLight)
 };
 
 #endif  // HUELIGHT_H_

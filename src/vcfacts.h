@@ -5,31 +5,33 @@
 
 #include "vcplugin.h"
 
-class VCFacts final : public VCPlugin
-{
+class VCFacts final : public VCPlugin {
     Q_OBJECT
-    Q_PROPERTY( QString fact  READ fact  NOTIFY factChanged )
 
-public:
-    VCFacts( const QString & name, QObject * parent = nullptr );
+    // clang-format off
+    Q_PROPERTY(QString fact  READ fact  NOTIFY factChanged)
+    // clang-format on
 
-    const QString & fact() const { return fact_; }
+ public:
+    VCFacts(const QString& name, QObject* parent = nullptr);
 
-signals:
+    const QString& fact() const { return fact_; }
+
+ signals:
     void factChanged();
 
-public slots:
+ public slots:
     void refresh() override;
 
-private slots:
-    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
+ private slots:
+    void handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body);
 
-private:
+ private:
     QString fact_;
 
     QUrl requestURL_;
 
-    Q_DISABLE_COPY_MOVE( VCFacts )
+    Q_DISABLE_COPY_MOVE(VCFacts)
 };
 
 #endif  // VCFACTS_H_

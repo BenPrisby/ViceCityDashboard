@@ -1,0 +1,9 @@
+Language: Cpp
+BasedOnStyle: Google
+AccessModifierOffset: -3
+AllowShortFunctionsOnASingleLine: InlineOnly
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 120
+IndentWidth: 4
+PointerAlignment: Left

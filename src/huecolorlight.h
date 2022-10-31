@@ -3,35 +3,37 @@
 
 #include "hueambiancelight.h"
 
-class HueColorLight final : public HueAmbianceLight
-{
+class HueColorLight final : public HueAmbianceLight {
     Q_OBJECT
-    Q_PROPERTY( QColor color  READ color  NOTIFY colorChanged )
-    Q_PROPERTY( int hue       READ hue    NOTIFY colorChanged )
 
-public:
-    explicit HueColorLight( int id, QObject * parent = nullptr );
+    // clang-format off
+    Q_PROPERTY(QColor color  READ color  NOTIFY colorChanged)
+    Q_PROPERTY(int hue       READ hue    NOTIFY colorChanged)
+    // clang-format on
 
-    const QColor & color() const { return color_; }
+ public:
+    explicit HueColorLight(int id, QObject* parent = nullptr);
+
+    const QColor& color() const { return color_; }
     int hue() const { return color_.hue(); }
 
-    static QColor xyToColor( double x, double y );
-    static QColor hueToColor( int hue );
+    static QColor xyToColor(double x, double y);
+    static QColor hueToColor(int hue);
 
-signals:
+ signals:
     void colorChanged();
 
-public slots:
-    void commandColor( const QColor & color );
-    void commandColor( int hue );
-    void commandColor( double x, double y );
+ public slots:
+    void commandColor(const QColor& color);
+    void commandColor(int hue);
+    void commandColor(double x, double y);
 
-private:
+ private:
     QColor color_;
 
-    void handleStateData( const QJsonObject & state ) override;
+    void handleStateData(const QJsonObject& state) override;
 
-    Q_DISABLE_COPY_MOVE( HueColorLight )
+    Q_DISABLE_COPY_MOVE(HueColorLight)
 };
 
-#endif // HUECOLORLIGHT_H_
+#endif  // HUECOLORLIGHT_H_

@@ -5,27 +5,29 @@
 
 #include "vcplugin.h"
 
-class VCNanoleaf final : public VCPlugin
-{
+class VCNanoleaf final : public VCPlugin {
     Q_OBJECT
-    Q_PROPERTY( QString name            READ name            NOTIFY nameChanged )
-    Q_PROPERTY( bool isOn               READ isOn            NOTIFY isOnChanged )
-    Q_PROPERTY( QVariantList effects    READ effects         NOTIFY effectsChanged )
-    Q_PROPERTY( QString selectedEffect  READ selectedEffect  NOTIFY selectedEffectChanged )
-    Q_PROPERTY( QString ipAddress       READ ipAddress       NOTIFY ipAddressChanged )
-    Q_PROPERTY( QString authToken       MEMBER authToken_   NOTIFY authTokenChanged )
-    Q_PROPERTY( QVariantList mapPoint   MEMBER mapPoint_    NOTIFY mapPointChanged )
 
-public:
-    explicit VCNanoleaf( const QString & name, QObject * parent = nullptr );
+    // clang-format off
+    Q_PROPERTY(QString name                               READ name            NOTIFY nameChanged)
+    Q_PROPERTY(bool isOn                                  READ isOn            NOTIFY isOnChanged)
+    Q_PROPERTY(QVariantList effects                       READ effects         NOTIFY effectsChanged)
+    Q_PROPERTY(QString selectedEffect                     READ selectedEffect  NOTIFY selectedEffectChanged)
+    Q_PROPERTY(QString ipAddress                          READ ipAddress       NOTIFY ipAddressChanged)
+    Q_PROPERTY(QString authToken       MEMBER authToken_                       NOTIFY authTokenChanged)
+    Q_PROPERTY(QVariantList mapPoint   MEMBER mapPoint_                        NOTIFY mapPointChanged)
+    // clang-format on
 
-    const QString & name() const { return name_; }
+ public:
+    explicit VCNanoleaf(const QString& name, QObject* parent = nullptr);
+
+    const QString& name() const { return name_; }
     bool isOn() const { return isOn_; }
-    const QVariantList & effects() const { return effects_; }
-    const QString & selectedEffect() const { return selectedEffect_; }
-    const QString & ipAddress() const { return ipAddress_; }
+    const QVariantList& effects() const { return effects_; }
+    const QString& selectedEffect() const { return selectedEffect_; }
+    const QString& ipAddress() const { return ipAddress_; }
 
-signals:
+ signals:
     void nameChanged();
     void isOnChanged();
     void effectsChanged();
@@ -34,18 +36,18 @@ signals:
     void authTokenChanged();
     void mapPointChanged();
 
-public slots:
+ public slots:
     void refresh() override;
     void refreshEffects();
-    void commandPower( bool on );
-    void selectEffect( const QString & effect );
+    void commandPower(bool on);
+    void selectEffect(const QString& effect);
 
-private slots:
-    void handleZeroConfServiceFound( const QString & serviceType, const QString & ipAddress );
-    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
+ private slots:
+    void handleZeroConfServiceFound(const QString& serviceType, const QString& ipAddress);
+    void handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body);
     void updateBaseURL();
 
-private:
+ private:
     QString name_;
     bool isOn_;
     int commandedPower_;
@@ -58,7 +60,7 @@ private:
 
     QString baseURL_;
 
-    Q_DISABLE_COPY_MOVE( VCNanoleaf )
+    Q_DISABLE_COPY_MOVE(VCNanoleaf)
 };
 
 #endif  // VCNANOLEAF_H_

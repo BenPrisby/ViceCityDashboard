@@ -1,59 +1,46 @@
 #include "vcfacts.h"
+
 #include "networkinterface.h"
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCFacts::VCFacts( const QString & name, QObject * parent ) :
-    VCPlugin( name, parent ),
-    requestURL_( QString( "https://uselessfacts.jsph.pl/random.json?language=%1" ).arg( QLocale::system().bcp47Name() ) )
-{
-    setUpdateInterval( 60 * 1000 );
+VCFacts::VCFacts(const QString& name, QObject* parent)
+    : VCPlugin(name, parent),
+      requestURL_(QString("https://uselessfacts.jsph.pl/random.json?language=%1").arg(QLocale::system().bcp47Name())) {
+    setUpdateInterval(60 * 1000);
 
     // Handle network responses.
-    connect( NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCFacts::handleNetworkReply );
+    connect(NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCFacts::handleNetworkReply);
 
     refresh();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCFacts::refresh()
-{
-    NetworkInterface::instance()->sendJSONRequest( requestURL_, this );
+void VCFacts::refresh() {
+    NetworkInterface::instance()->sendJSONRequest(requestURL_, this);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCFacts::handleNetworkReply( const int statusCode, QObject * const sender, const QJsonDocument & body )
-{
-    if ( this == sender )
-    {
-        if ( 200 == statusCode )
-        {
-            if ( body.isObject() )
-            {
+void VCFacts::handleNetworkReply(const int statusCode, QObject* const sender, const QJsonDocument& body) {
+    if (this == sender) {
+        if (200 == statusCode) {
+            if (body.isObject()) {
                 QJsonObject responseObject = body.object();
-                if ( responseObject.contains( "text" ) )
-                {
-                    QString fact = responseObject.value( "text" ).toString().simplified()
-                            .replace( QChar( '`' ), QChar( '\'' ) );
-                    if ( !fact.isEmpty() )
-                    {
+                if (responseObject.contains("text")) {
+                    QString fact =
+                        responseObject.value("text").toString().simplified().replace(QChar('`'), QChar('\''));
+                    if (!fact.isEmpty()) {
                         fact_ = fact;
                         emit factChanged();
-                    }
-                    else
-                    {
+                    } else {
                         qDebug() << "No fact received in reply";
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             qDebug() << "Ignoring bad reply when requesting fact";
         }
-    }
-    else
-    {
+    } else {
         // Not for us, ignore.
     }
 }
