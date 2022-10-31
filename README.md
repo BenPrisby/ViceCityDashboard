@@ -123,7 +123,7 @@ all intended configurable properties, where placeholder values can be substitute
 
 ### Development
 
-The simplest way to build and run is to open the project file `ViceCityDashboard.pro` in the Qt Creator IDE. Static
+The simplest way to build and run is to open the project file `vicecitydashboard.pro` in the Qt Creator IDE. Static
 building and linking to the required dependency library `QtZeroConf` is handled by this file. The configuration file
 command line argument above must be specified under Projects > Run.
 
