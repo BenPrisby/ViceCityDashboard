@@ -102,8 +102,8 @@ all intended configurable properties, where placeholder values can be substitute
 
 ## Building and Running
 
-```
-./ViceCityDashboard -c /path/to/vcconfig.json
+```shell
+./vicecitydashboard -c /path/to/vcconfig.json
 ```
 
 ### Development
