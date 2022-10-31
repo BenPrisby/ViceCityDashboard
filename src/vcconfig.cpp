@@ -8,12 +8,12 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static VCConfig *instance_ = nullptr;
+static VCConfig* instance_ = nullptr;
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCConfig::VCConfig(QObject *parent) : QObject(parent) {
+VCConfig::VCConfig(QObject* parent) : QObject(parent) {
     // Find our save slot in the Meta-Object system.
-    const QMetaObject *meta = metaObject();
+    const QMetaObject* meta = metaObject();
     for (int i = 0; i < meta->methodCount(); i++) {
         QMetaMethod method = meta->method(i);
         if ("save" == method.name()) {
@@ -24,7 +24,7 @@ VCConfig::VCConfig(QObject *parent) : QObject(parent) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCConfig *VCConfig::instance() {
+VCConfig* VCConfig::instance() {
     if (!instance_) {
         instance_ = new VCConfig(VCHub::instance());  // BDP: The parent allows key resolution.
     }
@@ -33,7 +33,7 @@ VCConfig *VCConfig::instance() {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-bool VCConfig::load(const QString &path) {
+bool VCConfig::load(const QString& path) {
     bool success = false;
 
     // Ensure the path refers to a writable file.
@@ -46,19 +46,19 @@ bool VCConfig::load(const QString &path) {
                 QJsonObject Config = configDocument.object();
                 keys_.clear();
                 const QStringList keys = Config.keys();
-                for (const auto &key : keys) {
+                for (const auto& key : keys) {
                     KeyContext context = keyToContext(key);
 
                     // Did the key resolve to a valid object and property name?
                     if (context.first && !context.second.isEmpty()) {
-                        QObject *object = context.first;
+                        QObject* object = context.first;
                         QString property = context.second;
 
                         // Ensure the property exists.
                         if (object->property(property.toStdString().c_str()).isValid()) {
                             // Find the property's NOTIFY signal to drive saving back the file.
                             QMetaMethod notifySignal;
-                            const QMetaObject *meta = object->metaObject();
+                            const QMetaObject* meta = object->metaObject();
                             for (int i = 0; i < meta->propertyCount(); i++) {
                                 QMetaProperty metaProperty = meta->property(i);
                                 if (property == metaProperty.name()) {
@@ -118,12 +118,12 @@ bool VCConfig::save() {
     // Ensure that a config has been previously loaded.
     if (!path_.isEmpty() && !keys_.isEmpty()) {
         QJsonObject config;
-        for (const auto &key : qAsConst(keys_)) {
+        for (const auto& key : qAsConst(keys_)) {
             KeyContext context = keyToContext(key);
 
             // This should always resolve since this is a validated key, but do a sanity check anyway.
             if (context.first && !context.second.isEmpty()) {
-                QObject *object = context.first;
+                QObject* object = context.first;
                 QString property = context.second;
 
                 // Record the latest property value.
@@ -154,8 +154,8 @@ bool VCConfig::save() {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-KeyContext VCConfig::keyToContext(const QString &key) {
-    QObject *object = nullptr;
+KeyContext VCConfig::keyToContext(const QString& key) {
+    QObject* object = nullptr;
     QString propertyName;
 
     // Keys are references into the Meta-Object system using object names, with the property to set at the end.
@@ -169,7 +169,7 @@ KeyContext VCConfig::keyToContext(const QString &key) {
 
         // If the object name is not the parent's, recurse down into the children to find it.
         if (object->objectName() != parts.first()) {
-            object = object->findChild<QObject *>(parts.first());
+            object = object->findChild<QObject*>(parts.first());
         }
     }
 

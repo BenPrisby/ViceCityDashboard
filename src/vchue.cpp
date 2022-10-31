@@ -11,7 +11,7 @@
 static constexpr const char* HUE_SERVICE_TYPE = "_hue._tcp";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCHue::VCHue(const QString &name, QObject *parent) : VCPlugin(name, parent) {
+VCHue::VCHue(const QString& name, QObject* parent) : VCPlugin(name, parent) {
     // Don't start refreshing until the Bridge has been found.
     updateTimer_.stop();
     setUpdateInterval(1000);
@@ -35,7 +35,7 @@ VCHue::VCHue(const QString &name, QObject *parent) : VCPlugin(name, parent) {
 int VCHue::onDevicesCount() const {
     int count = 0;
 
-    for (const HueDevice *device : qAsConst(devices_)) {
+    for (const HueDevice* device : qAsConst(devices_)) {
         if (device->isOn()) {
             count++;
         }
@@ -55,8 +55,8 @@ void VCHue::refreshGroups() {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::commandDeviceState(const int id, const QJsonObject &parameters) {
-    HueDevice *device = deviceTable_.value(id, nullptr);
+void VCHue::commandDeviceState(const int id, const QJsonObject& parameters) {
+    HueDevice* device = deviceTable_.value(id, nullptr);
     if (device) {
         QUrl url(QString("%1/%2/state").arg(lightsURL_.toString()).arg(id));
         NetworkInterface::instance()->sendJSONRequest(
@@ -67,7 +67,7 @@ void VCHue::commandDeviceState(const int id, const QJsonObject &parameters) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::handleZeroConfServiceFound(const QString &serviceType, const QString &ipAddress) {
+void VCHue::handleZeroConfServiceFound(const QString& serviceType, const QString& ipAddress) {
     if (bridgeIPAddress_.isEmpty() && serviceType.startsWith(HUE_SERVICE_TYPE)) {
         bridgeIPAddress_ = ipAddress;
         qDebug() << "Hue Bridge found at IP address: " << bridgeIPAddress_;
@@ -76,7 +76,7 @@ void VCHue::handleZeroConfServiceFound(const QString &serviceType, const QString
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static bool sortDevice(const HueDevice *const left, const HueDevice *const right) {
+static bool sortDevice(const HueDevice* const left, const HueDevice* const right) {
     if (!left) {
         return false;
     }
@@ -87,7 +87,7 @@ static bool sortDevice(const HueDevice *const left, const HueDevice *const right
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocument &body) {
+void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
     // Check if this is for us or should be dispatched to a device.
     if (this == sender) {
         if (200 == statusCode) {
@@ -95,7 +95,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
                 const QStringList keys = responseObject.keys();
-                for (const auto &key : keys) {
+                for (const auto& key : keys) {
                     bool ok = false;
                     int id = key.toInt(&ok);
                     if (ok) {
@@ -104,7 +104,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
                             // Is this device information?
                             if (!itemObject.contains("lights")) {
                                 // Device information, is there already a record of this device?
-                                HueDevice *device = deviceTable_.value(id, nullptr);
+                                HueDevice* device = deviceTable_.value(id, nullptr);
                                 if (!device) {
                                     // Inspect the device type to determine the correct object type.
                                     QString type = itemObject.value("type").toString().toLower();
@@ -136,11 +136,11 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
                                 QString type = itemObject.value("type").toString();
                                 if (!name.isEmpty() && ("room" == type.toLower())) {
                                     const QJsonArray lights = itemObject.value("lights").toArray();
-                                    for (const auto &light : lights) {
+                                    for (const auto& light : lights) {
                                         bool ok = false;
                                         int lightID = light.toString().toInt(&ok);
                                         if (ok) {
-                                            HueDevice *device = deviceTable_.value(lightID, nullptr);
+                                            HueDevice* device = deviceTable_.value(lightID, nullptr);
                                             if (device) {
                                                 // Tell the device which room it's in.
                                                 device->setRoom(name);
@@ -168,7 +168,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
             qDebug() << "Ignoring unsuccessful reply from Hue Bridge with status code: " << statusCode;
         }
     } else {
-        auto device = qobject_cast<HueDevice *>(sender);
+        auto device = qobject_cast<HueDevice*>(sender);
         if (device) {
             if (200 == statusCode) {
                 // Dispatch to the device.

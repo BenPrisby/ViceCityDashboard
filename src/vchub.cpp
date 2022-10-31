@@ -16,10 +16,10 @@
 #include "vcconfig.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static VCHub *instance_ = nullptr;
+static VCHub* instance_ = nullptr;
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCHub::VCHub(QObject *pParent)
+VCHub::VCHub(QObject* pParent)
     : QObject(pParent),
       isActive_(true),
       currentDateTime_(QDateTime::currentDateTime()),
@@ -45,7 +45,7 @@ VCHub::VCHub(QObject *pParent)
 
 #ifdef QT_DEBUG
     // Reload the config file if it changes externally.
-    connect(&configFileWatcher_, &QFileSystemWatcher::fileChanged, this, [=](const QString &Path) {
+    connect(&configFileWatcher_, &QFileSystemWatcher::fileChanged, this, [=](const QString& Path) {
         qDebug() << "Reloading config file because it has changed externally";
         (void)loadConfig(Path);
     });
@@ -66,7 +66,7 @@ VCHub::VCHub(QObject *pParent)
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCHub *VCHub::instance() {
+VCHub* VCHub::instance() {
     if (!instance_) {
         instance_ = new VCHub();
     }
@@ -76,7 +76,7 @@ VCHub *VCHub::instance() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCHub::setActive(const bool value) {
-    static const QList<VCPlugin *> plugins{hue_, nanoleaf_, pihole_, weather_, facts_, spotify_};
+    static const QList<VCPlugin*> plugins{hue_, nanoleaf_, pihole_, weather_, facts_, spotify_};
 
     if (isActive_ != value) {
         isActive_ = value;
@@ -101,7 +101,7 @@ void VCHub::setUse24HourClock(const bool value) {
         // Indicate that any QDateTime properties should be reevaluated by emitting the NOTIFY signal.
         const QObjectList childrenList = children();
         for (auto child : childrenList) {
-            const QMetaObject *childMeta = child->metaObject();
+            const QMetaObject* childMeta = child->metaObject();
             int propertyCount = childMeta->propertyCount();
             for (int i = 0; i < propertyCount; i++) {
                 QMetaProperty property = childMeta->property(i);
@@ -114,7 +114,7 @@ void VCHub::setUse24HourClock(const bool value) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-bool VCHub::loadConfig(const QString &path) {
+bool VCHub::loadConfig(const QString& path) {
     bool success = VCConfig::instance()->load(path);
 
     if (success) {
@@ -137,7 +137,7 @@ bool VCHub::loadConfig(const QString &path) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHub::runScene(const QString &scene) {
+void VCHub::runScene(const QString& scene) {
     QVariantList steps = extractSceneSteps(scene);
     if (!steps.isEmpty()) {
         // Indicate that execution is starting.
@@ -160,9 +160,9 @@ void VCHub::runScene(const QString &scene) {
                 // Execute the actions of the step based on the device class.
                 if ("hue" == className) {
                     // Locate the Hue device by name.
-                    const QList<HueDevice *> &hueDevices = hue_->devices();
-                    HueDevice *hueDevice = nullptr;
-                    for (auto *const device : hueDevices) {
+                    const QList<HueDevice*>& hueDevices = hue_->devices();
+                    HueDevice* hueDevice = nullptr;
+                    for (auto* const device : hueDevices) {
                         if (name == device->name()) {
                             hueDevice = device;
                             break;
@@ -180,7 +180,7 @@ void VCHub::runScene(const QString &scene) {
                         }
                         if (state.contains("brightness")) {
                             // This must be a light.
-                            auto hueLight = qobject_cast<HueLight *>(hueDevice);
+                            auto hueLight = qobject_cast<HueLight*>(hueDevice);
                             if (hueLight) {
                                 qDebug() << "\t=> Command brightness";
                                 hueLight->commandBrightness(state.take("brightness").toDouble());
@@ -193,7 +193,7 @@ void VCHub::runScene(const QString &scene) {
                         }
                         if (state.contains("colorTemperature")) {
                             // This must be an ambiance light.
-                            auto hueLight = qobject_cast<HueAmbianceLight *>(hueDevice);
+                            auto hueLight = qobject_cast<HueAmbianceLight*>(hueDevice);
                             if (hueLight) {
                                 qDebug() << "\t=> Command color temperature";
                                 hueLight->commandColorTemperature(state.take("colorTemperature").toInt());
@@ -206,7 +206,7 @@ void VCHub::runScene(const QString &scene) {
                         }
                         if (state.contains("xy")) {
                             // This must be a color light.
-                            auto hueLight = qobject_cast<HueColorLight *>(hueDevice);
+                            auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
                             if (hueLight) {
                                 qDebug() << "\t=> Command XY color";
                                 QVariantList xy = state.take("xy").toList();
@@ -220,7 +220,7 @@ void VCHub::runScene(const QString &scene) {
                         }
                         if (state.contains("hue")) {
                             // This must be a color light.
-                            auto hueLight = qobject_cast<HueColorLight *>(hueDevice);
+                            auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
                             if (hueLight) {
                                 qDebug() << "\t=> Command hue color";
                                 hueLight->commandColor(state.take("hue").toInt());
@@ -284,13 +284,13 @@ void VCHub::runScene(const QString &scene) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QStringList VCHub::parseSceneColors(const QString &scene) {
+QStringList VCHub::parseSceneColors(const QString& scene) {
     QStringList colors;
 
     // Pull any called-out colors from the step states.
     const QVariantList steps = extractSceneSteps(scene);
     if (!steps.isEmpty()) {
-        for (const auto &step : steps) {
+        for (const auto& step : steps) {
             QVariantMap state = step.toMap().value("state").toMap();
             if (state.contains("xy")) {
                 QVariantList xy = state.value("xy").toList();
@@ -319,17 +319,17 @@ QStringList VCHub::parseSceneColors(const QString &scene) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::dayOfWeek(const QDateTime &dateTime) const {
+QString VCHub::dayOfWeek(const QDateTime& dateTime) const {
     return dateTime.toString("dddd");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatTime(const QDateTime &dateTime) const {
+QString VCHub::formatTime(const QDateTime& dateTime) const {
     return dateTime.toString(use24HourClock() ? "hh:mm" : "h:mm AP");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatInt(int value, const QString &unit) const {
+QString VCHub::formatInt(int value, const QString& unit) const {
     QString display = QLocale::system().toString(value);
     if (!unit.isEmpty()) {
         display.append(QString(" %1").arg(unit));
@@ -338,7 +338,7 @@ QString VCHub::formatInt(int value, const QString &unit) const {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatDecimal(double dValue, const QString &Unit) const {
+QString VCHub::formatDecimal(double dValue, const QString& Unit) const {
     QString Display = QLocale::system().toString(dValue, 'f', 1);  // 1 decimal place
     if (!Unit.isEmpty()) {
         Display.append(QString(" %1").arg(Unit));
@@ -368,11 +368,11 @@ void VCHub::updateCurrentDateTime() {
 void VCHub::refreshIPAddresses() {
     // Examine all of the system network interfaces and any associated IP addresses they may have.
     const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-    for (const auto &interface : interfaces) {
+    for (const auto& interface : interfaces) {
         // Avoid loopback, P2P, or otherwise virtual interfaces.
         if ((QNetworkInterface::Ethernet == interface.type()) || (QNetworkInterface::Wifi == interface.type())) {
             const QList<QNetworkAddressEntry> addressEntries = interface.addressEntries();
-            for (const auto &addressEntry : addressEntries) {
+            for (const auto& addressEntry : addressEntries) {
                 QHostAddress address = addressEntry.ip();
                 if ((QAbstractSocket::IPv4Protocol == address.protocol()) && !address.isLoopback()) {
                     QString ipAddress = address.toString();
@@ -390,11 +390,11 @@ void VCHub::refreshIPAddresses() {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QVariantList VCHub::extractSceneSteps(const QString &scene) {
+QVariantList VCHub::extractSceneSteps(const QString& scene) {
     QVariantList steps;
 
     // Find the scene in the list and extract its steps.
-    for (const auto &sceneItem : qAsConst(scenes_)) {
+    for (const auto& sceneItem : qAsConst(scenes_)) {
         QVariantMap sceneMap = sceneItem.toMap();
         QString name = sceneMap.value("name").toString();
         if (!name.isEmpty() && (scene == name)) {
@@ -407,7 +407,7 @@ QVariantList VCHub::extractSceneSteps(const QString &scene) {
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QObject *vchub_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine) {
+QObject* vchub_singletontype_provider(QQmlEngine* engine, QJSEngine* scriptEngine) {
     (void)engine;
     (void)scriptEngine;
 

@@ -16,12 +16,12 @@ class VCHue : public VCPlugin {
     // clang-format on
 
  public:
-    explicit VCHue(const QString &name, QObject *parent = nullptr);
+    explicit VCHue(const QString& name, QObject* parent = nullptr);
 
-    const QList<HueDevice *> &devices() const { return devices_; }
+    const QList<HueDevice*>& devices() const { return devices_; }
     int onDevicesCount() const;
-    const QString &bridgeIPAddress() const { return bridgeIPAddress_; }
-    const QString &bridgeUsername() const { return bridgeUsername_; }
+    const QString& bridgeIPAddress() const { return bridgeIPAddress_; }
+    const QString& bridgeUsername() const { return bridgeUsername_; }
 
  signals:
     void devicesChanged();
@@ -33,16 +33,16 @@ class VCHue : public VCPlugin {
  public slots:
     void refresh() override;
     void refreshGroups();
-    void commandDeviceState(int id, const QJsonObject &parameters);
+    void commandDeviceState(int id, const QJsonObject& parameters);
 
  private slots:
-    void handleZeroConfServiceFound(const QString &serviceType, const QString &ipAddress);
-    void handleNetworkReply(int statusCode, QObject *sender, const QJsonDocument &body);
+    void handleZeroConfServiceFound(const QString& serviceType, const QString& ipAddress);
+    void handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body);
     void updateBaseURL();
 
  private:
-    QList<HueDevice *> devices_;
-    QHash<int, HueDevice *> deviceTable_;  // Key: ID, Value: device
+    QList<HueDevice*> devices_;
+    QHash<int, HueDevice*> deviceTable_;  // Key: ID, Value: device
     QString bridgeIPAddress_;
     QString bridgeUsername_;
     QVariantMap mapModel_;

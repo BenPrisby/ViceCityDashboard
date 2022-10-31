@@ -7,27 +7,27 @@
 #include <QString>
 #include <QVariant>
 
-using KeyContext = QPair<QObject *, QString>;  // Object, property name
+using KeyContext = QPair<QObject*, QString>;  // Object, property name
 
 class VCConfig final : public QObject {
     Q_OBJECT
 
  public:
-    static VCConfig *instance();
+    static VCConfig* instance();
 
-    bool load(const QString &path);
+    bool load(const QString& path);
 
  public slots:
     bool save();
 
  private:
-    explicit VCConfig(QObject *parent = nullptr);
+    explicit VCConfig(QObject* parent = nullptr);
 
     QString path_;
     QStringList keys_;
     QMetaMethod saveMethod_;
 
-    KeyContext keyToContext(const QString &key);
+    KeyContext keyToContext(const QString& key);
 
     Q_DISABLE_COPY_MOVE(VCConfig)
 };
