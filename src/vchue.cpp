@@ -8,7 +8,9 @@
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static constexpr const char* HUE_SERVICE_TYPE = "_hue._tcp";
+namespace {
+constexpr const char* HUE_SERVICE_TYPE = "_hue._tcp";
+}  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCHue::VCHue(const QString& name, QObject* parent) : VCPlugin(name, parent) {

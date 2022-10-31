@@ -3,8 +3,10 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static constexpr int MIN_CAPABLE_BRIGHTNESS = 1;
-static constexpr int MAX_CAPABLE_BRIGHTNESS = 254;
+namespace {
+constexpr int MIN_CAPABLE_BRIGHTNESS = 1;
+constexpr int MAX_CAPABLE_BRIGHTNESS = 254;
+}  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 HueLight::HueLight(int id, QObject* parent) : HueDevice(id, parent) {

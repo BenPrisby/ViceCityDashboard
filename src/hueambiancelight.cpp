@@ -5,9 +5,10 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static constexpr int WARMEST_CAPABLE_CT = 500;
-static constexpr int COLDEST_CAPABLE_CT = 153;
-static const QHash<int, QColor> COLOR_TEMPERATURE_MAP = {
+namespace {
+constexpr int WARMEST_CAPABLE_CT = 500;
+constexpr int COLDEST_CAPABLE_CT = 153;
+const QHash<int, QColor> COLOR_TEMPERATURE_MAP = {
     {2000, QColor(240, 219, 131)}, {2100, QColor(241, 221, 137)}, {2200, QColor(242, 222, 142)},
     {2300, QColor(243, 224, 148)}, {2400, QColor(243, 225, 153)}, {2500, QColor(243, 228, 158)},
     {2600, QColor(244, 230, 164)}, {2700, QColor(245, 231, 169)}, {2800, QColor(246, 233, 176)},
@@ -24,6 +25,7 @@ static const QHash<int, QColor> COLOR_TEMPERATURE_MAP = {
     {5900, QColor(215, 243, 250)}, {6000, QColor(213, 243, 250)}, {6100, QColor(210, 242, 250)},
     {6200, QColor(208, 242, 250)}, {6300, QColor(206, 241, 250)}, {6400, QColor(204, 241, 250)},
     {6500, QColor(203, 241, 250)}};
+}  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 HueAmbianceLight::HueAmbianceLight(int id, QObject* parent) : HueLight(id, parent), colorTemperature_(0) {

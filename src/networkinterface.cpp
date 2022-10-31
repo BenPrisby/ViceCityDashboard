@@ -3,10 +3,11 @@
 #include <QCoreApplication>
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static constexpr const char* JSON_CONTENT_TYPE = "application/json";
-/*--------------------------------------------------------------------------------------------------------------------*/
+namespace {
+constexpr const char* JSON_CONTENT_TYPE = "application/json";
 
-static NetworkInterface* instance_ = nullptr;
+NetworkInterface* instance_ = nullptr;
+}  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 NetworkInterface::NetworkInterface(QObject* parent)

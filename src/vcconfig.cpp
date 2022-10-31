@@ -8,7 +8,9 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static VCConfig* instance_ = nullptr;
+namespace {
+VCConfig* instance_ = nullptr;
+}  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCConfig::VCConfig(QObject* parent) : QObject(parent) {
