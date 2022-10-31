@@ -13,16 +13,16 @@ class VCHue : public VCPlugin
     Q_PROPERTY( QList<HueDevice *> devices  READ devices             NOTIFY devicesChanged )
     Q_PROPERTY( int onDevicesCount          READ onDevicesCount      NOTIFY onDevicesCountChanged )
     Q_PROPERTY( QString bridgeIPAddress     READ bridgeIPAddress     NOTIFY bridgeIPAddressChanged )
-    Q_PROPERTY( QString bridgeUsername      MEMBER m_BridgeUsername  NOTIFY bridgeUsernameChanged )
-    Q_PROPERTY( QVariantMap mapModel        MEMBER m_MapModel        NOTIFY mapModelChanged )
+    Q_PROPERTY( QString bridgeUsername      MEMBER bridgeUsername_  NOTIFY bridgeUsernameChanged )
+    Q_PROPERTY( QVariantMap mapModel        MEMBER mapModel_        NOTIFY mapModelChanged )
 
 public:
-    explicit VCHue( const QString & Name, QObject * pParent = nullptr );
+    explicit VCHue( const QString & name, QObject * parent = nullptr );
 
-    const QList<HueDevice *> & devices() const { return m_Devices; }
+    const QList<HueDevice *> & devices() const { return devices_; }
     int onDevicesCount() const;
-    const QString & bridgeIPAddress() const { return m_BridgeIPAddress; }
-    const QString & bridgeUsername() const { return m_BridgeUsername; }
+    const QString & bridgeIPAddress() const { return bridgeIPAddress_; }
+    const QString & bridgeUsername() const { return bridgeUsername_; }
 
 signals:
     void devicesChanged();
@@ -34,22 +34,22 @@ signals:
 public slots:
     void refresh() override;
     void refreshGroups();
-    void commandDeviceState( int iID, const QJsonObject & Parameters );
+    void commandDeviceState( int id, const QJsonObject & parameters );
 
 private slots:
-    void handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
+    void handleZeroConfServiceFound( const QString & serviceType, const QString & ipAddress );
+    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
     void updateBaseURL();
 
 private:
-    QList<HueDevice *> m_Devices;
-    QHash<int, HueDevice *> m_DeviceTable;  // Key: ID, Value: device
-    QString m_BridgeIPAddress;
-    QString m_BridgeUsername;
-    QVariantMap m_MapModel;
+    QList<HueDevice *> devices_;
+    QHash<int, HueDevice *> deviceTable_;  // Key: ID, Value: device
+    QString bridgeIPAddress_;
+    QString bridgeUsername_;
+    QVariantMap mapModel_;
 
-    QUrl m_LightsURL;
-    QUrl m_GroupsURL;
+    QUrl lightsURL_;
+    QUrl groupsURL_;
 
     Q_DISABLE_COPY_MOVE( VCHue )
 };

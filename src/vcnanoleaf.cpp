@@ -9,13 +9,13 @@
 static const QString NANOLEAF_SERVICE_TYPE = "_nanoleafapi._tcp";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCNanoleaf::VCNanoleaf( const QString & Name, QObject * pParent ) :
-    VCPlugin( Name, pParent ),
-    m_bIsOn( false ),
-    m_iCommandedPower( -1 )
+VCNanoleaf::VCNanoleaf( const QString & name, QObject * parent ) :
+    VCPlugin( name, parent ),
+    isOn_( false ),
+    commandedPower_( -1 )
 {
     // Don't start refreshing until the Nanoleaf has been found.
-    m_UpdateTimer.stop();
+    updateTimer_.stop();
     setUpdateInterval( 3 * 1000 );
 
     // Handle network responses.
@@ -36,198 +36,198 @@ VCNanoleaf::VCNanoleaf( const QString & Name, QObject * pParent ) :
 
 void VCNanoleaf::refresh()
 {
-    NetworkInterface::instance()->sendJSONRequest( QUrl( m_BaseURL ), this );
+    NetworkInterface::instance()->sendJSONRequest( QUrl( baseURL_ ), this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCNanoleaf::refreshEffects()
 {
-    QUrl Destination( QString( "%1/effects" ).arg( m_BaseURL ) );
-    QJsonObject Write { { "command", "requestAll" } };
-    QJsonObject Body { { "write", Write } };
+    QUrl destination( QString( "%1/effects" ).arg( baseURL_ ) );
+    QJsonObject write { { "command", "requestAll" } };
+    QJsonObject body { { "write", write } };
 
     // BDP: A put request containing a command to the write endpoint is actually just a query? Really?
-    NetworkInterface::instance()->sendJSONRequest( Destination,
+    NetworkInterface::instance()->sendJSONRequest( destination,
                                                    this,
                                                    QNetworkAccessManager::PutOperation,
-                                                   QJsonDocument( Body ) );
+                                                   QJsonDocument( body ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCNanoleaf::commandPower( const bool bOn )
+void VCNanoleaf::commandPower( const bool on )
 {
-    QJsonObject Command { { "on", QJsonObject { { "value", bOn } } } };
-    QUrl Destination( QString( "%1/state" ).arg( m_BaseURL ) );
+    QJsonObject command { { "on", QJsonObject { { "value", on } } } };
+    QUrl destination( QString( "%1/state" ).arg( baseURL_ ) );
 
     // Assume the command will succeed.
-    m_iCommandedPower = bOn ? 1 : 0;
-    m_bIsOn = bOn;
+    commandedPower_ = on ? 1 : 0;
+    isOn_ = on;
     emit isOnChanged();
 
-    NetworkInterface::instance()->sendJSONRequest( Destination,
+    NetworkInterface::instance()->sendJSONRequest( destination,
                                                    this,
                                                    QNetworkAccessManager::PutOperation,
-                                                   QJsonDocument( Command ) );
+                                                   QJsonDocument( command ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCNanoleaf::selectEffect( const QString & Effect )
+void VCNanoleaf::selectEffect( const QString & effect )
 {
-    QJsonObject Command { { "select", Effect } };
-    QUrl Destination( QString( "%1/effects" ).arg( m_BaseURL ) );
+    QJsonObject command { { "select", effect } };
+    QUrl destination( QString( "%1/effects" ).arg( baseURL_ ) );
 
     // Assume the command will succeed.
-    m_CommandedEffect = Effect;
-    m_SelectedEffect = Effect;
+    commandedEffect_ = effect;
+    selectedEffect_ = effect;
     emit selectedEffectChanged();
 
-    NetworkInterface::instance()->sendJSONRequest( Destination,
+    NetworkInterface::instance()->sendJSONRequest( destination,
                                                    this,
                                                    QNetworkAccessManager::PutOperation,
-                                                   QJsonDocument( Command ) );
+                                                   QJsonDocument( command ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCNanoleaf::handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress )
+void VCNanoleaf::handleZeroConfServiceFound( const QString & serviceType, const QString & ipAddress )
 {
-    if ( m_IPAddress.isEmpty() && ServiceType.startsWith( NANOLEAF_SERVICE_TYPE ) )
+    if ( ipAddress_.isEmpty() && serviceType.startsWith( NANOLEAF_SERVICE_TYPE ) )
     {
-        m_IPAddress = IPAddress;
-        qDebug() << "Nanoleaf found at IP address: " << m_IPAddress;
+        ipAddress_ = ipAddress;
+        qDebug() << "Nanoleaf found at IP address: " << ipAddress_;
         emit ipAddressChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCNanoleaf::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body )
+void VCNanoleaf::handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body )
 {
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
-                if ( ResponseObject.contains( "name" ) )
+                QJsonObject responseObject = body.object();
+                if ( responseObject.contains( "name" ) )
                 {
-                    QString Name = ResponseObject.value( "name" ).toString();
-                    if ( m_Name != Name )
+                    QString name = responseObject.value( "name" ).toString();
+                    if ( name_ != name )
                     {
-                        m_Name = Name;
+                        name_ = name;
                         emit nameChanged();
                     }
                 }
-                if ( ResponseObject.contains( "effects" ) )
+                if ( responseObject.contains( "effects" ) )
                 {
-                    QJsonObject EffectsObject = ResponseObject.value( "effects" ).toObject();
-                    if ( EffectsObject.contains( "select" ) )
+                    QJsonObject effectsObject = responseObject.value( "effects" ).toObject();
+                    if ( effectsObject.contains( "select" ) )
                     {
-                        QString Selected = EffectsObject.value( "select" ).toString();
+                        QString selected = effectsObject.value( "select" ).toString();
 
                         // BDP: Ensure the commanded effect is applied, which seems to possibly take more than one try
                         //      if the Nanoleaf has been sitting idle for a while.
-                        if ( ( !m_CommandedEffect.isEmpty() ) && ( m_CommandedEffect != Selected ) )
+                        if ( !commandedEffect_.isEmpty() && ( commandedEffect_ != selected ) )
                         {
                             // Command the effect again after a short delay.
                             // TODO(BDP): Give up after a certain number of attempts?
-                            QTimer::singleShot( 500, this, [=] { selectEffect( m_CommandedEffect ); } );
+                            QTimer::singleShot( 500, this, [=] { selectEffect( commandedEffect_ ); } );
                         }
                         else
                         {
-                            m_CommandedEffect.clear();
+                            commandedEffect_.clear();
 
-                            if ( m_SelectedEffect != Selected )
+                            if ( selectedEffect_ != selected )
                             {
-                                m_SelectedEffect = Selected;
+                                selectedEffect_ = selected;
                                 emit selectedEffectChanged();
                             }
                         }
                     }
                 }
-                if ( ResponseObject.contains( "state" ) )
+                if ( responseObject.contains( "state" ) )
                 {
-                    QJsonObject StateObject = ResponseObject.value( "state" ).toObject();
-                    if ( StateObject.contains( "on" ) )
+                    QJsonObject stateObject = responseObject.value( "state" ).toObject();
+                    if ( stateObject.contains( "on" ) )
                     {
-                        QJsonObject OnObject = StateObject.value( "on" ).toObject();
-                        if ( OnObject.contains( "value" ) )
+                        QJsonObject onObject = stateObject.value( "on" ).toObject();
+                        if ( onObject.contains( "value" ) )
                         {
-                            bool bOn = OnObject.value( "value" ).toBool();
+                            bool on = onObject.value( "value" ).toBool();
 
                             // BDP: Ensure the commanded power is applied.
-                            if ( ( ( 0 == m_iCommandedPower ) && bOn ) || ( ( 1 == m_iCommandedPower ) && ( !bOn ) ) )
+                            if ( ( ( 0 == commandedPower_ ) && on ) || ( ( 1 == commandedPower_ ) && !on ) )
                             {
                                 // Command again after a short delay.
-                                QTimer::singleShot( 500, this, [=] { commandPower( 1 == m_iCommandedPower ); } );
+                                QTimer::singleShot( 500, this, [=] { commandPower( 1 == commandedPower_ ); } );
                             }
                             else
                             {
-                                m_iCommandedPower = -1;
+                                commandedPower_ = -1;
 
-                                if ( m_bIsOn != bOn )
+                                if ( isOn_ != on )
                                 {
-                                    m_bIsOn = bOn;
+                                    isOn_ = on;
                                     emit isOnChanged();
                                 }
                             }
                         }
                     }
                 }
-                if ( ResponseObject.contains( "animations" ) )
+                if ( responseObject.contains( "animations" ) )
                 {
-                    QVariantList Effects;
-                    const QJsonArray AnimationsArray = ResponseObject.value( "animations" ).toArray();
-                    for ( const auto & Animation : AnimationsArray )
+                    QVariantList effects;
+                    const QJsonArray animationsArray = responseObject.value( "animations" ).toArray();
+                    for ( const auto & animation : animationsArray )
                     {
-                        QJsonObject AnimationObject = Animation.toObject();
-                        if ( !AnimationObject.isEmpty() )
+                        QJsonObject animationObject = animation.toObject();
+                        if ( !animationObject.isEmpty() )
                         {
-                            QVariantMap Effect { { "name", AnimationObject.value( "animName" ).toString() } };
+                            QVariantMap effect { { "name", animationObject.value( "animName" ).toString() } };
 
-                            QStringList Colors;
-                            const QJsonArray PaletteArray = AnimationObject.value( "palette" ).toArray();
-                            for ( const auto & Palette : PaletteArray )
+                            QStringList colors;
+                            const QJsonArray paletteArray = animationObject.value( "palette" ).toArray();
+                            for ( const auto & palette : paletteArray )
                             {
-                                QJsonObject PaletteObject = Palette.toObject();
-                                if ( !PaletteObject.isEmpty() )
+                                QJsonObject paletteObject = palette.toObject();
+                                if ( !paletteObject.isEmpty() )
                                 {
-                                    double dHue = PaletteObject.value( "hue" ).toInt() / 359.0;
-                                    double dSaturation = PaletteObject.value( "saturation" ).toInt() / 100.0;
-                                    double dBrightness = PaletteObject.value( "brightness" ).toInt() / 100.0;
-                                    Colors.append( QColor::fromHsvF( dHue, dSaturation, dBrightness ).name() );
+                                    double hue = paletteObject.value( "hue" ).toInt() / 359.0;
+                                    double saturation = paletteObject.value( "saturation" ).toInt() / 100.0;
+                                    double brightness = paletteObject.value( "brightness" ).toInt() / 100.0;
+                                    colors.append( QColor::fromHsvF( hue, saturation, brightness ).name() );
                                 }
                             }
-                            Effect[ "colors" ] = Colors;
+                            effect[ "colors" ] = colors;
 
-                            const QJsonArray OptionsArray = AnimationObject.value( "pluginOptions" ).toArray();
-                            for ( const auto & Option : OptionsArray )
+                            const QJsonArray optionsArray = animationObject.value( "pluginOptions" ).toArray();
+                            for ( const auto & option : optionsArray )
                             {
-                                QJsonObject OptionObject = Option.toObject();
-                                if ( !OptionObject.isEmpty() )
+                                QJsonObject optionObject = option.toObject();
+                                if ( !optionObject.isEmpty() )
                                 {
-                                    QString OptionName = OptionObject.value( "name" ).toString();
-                                    if ( ( "delayTime" == OptionName ) || ( "transTime" == OptionName ) )
+                                    QString optionName = optionObject.value( "name" ).toString();
+                                    if ( ( "delayTime" == optionName ) || ( "transTime" == optionName ) )
                                     {
                                         // These values are presented in tenths of a second, convert.
-                                        Effect[ OptionName ] = OptionObject.value( "value" ).toInt() / 10.0;
+                                        effect[ optionName ] = optionObject.value( "value" ).toInt() / 10.0;
                                     }
                                 }
                             }
 
-                            Effects.append( Effect );
+                            effects.append( effect );
                         }
                     }
 
-                    if ( !Effects.isEmpty() )
+                    if ( !effects.isEmpty() )
                     {
                         // Sort alphabetically by name.
-                        std::sort( Effects.begin(), Effects.end(), []( const QVariant & Left, const QVariant & Right ) {
-                            return Left.toMap().value( "name" ).toString() < Right.toMap().value( "name" ).toString();
+                        std::sort( effects.begin(), effects.end(), []( const QVariant & left, const QVariant & right ) {
+                            return left.toMap().value( "name" ).toString() < right.toMap().value( "name" ).toString();
                         } );
 
-                        if ( m_Effects != Effects )
+                        if ( effects_ != effects )
                         {
-                            m_Effects = Effects;
+                            effects_ = effects;
                             emit effectsChanged();
                         }
                     }
@@ -238,13 +238,13 @@ void VCNanoleaf::handleNetworkReply( int iStatusCode, QObject * pSender, const Q
                 qDebug() << "Failed to parse response from Nanoleaf";
             }
         }
-        else if ( 204 == iStatusCode )
+        else if ( 204 == statusCode )
         {
             // Successful ACK of effect selection, but no content in the response.
         }
         else
         {
-            qDebug() << "Ignoring unsuccessful reply from Nanoleaf with status code: " << iStatusCode;
+            qDebug() << "Ignoring unsuccessful reply from Nanoleaf with status code: " << statusCode;
         }
     }
     else
@@ -256,12 +256,12 @@ void VCNanoleaf::handleNetworkReply( int iStatusCode, QObject * pSender, const Q
 
 void VCNanoleaf::updateBaseURL()
 {
-    if ( ( !m_IPAddress.isEmpty() ) && ( !m_AuthToken.isEmpty() ) )
+    if ( !ipAddress_.isEmpty() && !authToken_.isEmpty() )
     {
-        m_BaseURL = QString( "http://%1:16021/api/v1/%2" ).arg( m_IPAddress, m_AuthToken );
+        baseURL_ = QString( "http://%1:16021/api/v1/%2" ).arg( ipAddress_, authToken_ );
 
         // With the IP address known, start the update timer and refesh immediately.
-        m_UpdateTimer.start();
+        updateTimer_.start();
         refresh();
         refreshEffects();
     }

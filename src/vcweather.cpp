@@ -6,33 +6,33 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCWeather::VCWeather( const QString & Name, QObject * pParent) :
-    VCPlugin( Name, pParent ),
-    m_dLatitude( qQNaN() ),
-    m_dLongitude( qQNaN() ),
-    m_dCurrentTemperature( qQNaN() ),
-    m_dCurrentFeelsLike( qQNaN() ),
-    m_iCurrentHumidity( 0 ),
-    m_dCurrentWindSpeed( qQNaN() ),
-    m_dHour1Temperature( qQNaN() ),
-    m_dHour2Temperature( qQNaN() ),
-    m_dHour3Temperature( qQNaN() ),
-    m_dHour4Temperature( qQNaN() ),
-    m_dHour5Temperature( qQNaN() ),
-    m_dHour6Temperature( qQNaN() ),
-    m_dDay1TemperatureMin( qQNaN() ),
-    m_dDay1TemperatureMax( qQNaN() ),
-    m_dDay2TemperatureMin( qQNaN() ),
-    m_dDay2TemperatureMax( qQNaN() ),
-    m_dDay3TemperatureMin( qQNaN() ),
-    m_dDay3TemperatureMax( qQNaN() ),
-    m_dDay4TemperatureMin( qQNaN() ),
-    m_dDay4TemperatureMax( qQNaN() ),
-    m_dDay5TemperatureMin( qQNaN() ),
-    m_dDay5TemperatureMax( qQNaN() )
+VCWeather::VCWeather( const QString & name, QObject * parent) :
+    VCPlugin( name, parent ),
+    latitude_( qQNaN() ),
+    longitude_( qQNaN() ),
+    currentTemperature_( qQNaN() ),
+    currentFeelsLike_( qQNaN() ),
+    currentHumidity_( 0 ),
+    currentWindSpeed_( qQNaN() ),
+    hour1Temperature_( qQNaN() ),
+    hour2Temperature_( qQNaN() ),
+    hour3Temperature_( qQNaN() ),
+    hour4Temperature_( qQNaN() ),
+    hour5Temperature_( qQNaN() ),
+    hour6Temperature_( qQNaN() ),
+    day1TemperatureMin_( qQNaN() ),
+    day1TemperatureMax_( qQNaN() ),
+    day2TemperatureMin_( qQNaN() ),
+    day2TemperatureMax_( qQNaN() ),
+    day3TemperatureMin_( qQNaN() ),
+    day3TemperatureMax_( qQNaN() ),
+    day4TemperatureMin_( qQNaN() ),
+    day4TemperatureMax_( qQNaN() ),
+    day5TemperatureMin_( qQNaN() ),
+    day5TemperatureMax_( qQNaN() )
 {
     setUpdateInterval( 5 * 60 * 1000 );
-    m_UpdateTimer.stop();
+    updateTimer_.stop();
 
     // Handle network responses.
     connect( NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCWeather::handleNetworkReply );
@@ -48,138 +48,138 @@ void VCWeather::refresh()
 {
 #ifndef QT_DEBUG
     // BDP: Be mindful of the API rate limits.
-    NetworkInterface::instance()->sendJSONRequest( m_Destination, this );
+    NetworkInterface::instance()->sendJSONRequest( destination_, this );
 #endif
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCWeather::localHour( const QDateTime & DateTime ) const
+QString VCWeather::localHour( const QDateTime & dateTime ) const
 {
-    return DateTime.toString( VCHub::instance()->use24HourClock() ? "hh:00" : "h AP" );
+    return dateTime.toString( VCHub::instance()->use24HourClock() ? "hh:00" : "h AP" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QUrl VCWeather::iconURL( const QString & Key ) const
+QUrl VCWeather::iconURL( const QString & key ) const
 {
-    if ( !Key.isEmpty() )
+    if ( !key.isEmpty() )
     {
         // Use our own variant of the relevant icon.
-        return QUrl( QString( "qrc:/images/weather-%1.svg" ).arg( Key ) );
+        return QUrl( QString( "qrc:/images/weather-%1.svg" ).arg( key ) );
     }
     return QUrl();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCWeather::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body )
+void VCWeather::handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body )
 {
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
-                if ( ResponseObject.contains( "current" ) )
+                QJsonObject responseObject = body.object();
+                if ( responseObject.contains( "current" ) )
                 {
-                    QJsonObject CurrentObject = ResponseObject.value( "current" ).toObject();
-                    if ( CurrentObject.contains( "temp" ) )
+                    QJsonObject currentObject = responseObject.value( "current" ).toObject();
+                    if ( currentObject.contains( "temp" ) )
                     {
-                        double dCurrentTemperature = CurrentObject.value( "temp" ).toDouble();
-                        if ( m_dCurrentTemperature != dCurrentTemperature )
+                        double currentTemperature = currentObject.value( "temp" ).toDouble();
+                        if ( currentTemperature_ != currentTemperature )
                         {
-                            m_dCurrentTemperature = dCurrentTemperature;
+                            currentTemperature_ = currentTemperature;
                             emit currentTemperatureChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "feels_like" ) )
+                    if ( currentObject.contains( "feels_like" ) )
                     {
-                        double dCurrentFeelsLike = CurrentObject.value( "feels_like" ).toDouble();
-                        if ( m_dCurrentFeelsLike != dCurrentFeelsLike )
+                        double currentFeelsLike = currentObject.value( "feels_like" ).toDouble();
+                        if ( currentFeelsLike_ != currentFeelsLike )
                         {
-                            m_dCurrentFeelsLike = dCurrentFeelsLike;
+                            currentFeelsLike_ = currentFeelsLike;
                             emit currentFeelsLikeChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "humidity" ) )
+                    if ( currentObject.contains( "humidity" ) )
                     {
-                        int iCurrentHumidity = CurrentObject.value( "humidity" ).toInt();
-                        if ( m_iCurrentHumidity != iCurrentHumidity )
+                        int currentHumidity = currentObject.value( "humidity" ).toInt();
+                        if ( currentHumidity_ != currentHumidity )
                         {
-                            m_iCurrentHumidity = iCurrentHumidity;
+                            currentHumidity_ = currentHumidity;
                             emit currentHumidityChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "wind_speed" ) )
+                    if ( currentObject.contains( "wind_speed" ) )
                     {
-                        double dCurrentWindSpeed = CurrentObject.value( "wind_speed" ).toDouble();
-                        if ( m_dCurrentWindSpeed != dCurrentWindSpeed )
+                        double currentWindSpeed = currentObject.value( "wind_speed" ).toDouble();
+                        if ( currentWindSpeed_ != currentWindSpeed )
                         {
-                            m_dCurrentWindSpeed = dCurrentWindSpeed;
+                            currentWindSpeed_ = currentWindSpeed;
                             emit currentWindSpeedChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "sunrise" ) )
+                    if ( currentObject.contains( "sunrise" ) )
                     {
-                        QDateTime SunriseTime = QDateTime::fromSecsSinceEpoch( CurrentObject.value( "sunrise" ).toInt() );
-                        if ( m_SunriseTime != SunriseTime )
+                        QDateTime sunriseTime = QDateTime::fromSecsSinceEpoch( currentObject.value( "sunrise" ).toInt() );
+                        if ( sunriseTime_ != sunriseTime )
                         {
-                            m_SunriseTime = SunriseTime;
+                            sunriseTime_ = sunriseTime;
                             emit sunriseTimeChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "sunset" ) )
+                    if ( currentObject.contains( "sunset" ) )
                     {
-                        QDateTime SunsetTime = QDateTime::fromSecsSinceEpoch( CurrentObject.value( "sunset" ).toInt() );
-                        if ( m_SunsetTime != SunsetTime )
+                        QDateTime sunsetTime = QDateTime::fromSecsSinceEpoch( currentObject.value( "sunset" ).toInt() );
+                        if ( sunsetTime_ != sunsetTime )
                         {
-                            m_SunsetTime = SunsetTime;
+                            sunsetTime_ = sunsetTime;
                             emit sunsetTimeChanged();
                         }
                     }
-                    if ( CurrentObject.contains( "weather" ) )
+                    if ( currentObject.contains( "weather" ) )
                     {
                         // Only be concerned with the first value in the array.
-                        QJsonArray CurrentWeatherArray = CurrentObject.value( "weather" ).toArray();
-                        if ( !CurrentWeatherArray.isEmpty() )
+                        QJsonArray currentWeatherArray = currentObject.value( "weather" ).toArray();
+                        if ( !currentWeatherArray.isEmpty() )
                         {
-                            QJsonObject CurrentWeatherObject = CurrentWeatherArray.first().toObject();
-                            if ( CurrentWeatherObject.contains( "main" ) )
+                            QJsonObject currentWeatherObject = currentWeatherArray.first().toObject();
+                            if ( currentWeatherObject.contains( "main" ) )
                             {
-                                QString CurrentCondition = CurrentWeatherObject.value( "main" ).toString();
-                                if ( m_CurrentCondition != CurrentCondition )
+                                QString currentCondition = currentWeatherObject.value( "main" ).toString();
+                                if ( currentCondition_ != currentCondition )
                                 {
-                                    m_CurrentCondition = CurrentCondition;
+                                    currentCondition_ = currentCondition;
                                     emit currentConditionChanged();
                                 }
                             }
-                            if ( CurrentWeatherObject.contains( "icon" ) )
+                            if ( currentWeatherObject.contains( "icon" ) )
                             {
-                                QString CurrentIconKey = CurrentWeatherObject.value( "icon" ).toString();
-                                if ( m_CurrentIconKey != CurrentIconKey )
+                                QString currentIconKey = currentWeatherObject.value( "icon" ).toString();
+                                if ( currentIconKey_ != currentIconKey )
                                 {
-                                    m_CurrentIconKey = CurrentIconKey;
+                                    currentIconKey_ = currentIconKey;
                                     emit currentIconKeyChanged();
                                 }
                             }
                         }
                     }
                 }
-                if ( ResponseObject.contains( "hourly" ) )
+                if ( responseObject.contains( "hourly" ) )
                 {
                     // Only be concerned with the first 6 hours of forecast.
-                    QJsonArray HourlyArray = ResponseObject.value( "hourly" ).toArray();
+                    QJsonArray hourlyArray = responseObject.value( "hourly" ).toArray();
                     for ( int i = 0; i < 6; i++ )
                     {
-                        processHourlyObject( i + 1, HourlyArray.at( i ).toObject() );
+                        processHourlyObject( i + 1, hourlyArray.at( i ).toObject() );
                     }
                 }
-                if ( ResponseObject.contains( "daily" ) )
+                if ( responseObject.contains( "daily" ) )
                 {
                     // Only be concerned with the first 5 days of forecast.
-                    QJsonArray DailyArray = ResponseObject.value( "daily" ).toArray();
+                    QJsonArray dailyArray = responseObject.value( "daily" ).toArray();
                     for ( int i = 0; i < 5; i++ )
                     {
-                        processDailyObject( i + 1, DailyArray.at( i ).toObject() );
+                        processDailyObject( i + 1, dailyArray.at( i ).toObject() );
                     }
                 }
             }
@@ -190,7 +190,7 @@ void VCWeather::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
         }
         else
         {
-            qDebug() << "Ignoring unsuccessful reply from weather server with status code: " << iStatusCode;
+            qDebug() << "Ignoring unsuccessful reply from weather server with status code: " << statusCode;
         }
     }
 }
@@ -198,85 +198,85 @@ void VCWeather::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
 
 void VCWeather::updateDestinationURL()
 {
-    if ( ( !m_APIKey.isEmpty() ) && ( !qIsNaN( m_dLatitude ) ) && ( !qIsNaN( m_dLongitude ) ) )
+    if ( !apiKey_.isEmpty() && !qIsNaN( latitude_ ) && !qIsNaN( longitude_ ) )
     {
-        m_Destination = QUrl( QString( "https://api.openweathermap.org/data/2.5/"
+        destination_ = QUrl( QString( "https://api.openweathermap.org/data/2.5/"
                                        "onecall?lat=%1&lon=%2&appid=%3&units=imperial&exclude=minutely" )
-                                  .arg( m_dLatitude )
-                                  .arg( m_dLongitude )
-                                  .arg( m_APIKey ) );
+                                  .arg( latitude_ )
+                                  .arg( longitude_ )
+                                  .arg( apiKey_ ) );
 
         // With everything needed to make requests collected, start the update timer and refesh immediately.
-        m_UpdateTimer.start();
+        updateTimer_.start();
         refresh();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCWeather::processHourlyObject( const int iIndex, const QJsonObject & Data )
+void VCWeather::processHourlyObject( const int index, const QJsonObject & data )
 {
     // Since the properties are named predictably, set them generically instead of being exhaustive and repetitive.
-    if ( Data.contains( "dt" ) )
+    if ( data.contains( "dt" ) )
     {
-        QDateTime Time = QDateTime::fromSecsSinceEpoch( Data.value( "dt" ).toInt() );
-        QString PropertyName = QString( "hour%1Time" ).arg( iIndex );
-        setProperty( PropertyName.toStdString().c_str(), Time );
+        QDateTime time = QDateTime::fromSecsSinceEpoch( data.value( "dt" ).toInt() );
+        QString propertyName = QString( "hour%1Time" ).arg( index );
+        setProperty( propertyName.toStdString().c_str(), time );
     }
-    if ( Data.contains( "temp" ) )
+    if ( data.contains( "temp" ) )
     {
-        QString PropertyName = QString( "hour%1Temperature" ).arg( iIndex );
-        setProperty( PropertyName.toStdString().c_str(), Data.value( "temp" ).toDouble() );
+        QString propertyName = QString( "hour%1Temperature" ).arg( index );
+        setProperty( propertyName.toStdString().c_str(), data.value( "temp" ).toDouble() );
     }
-    if ( Data.contains( "weather" ) )
+    if ( data.contains( "weather" ) )
     {
-        QJsonArray WeatherArray = Data.value( "weather" ).toArray();
-        if ( !WeatherArray.isEmpty() )
+        QJsonArray weatherArray = data.value( "weather" ).toArray();
+        if ( !weatherArray.isEmpty() )
         {
-            QJsonObject WeatherObject = WeatherArray.first().toObject();
-            if ( WeatherObject.contains( "icon" ) )
+            QJsonObject weatherObject = weatherArray.first().toObject();
+            if ( weatherObject.contains( "icon" ) )
             {
-                QString PropertyName = QString( "hour%1IconKey" ).arg( iIndex );
-                setProperty( PropertyName.toStdString().c_str(), WeatherObject.value( "icon" ).toString() );
+                QString propertyName = QString( "hour%1IconKey" ).arg( index );
+                setProperty( propertyName.toStdString().c_str(), weatherObject.value( "icon" ).toString() );
             }
         }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCWeather::processDailyObject( const int iIndex, const QJsonObject & Data )
+void VCWeather::processDailyObject( const int index, const QJsonObject & data )
 {
     // Same rationale as the hourly object processing.
-    if ( Data.contains( "dt" ) )
+    if ( data.contains( "dt" ) )
     {
-        QDateTime Time = QDateTime::fromSecsSinceEpoch( Data.value( "dt" ).toInt() );
-        QString PropertyName = QString( "day%1Time" ).arg( iIndex );
-        setProperty( PropertyName.toStdString().c_str(), Time );
+        QDateTime time = QDateTime::fromSecsSinceEpoch( data.value( "dt" ).toInt() );
+        QString propertyName = QString( "day%1Time" ).arg( index );
+        setProperty( propertyName.toStdString().c_str(), time );
     }
-    if ( Data.contains( "temp" ) )
+    if ( data.contains( "temp" ) )
     {
-        QJsonObject TempObject = Data.value( "temp" ).toObject();
-        QString BasePropertyName = QString( "day%1Temperature" ).arg( iIndex );
-        if ( TempObject.contains( "min" ) )
+        QJsonObject tempObject = data.value( "temp" ).toObject();
+        QString basePropertyName = QString( "day%1Temperature" ).arg( index );
+        if ( tempObject.contains( "min" ) )
         {
-            setProperty( QString( "%1Min" ).arg( BasePropertyName ).toStdString().c_str(),
-                         TempObject.value( "min" ).toDouble() );
+            setProperty( QString( "%1Min" ).arg( basePropertyName ).toStdString().c_str(),
+                         tempObject.value( "min" ).toDouble() );
         }
-        if ( TempObject.contains( "max" ) )
+        if ( tempObject.contains( "max" ) )
         {
-            setProperty( QString( "%1Max" ).arg( BasePropertyName ).toStdString().c_str(),
-                         TempObject.value( "max" ).toDouble() );
+            setProperty( QString( "%1Max" ).arg( basePropertyName ).toStdString().c_str(),
+                         tempObject.value( "max" ).toDouble() );
         }
     }
-    if ( Data.contains( "weather" ) )
+    if ( data.contains( "weather" ) )
     {
-        QJsonArray WeatherArray = Data.value( "weather" ).toArray();
-        if ( !WeatherArray.isEmpty() )
+        QJsonArray weatherArray = data.value( "weather" ).toArray();
+        if ( !weatherArray.isEmpty() )
         {
-            QJsonObject WeatherObject = WeatherArray.first().toObject();
-            if ( WeatherObject.contains( "icon" ) )
+            QJsonObject weatherObject = weatherArray.first().toObject();
+            if ( weatherObject.contains( "icon" ) )
             {
-                QString PropertyName = QString( "day%1IconKey" ).arg( iIndex );
-                setProperty( PropertyName.toStdString().c_str(), WeatherObject.value( "icon" ).toString() );
+                QString propertyName = QString( "day%1IconKey" ).arg( index );
+                setProperty( propertyName.toStdString().c_str(), weatherObject.value( "icon" ).toString() );
             }
         }
     }

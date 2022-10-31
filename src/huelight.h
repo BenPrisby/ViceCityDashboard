@@ -9,20 +9,20 @@ class HueLight : public HueDevice
     Q_PROPERTY( double brightness  READ brightness  NOTIFY brightnessChanged )
 
 public:
-    explicit HueLight( int iID, QObject * pParent = nullptr );
+    explicit HueLight( int id, QObject * parent = nullptr );
 
-    double brightness() const { return m_dBrightness; }
+    double brightness() const { return brightness_; }
 
 signals:
     void brightnessChanged();
 
 public slots:
-    void commandBrightness( double dBrightness );
+    void commandBrightness( double brightness );
 
 protected:
-    double m_dBrightness;
+    double brightness_;
 
-    void handleStateData( const QJsonObject & State ) override;
+    void handleStateData( const QJsonObject & state ) override;
 
 private:
     Q_DISABLE_COPY_MOVE( HueLight )

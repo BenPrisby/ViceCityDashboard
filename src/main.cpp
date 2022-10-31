@@ -21,28 +21,28 @@ int main( int argc, char * argv[] )
     QCoreApplication::setAttribute( Qt::AA_EnableHighDpiScaling );
 
     // Create the application context.
-    QApplication App( argc, argv );
-    App.setObjectName( "app" );
+    QApplication app( argc, argv );
+    app.setObjectName( "app" );
 
     // Register command line options.
-    QCommandLineParser Parser;
-    Parser.setApplicationDescription( "Smart home integration dashboard for Vice City" );
-    Parser.addHelpOption();
-    Parser.addVersionOption();
-    Parser.addOption( { { "c", "config" }, "Load configuration from <file>.", "file" } );
+    QCommandLineParser parser;
+    parser.setApplicationDescription( "Smart home integration dashboard for Vice City" );
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addOption( { { "c", "config" }, "Load configuration from <file>.", "file" } );
 
     // Process the command line options.
-    Parser.process( App );
+    parser.process( app );
 
     // Ensure a config file was specified.
-    if ( !Parser.isSet( "config" ) )
+    if ( !parser.isSet( "config" ) )
     {
         qWarning() << "No configuration file specified\n";
-        Parser.showHelp( 1 );
+        parser.showHelp( 1 );
     }
 
     // Load the specified config file.
-    if ( !VCHub::instance()->loadConfig( Parser.value( "config" ) ) )
+    if ( !VCHub::instance()->loadConfig( parser.value( "config" ) ) )
     {
         return 2;
     }
@@ -55,18 +55,18 @@ int main( int argc, char * argv[] )
     // Register the central C++ type that should be exposed to QML.
     qmlRegisterSingletonType<VCHub>( "com.benprisby.vc.vchub", 1, 0, "VCHub", vchub_singletontype_provider );
     QQmlEngine::setObjectOwnership( VCHub::instance(), QQmlEngine::CppOwnership );
-    VCHub::instance()->setParent( &App );
+    VCHub::instance()->setParent( &app );
 
     // Create the QML context.
-    QQmlApplicationEngine Engine( &App );
-    Engine.addImportPath( "qrc:/" );
-    Engine.addImportPath( "qrc:/keyboard/style" );
-    Engine.load( "qrc:/main.qml" );
-    if ( Engine.rootObjects().isEmpty() )
+    QQmlApplicationEngine engine( &app );
+    engine.addImportPath( "qrc:/" );
+    engine.addImportPath( "qrc:/keyboard/style" );
+    engine.load( "qrc:/main.qml" );
+    if ( engine.rootObjects().isEmpty() )
     {
         return 3;
     }
 
-    return App.exec();
+    return app.exec();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

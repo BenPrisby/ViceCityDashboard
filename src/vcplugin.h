@@ -11,13 +11,13 @@ class VCPlugin : public QObject
     Q_PROPERTY( bool isActive         READ isActive        WRITE setActive           NOTIFY isActiveChanged )
 
 public:
-    explicit VCPlugin( const QString & Name, QObject * pParent = nullptr );
+    explicit VCPlugin( const QString & name, QObject * parent = nullptr );
 
-    const QString & pluginName() const { return m_PluginName; }
-    int updateInterval() const { return m_iUpdateInterval; }
-    void setUpdateInterval( int iValue );
-    bool isActive() const { return m_bIsActive; }
-    void setActive( bool bValue );
+    const QString & pluginName() const { return pluginName_; }
+    int updateInterval() const { return updateInterval_; }
+    void setUpdateInterval( int value );
+    bool isActive() const { return isActive_; }
+    void setActive( bool value );
 
 signals:
     void updateIntervalChanged();
@@ -27,10 +27,10 @@ public slots:
     virtual void refresh() = 0;
 
 protected:
-    QString m_PluginName;
-    int m_iUpdateInterval;
-    QTimer m_UpdateTimer;
-    bool m_bIsActive;
+    QString pluginName_;
+    int updateInterval_;
+    QTimer updateTimer_;
+    bool isActive_;
 
     Q_DISABLE_COPY_MOVE( VCPlugin )
 };

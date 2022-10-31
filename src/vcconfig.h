@@ -13,19 +13,19 @@ class VCConfig final : public QObject
 public:
     static VCConfig * instance();
 
-    bool load( const QString & Path );
+    bool load( const QString & path );
 
 public slots:
     bool save();
 
 private:
-    explicit VCConfig( QObject * pParent = nullptr );
+    explicit VCConfig( QObject * parent = nullptr );
 
-    QString m_Path;
-    QStringList m_Keys;
-    QMetaMethod m_SaveMethod;
+    QString path_;
+    QStringList keys_;
+    QMetaMethod saveMethod_;
 
-    KeyContext keyToContext( const QString & Key );
+    KeyContext keyToContext( const QString & key );
 
     Q_DISABLE_COPY_MOVE( VCConfig )
 };

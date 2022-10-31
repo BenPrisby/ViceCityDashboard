@@ -28,38 +28,38 @@ class VCSpotify final : public VCPlugin
     Q_PROPERTY( QString deviceType          READ deviceType                                  NOTIFY deviceTypeChanged )
     Q_PROPERTY( int deviceVolume            READ deviceVolume                                NOTIFY deviceVolumeChanged )
     Q_PROPERTY( QVariantList devices        READ devices                                     NOTIFY devicesChanged )
-    Q_PROPERTY( QString preferredDevice     READ preferredDevice   MEMBER m_PreferredDevice  NOTIFY preferredDeviceChanged )
+    Q_PROPERTY( QString preferredDevice     READ preferredDevice   MEMBER preferredDevice_  NOTIFY preferredDeviceChanged )
     Q_PROPERTY( QVariantList searchResults  READ searchResults                               NOTIFY searchResultsChanged )
-    Q_PROPERTY( QString clientID            MEMBER m_ClientID                                NOTIFY clientIDChanged )
-    Q_PROPERTY( QString clientSecret        MEMBER m_ClientSecret                            NOTIFY clientSecretChanged )
-    Q_PROPERTY( QString refreshToken        MEMBER m_RefreshToken                            NOTIFY refreshTokenChanged )
+    Q_PROPERTY( QString clientID            MEMBER clientID_                                NOTIFY clientIDChanged )
+    Q_PROPERTY( QString clientSecret        MEMBER clientSecret_                            NOTIFY clientSecretChanged )
+    Q_PROPERTY( QString refreshToken        MEMBER refreshToken_                            NOTIFY refreshTokenChanged )
 
 public:
-    explicit VCSpotify( const QString & Name, QObject * pParent = nullptr );
+    explicit VCSpotify( const QString & name, QObject * parent = nullptr );
 
-    const QString & userName() const { return m_UserName; }
-    const QString & userEmail() const { return m_UserEmail; }
-    const QString & userSubscription() const { return m_UserSubscription; }
-    const QUrl & userImage() const { return m_UserImage; }
-    bool isActive() const { return m_bIsActive; }
-    bool isPlaying() const { return m_bIsPlaying; }
-    bool shuffleEnabled() const { return m_bShuffleEnabled; }
-    bool repeatOneEnabled() const { return m_bRepeatOneEnabled; }
-    bool repeatAllEnabled() const { return m_bRepeatAllEnabled; }
-    const QString & trackName() const { return m_TrackName; }
-    const QString & trackArtist() const { return m_TrackArtist; }
-    const QString & trackAlbum() const { return m_TrackAlbum; }
-    const QUrl & trackAlbumArt() const { return m_TrackAlbumArt; }
-    int trackPosition() const { return m_iTrackPosition; }
-    int trackDuration() const { return m_iTrackDuration; }
-    const QString & playlistName() const { return m_PlaylistName; }
-    const QVariantList & playlists() const { return m_Playlists; }
-    const QString & deviceName() const { return m_DeviceName; }
-    const QString & deviceType() const { return m_DeviceType; }
-    const QVariantList & devices() const { return m_Devices; }
-    const QString & preferredDevice() const { return m_PreferredDevice; }
-    const QVariantList & searchResults() const { return m_SearchResults; }
-    int deviceVolume() const { return m_iDeviceVolume; }
+    const QString & userName() const { return userName_; }
+    const QString & userEmail() const { return userEmail_; }
+    const QString & userSubscription() const { return userSubscription_; }
+    const QUrl & userImage() const { return userImage_; }
+    bool isActive() const { return isActive_; }
+    bool isPlaying() const { return isPlaying_; }
+    bool shuffleEnabled() const { return shuffleEnabled_; }
+    bool repeatOneEnabled() const { return repeatOneEnabled_; }
+    bool repeatAllEnabled() const { return repeatAllEnabled_; }
+    const QString & trackName() const { return trackName_; }
+    const QString & trackArtist() const { return trackArtist_; }
+    const QString & trackAlbum() const { return trackAlbum_; }
+    const QUrl & trackAlbumArt() const { return trackAlbumArt_; }
+    int trackPosition() const { return trackPosition_; }
+    int trackDuration() const { return trackDuration_; }
+    const QString & playlistName() const { return playlistName_; }
+    const QVariantList & playlists() const { return playlists_; }
+    const QString & deviceName() const { return deviceName_; }
+    const QString & deviceType() const { return deviceType_; }
+    const QVariantList & devices() const { return devices_; }
+    const QString & preferredDevice() const { return preferredDevice_; }
+    const QVariantList & searchResults() const { return searchResults_; }
+    int deviceVolume() const { return deviceVolume_; }
 
 signals:
     void userNameChanged();
@@ -95,64 +95,64 @@ public slots:
     void refreshUserProfile();
     void refreshPlaylists();
 
-    void play( const QString & URI = QString() );
+    void play( const QString & uri = QString() );
     void pause();
     void previous();
     void next();
-    void seek( int iPosition );
-    void enableShuffle( bool bValue );
-    void enableRepeat( bool bValue, bool bAll = true );
-    void commandDeviceVolume( int iValue );
-    void search( const QString & Query );
-    void queue( const QString & URI );
-    void transfer( const QString & DeviceID );
+    void seek( int position );
+    void enableShuffle( bool value );
+    void enableRepeat( bool value, bool all = true );
+    void commandDeviceVolume( int value );
+    void search( const QString & query );
+    void queue( const QString & uri );
+    void transfer( const QString & deviceID );
 
-    QString formatDuration( int iValue );
+    QString formatDuration( int value );
 
 private slots:
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
+    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
     void refreshAccessToken();
 
 private:
-    QString m_UserName;
-    QString m_UserEmail;
-    QString m_UserSubscription;
-    QUrl m_UserImage;
-    bool m_bIsActive;
-    bool m_bIsPlaying;
-    bool m_bShuffleEnabled;
-    bool m_bRepeatOneEnabled;
-    bool m_bRepeatAllEnabled;
-    QString m_TrackName;
-    QString m_TrackArtist;
-    QString m_TrackAlbum;
-    QUrl m_TrackAlbumArt;
-    int m_iTrackPosition;
-    int m_iTrackDuration;
-    QString m_PlaylistName;
-    QVariantList m_Playlists;
-    QString m_DeviceName;
-    QString m_DeviceType;
-    int m_iDeviceVolume;
-    QVariantList m_Devices;
-    QString m_PreferredDevice;
-    QString m_PreferredDeviceID;
-    QVariantList m_SearchResults;
-    QString m_ClientID;
-    QString m_ClientSecret;
-    QString m_RefreshToken;
-    QString m_AccessToken;
-    QString m_AccessTokenType;
+    QString userName_;
+    QString userEmail_;
+    QString userSubscription_;
+    QUrl userImage_;
+    bool isActive_;
+    bool isPlaying_;
+    bool shuffleEnabled_;
+    bool repeatOneEnabled_;
+    bool repeatAllEnabled_;
+    QString trackName_;
+    QString trackArtist_;
+    QString trackAlbum_;
+    QUrl trackAlbumArt_;
+    int trackPosition_;
+    int trackDuration_;
+    QString playlistName_;
+    QVariantList playlists_;
+    QString deviceName_;
+    QString deviceType_;
+    int deviceVolume_;
+    QVariantList devices_;
+    QString preferredDevice_;
+    QString preferredDeviceID_;
+    QVariantList searchResults_;
+    QString clientID_;
+    QString clientSecret_;
+    QString refreshToken_;
+    QString accessToken_;
+    QString accessTokenType_;
 
-    QString m_Market;
-    QByteArray m_AccessTokenAuthorization;
-    QTimer m_AccessTokenRefreshTimer;
-    QTimer m_InactivityTimer;
-    QTimer m_ActionSubmissionTimer;
+    QString market_;
+    QByteArray accessTokenAuthorization_;
+    QTimer accessTokenRefreshTimer_;
+    QTimer inactivityTimer_;
+    QTimer actionSubmissionTimer_;
 
-    void sendRequest( const QUrl & Destination,
-                      QNetworkAccessManager::Operation eRequestType = QNetworkAccessManager::GetOperation,
-                      const QJsonDocument & Body = QJsonDocument() );
+    void sendRequest( const QUrl & destination,
+                      QNetworkAccessManager::Operation requestType = QNetworkAccessManager::GetOperation,
+                      const QJsonDocument & body = QJsonDocument() );
 
     Q_DISABLE_COPY_MOVE( VCSpotify )
 };

@@ -6,48 +6,48 @@ static constexpr int MIN_CAPABLE_BRIGHTNESS = 1;
 static constexpr int MAX_CAPABLE_BRIGHTNESS = 254;
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-HueLight::HueLight( int iID, QObject * pParent ) : HueDevice( iID, pParent )
+HueLight::HueLight( int id, QObject * parent ) : HueDevice( id, parent )
 {
     // Nothing else to do.
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueLight::commandBrightness( const double dBrightness )
+void HueLight::commandBrightness( const double brightness )
 {
-    if ( ( !qIsNaN( dBrightness ) ) && ( 0.0 <= dBrightness ) && ( 100.0 >= dBrightness ) )
+    if ( !qIsNaN( brightness ) && ( 0.0 <= brightness ) && ( 100.0 >= brightness ) )
     {
         // If the light is not on, turn it on or else the command will fail.
-        if ( !m_bIsOn )
+        if ( !isOn_ )
         {
             commandPower( true );
         }
 
         // Scale from a percentage into the capable range of the light.
-        int iBrightness = qRound( ( ( dBrightness / 100.0 ) * ( MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS ) )
+        int scaledBrightness = qRound( ( ( brightness / 100.0 ) * ( MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS ) )
                                   + MIN_CAPABLE_BRIGHTNESS );
-        VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "bri", iBrightness } } );
+        VCHub::instance()->hue()->commandDeviceState( id_, QJsonObject { { "bri", scaledBrightness } } );
     }
     else
     {
-        qDebug() << "Ignoring request to set invalid brightness for light with ID: " << m_iID;
+        qDebug() << "Ignoring request to set invalid brightness for light with ID: " << id_;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueLight::handleStateData( const QJsonObject & State )
+void HueLight::handleStateData( const QJsonObject & state )
 {
     // Call the parent.
-    HueDevice::handleStateData( State );
+    HueDevice::handleStateData( state );
 
-    if ( State.contains( "bri" ) )
+    if ( state.contains( "bri" ) )
     {
         // Present the brightness as a percentage.
-        double dBrightness = ( ( State.value( "bri" ).toDouble() - MIN_CAPABLE_BRIGHTNESS )
+        double brightness = ( ( state.value( "bri" ).toDouble() - MIN_CAPABLE_BRIGHTNESS )
                                / ( MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS ) )
                              * 100.0;
-        if ( m_dBrightness != dBrightness )
+        if ( brightness_ != brightness )
         {
-            m_dBrightness = dBrightness;
+            brightness_ = brightness;
             emit brightnessChanged();
         }
     }

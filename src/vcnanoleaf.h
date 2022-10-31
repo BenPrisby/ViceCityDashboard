@@ -13,17 +13,17 @@ class VCNanoleaf final : public VCPlugin
     Q_PROPERTY( QVariantList effects    READ effects         NOTIFY effectsChanged )
     Q_PROPERTY( QString selectedEffect  READ selectedEffect  NOTIFY selectedEffectChanged )
     Q_PROPERTY( QString ipAddress       READ ipAddress       NOTIFY ipAddressChanged )
-    Q_PROPERTY( QString authToken       MEMBER m_AuthToken   NOTIFY authTokenChanged )
-    Q_PROPERTY( QVariantList mapPoint   MEMBER m_MapPoint    NOTIFY mapPointChanged )
+    Q_PROPERTY( QString authToken       MEMBER authToken_   NOTIFY authTokenChanged )
+    Q_PROPERTY( QVariantList mapPoint   MEMBER mapPoint_    NOTIFY mapPointChanged )
 
 public:
-    explicit VCNanoleaf( const QString & Name, QObject * pParent = nullptr );
+    explicit VCNanoleaf( const QString & name, QObject * parent = nullptr );
 
-    const QString & name() const { return m_Name; }
-    bool isOn() const { return m_bIsOn; }
-    const QVariantList & effects() const { return m_Effects; }
-    const QString & selectedEffect() const { return m_SelectedEffect; }
-    const QString & ipAddress() const { return m_IPAddress; }
+    const QString & name() const { return name_; }
+    bool isOn() const { return isOn_; }
+    const QVariantList & effects() const { return effects_; }
+    const QString & selectedEffect() const { return selectedEffect_; }
+    const QString & ipAddress() const { return ipAddress_; }
 
 signals:
     void nameChanged();
@@ -37,26 +37,26 @@ signals:
 public slots:
     void refresh() override;
     void refreshEffects();
-    void commandPower( bool bOn );
-    void selectEffect( const QString & Effect );
+    void commandPower( bool on );
+    void selectEffect( const QString & effect );
 
 private slots:
-    void handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
+    void handleZeroConfServiceFound( const QString & serviceType, const QString & ipAddress );
+    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
     void updateBaseURL();
 
 private:
-    QString m_Name;
-    bool m_bIsOn;
-    int m_iCommandedPower;
-    QVariantList m_Effects;
-    QString m_SelectedEffect;
-    QString m_CommandedEffect;
-    QString m_IPAddress;
-    QString m_AuthToken;
-    QVariantList m_MapPoint;
+    QString name_;
+    bool isOn_;
+    int commandedPower_;
+    QVariantList effects_;
+    QString selectedEffect_;
+    QString commandedEffect_;
+    QString ipAddress_;
+    QString authToken_;
+    QVariantList mapPoint_;
 
-    QString m_BaseURL;
+    QString baseURL_;
 
     Q_DISABLE_COPY_MOVE( VCNanoleaf )
 };

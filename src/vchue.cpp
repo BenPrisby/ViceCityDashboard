@@ -7,11 +7,11 @@
 static const QString HUE_SERVICE_TYPE = "_hue._tcp";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCHue::VCHue( const QString & Name, QObject * pParent ) :
-    VCPlugin( Name, pParent )
+VCHue::VCHue( const QString & name, QObject * parent ) :
+    VCPlugin( name, parent )
 {
     // Don't start refreshing until the Bridge has been found.
-    m_UpdateTimer.stop();
+    updateTimer_.stop();
     setUpdateInterval( 1000 );
 
     // Handle network responses.
@@ -32,154 +32,154 @@ VCHue::VCHue( const QString & Name, QObject * pParent ) :
 
 int VCHue::onDevicesCount() const
 {
-     int iCount = 0;
+     int count = 0;
 
-     for ( const HueDevice * pDevice : qAsConst( m_Devices ) )
+     for ( const HueDevice * device : qAsConst( devices_ ) )
      {
-         if ( pDevice->isOn() )
+         if ( device->isOn() )
          {
-             iCount++;
+             count++;
          }
      }
 
-     return iCount;
+     return count;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCHue::refresh()
 {
-    NetworkInterface::instance()->sendJSONRequest( m_LightsURL, this );
+    NetworkInterface::instance()->sendJSONRequest( lightsURL_, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCHue::refreshGroups()
 {
-    NetworkInterface::instance()->sendJSONRequest( m_GroupsURL, this );
+    NetworkInterface::instance()->sendJSONRequest( groupsURL_, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::commandDeviceState( const int iID, const QJsonObject & Parameters )
+void VCHue::commandDeviceState( const int id, const QJsonObject & parameters )
 {
-    HueDevice * pDevice = m_DeviceTable.value( iID, nullptr );
-    if ( nullptr != pDevice )
+    HueDevice * device = deviceTable_.value( id, nullptr );
+    if ( nullptr != device )
     {
-        QUrl URL( QString( "%1/%2/state" ).arg( m_LightsURL.toString() ).arg( iID ) );
-        NetworkInterface::instance()->sendJSONRequest( URL,
-                                                       pDevice,
+        QUrl url( QString( "%1/%2/state" ).arg( lightsURL_.toString() ).arg( id ) );
+        NetworkInterface::instance()->sendJSONRequest( url,
+                                                       device,
                                                        QNetworkAccessManager::PutOperation,
-                                                       QJsonDocument( Parameters ) );
+                                                       QJsonDocument( parameters ) );
     }
     else
     {
-        qDebug() << "Ignoring request to command state of unknown device: " << iID;
+        qDebug() << "Ignoring request to command state of unknown device: " << id;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::handleZeroConfServiceFound( const QString & ServiceType, const QString & IPAddress )
+void VCHue::handleZeroConfServiceFound( const QString & serviceType, const QString & ipAddress )
 {
-    if ( m_BridgeIPAddress.isEmpty() && ServiceType.startsWith( HUE_SERVICE_TYPE ) )
+    if ( bridgeIPAddress_.isEmpty() && serviceType.startsWith( HUE_SERVICE_TYPE ) )
     {
-        m_BridgeIPAddress = IPAddress;
-        qDebug() << "Hue Bridge found at IP address: " << m_BridgeIPAddress;
+        bridgeIPAddress_ = ipAddress;
+        qDebug() << "Hue Bridge found at IP address: " << bridgeIPAddress_;
         emit bridgeIPAddressChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static bool sortDevice( const HueDevice * const pLeft, const HueDevice * const pRight )
+static bool sortDevice( const HueDevice * const left, const HueDevice * const right )
 {
-    if ( nullptr == pLeft )
+    if ( nullptr == left )
     {
         return false;
     }
-    if ( nullptr == pRight )
+    if ( nullptr == right )
     {
         return true;
     }
-    return pLeft->id() < pRight->id();
+    return left->id() < right->id();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHue::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body )
+void VCHue::handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body )
 {
     // Check if this is for us or should be dispatched to a device.
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
             // Query response for all light information.
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
-                const QStringList Keys = ResponseObject.keys();
-                for ( const auto & Key : Keys )
+                QJsonObject responseObject = body.object();
+                const QStringList keys = responseObject.keys();
+                for ( const auto & key : keys )
                 {
-                    bool bOk = false;
-                    int iID = Key.toInt( &bOk );
-                    if ( bOk )
+                    bool ok = false;
+                    int id = key.toInt( &ok );
+                    if ( ok )
                     {
-                        QJsonObject ItemObject = ResponseObject.value( Key ).toObject();
-                        if ( !ItemObject.isEmpty() )
+                        QJsonObject itemObject = responseObject.value( key ).toObject();
+                        if ( !itemObject.isEmpty() )
                         {
                             // Is this device information?
-                            if ( !ItemObject.contains( "lights" ) )
+                            if ( !itemObject.contains( "lights" ) )
                             {
                                 // Device information, is there already a record of this device?
-                                HueDevice * pDevice = m_DeviceTable.value( iID, nullptr );
-                                if ( nullptr == pDevice )
+                                HueDevice * device = deviceTable_.value( id, nullptr );
+                                if ( nullptr == device )
                                 {
                                     // Inspect the device type to determine the correct object type.
-                                    QString Type = ItemObject.value( "type" ).toString().toLower();
-                                    if ( "dimmable light" == Type )
+                                    QString type = itemObject.value( "type" ).toString().toLower();
+                                    if ( "dimmable light" == type )
                                     {
-                                        pDevice = new HueLight( iID, this );
+                                        device = new HueLight( id, this );
                                     }
-                                    else if ( "color temperature light" == Type )
+                                    else if ( "color temperature light" == type )
                                     {
-                                        pDevice = new HueAmbianceLight( iID, this );
+                                        device = new HueAmbianceLight( id, this );
                                     }
-                                    else if ( Type.endsWith( "color light" ) )
+                                    else if ( type.endsWith( "color light" ) )
                                     {
-                                        pDevice = new HueColorLight( iID, this );
+                                        device = new HueColorLight( id, this );
                                     }
                                     else
                                     {
-                                        pDevice = new HueDevice( iID, this );
+                                        device = new HueDevice( id, this );
                                     }
 
                                     // Update the number of devices powered on when it changes.
-                                    connect( pDevice, &HueDevice::isOnChanged, this, &VCHue::onDevicesCountChanged );
+                                    connect( device, &HueDevice::isOnChanged, this, &VCHue::onDevicesCountChanged );
 
                                     // Record the device.
-                                    m_DeviceTable.insert( iID, pDevice );
-                                    m_Devices.append( pDevice );
-                                    std::sort( m_Devices.begin(), m_Devices.end(), sortDevice );
+                                    deviceTable_.insert( id, device );
+                                    devices_.append( device );
+                                    std::sort( devices_.begin(), devices_.end(), sortDevice );
                                     emit devicesChanged();
                                 }
 
                                 // Dispatch device and state information to the device.
-                                pDevice->handleResponse( QJsonDocument( ItemObject ) );
+                                device->handleResponse( QJsonDocument( itemObject ) );
                             }
                             else
                             {
                                 // Group information.
-                                QString Name = ItemObject.value( "name" ).toString();
-                                QString Type = ItemObject.value( "type" ).toString();
-                                if ( ( !Name.isEmpty() ) && ( "room" == Type.toLower() ) )
+                                QString name = itemObject.value( "name" ).toString();
+                                QString type = itemObject.value( "type" ).toString();
+                                if ( !name.isEmpty() && ( "room" == type.toLower() ) )
                                 {
-                                    const QJsonArray Lights = ItemObject.value( "lights" ).toArray();
-                                    for ( const auto & Light : Lights )
+                                    const QJsonArray lights = itemObject.value( "lights" ).toArray();
+                                    for ( const auto & light : lights )
                                     {
-                                        bool bOk = false;
-                                        int iLightID = Light.toString().toInt( &bOk );
-                                        if ( bOk )
+                                        bool ok = false;
+                                        int lightID = light.toString().toInt( &ok );
+                                        if ( ok )
                                         {
-                                            HueDevice * pDevice = m_DeviceTable.value( iLightID, nullptr );
-                                            if ( nullptr != pDevice )
+                                            HueDevice * device = deviceTable_.value( lightID, nullptr );
+                                            if ( nullptr != device )
                                             {
                                                 // Tell the device which room it's in.
-                                                pDevice->setRoom( Name );
+                                                device->setRoom( name );
                                             }
                                             else
                                             {
@@ -197,7 +197,7 @@ void VCHue::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonD
                         else
                         {
                             qDebug() << "Got empty or invalid item object in query response from Hue Bridge at key: "
-                                     << Key;
+                                     << key;
                         }
                     }
                     else
@@ -213,23 +213,23 @@ void VCHue::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonD
         }
         else
         {
-            qDebug() << "Ignoring unsuccessful reply from Hue Bridge with status code: " << iStatusCode;
+            qDebug() << "Ignoring unsuccessful reply from Hue Bridge with status code: " << statusCode;
         }
     }
     else
     {
-        auto * pDevice = qobject_cast<HueDevice *>( pSender );
-        if ( nullptr != pDevice )
+        auto device = qobject_cast<HueDevice *>( sender );
+        if ( nullptr != device )
         {
-            if ( 200 == iStatusCode )
+            if ( 200 == statusCode )
             {
                 // Dispatch to the device.
-                pDevice->handleResponse( Body );
+                device->handleResponse( body );
             }
             else
             {
-                qDebug() << "Ignoring unsuccessful reply from Hue Bridge for device " << pDevice->name()
-                         << " with status code: " << iStatusCode;
+                qDebug() << "Ignoring unsuccessful reply from Hue Bridge for device " << device->name()
+                         << " with status code: " << statusCode;
             }
         }
         else
@@ -242,14 +242,14 @@ void VCHue::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonD
 
 void VCHue::updateBaseURL()
 {
-    if ( ( !m_BridgeIPAddress.isEmpty() ) && ( !m_BridgeUsername.isEmpty() ) )
+    if ( !bridgeIPAddress_.isEmpty() && !bridgeUsername_.isEmpty() )
     {
-        QString BaseURL = QString( "http://%1/api/%2" ).arg( m_BridgeIPAddress, m_BridgeUsername );
-        m_LightsURL = QUrl( QString( "%1/lights" ).arg( BaseURL ) );
-        m_GroupsURL = QUrl( QString( "%1/groups" ).arg( BaseURL ) );
+        QString baseURL = QString( "http://%1/api/%2" ).arg( bridgeIPAddress_, bridgeUsername_ );
+        lightsURL_ = QUrl( QString( "%1/lights" ).arg( baseURL ) );
+        groupsURL_ = QUrl( QString( "%1/groups" ).arg( baseURL ) );
 
         // With the IP address known, start the update timer and refesh immediately.
-        m_UpdateTimer.start();
+        updateTimer_.start();
         refresh();
         refreshGroups();
     }

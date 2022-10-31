@@ -16,16 +16,16 @@ class HueDevice : public QObject
     Q_PROPERTY( QString room         READ room         WRITE setRoom  NOTIFY roomChanged )
 
 public:
-    explicit HueDevice( int iID, QObject * pParent = nullptr );
+    explicit HueDevice( int id, QObject * parent = nullptr );
 
-    int id() const { return m_iID; }
-    const QString & name() const { return m_Name; }
-    const QString & type() const { return m_Type; }
-    const QString & productName() const { return m_ProductName; }
-    bool isReachable() const { return m_bIsReachable; }
-    bool isOn() const { return m_bIsOn; }
-    const QString & room() const { return m_Room; }
-    void setRoom( const QString & Value );
+    int id() const { return id_; }
+    const QString & name() const { return name_; }
+    const QString & type() const { return type_; }
+    const QString & productName() const { return productName_; }
+    bool isReachable() const { return isReachable_; }
+    bool isOn() const { return isOn_; }
+    const QString & room() const { return room_; }
+    void setRoom( const QString & value );
 
 signals:
     void idChanged();
@@ -37,22 +37,22 @@ signals:
     void roomChanged();
 
 public slots:
-    void commandPower( bool bOn );
-    void handleResponse( const QJsonDocument & Response );
+    void commandPower( bool on );
+    void handleResponse( const QJsonDocument & response );
 
 protected:
-    int m_iID;
-    QString m_Name;
-    QString m_Type;
-    QString m_ProductName;
-    bool m_bIsReachable;
-    bool m_bIsOn;
-    QString m_Room;
+    int id_;
+    QString name_;
+    QString type_;
+    QString productName_;
+    bool isReachable_;
+    bool isOn_;
+    QString room_;
 
-    virtual void handleStateData( const QJsonObject & State );
+    virtual void handleStateData( const QJsonObject & state );
 
 private:
-    void handleResponseData( const QJsonObject & Data );
+    void handleResponseData( const QJsonObject & data );
 
     Q_DISABLE_COPY_MOVE( HueDevice )
 };

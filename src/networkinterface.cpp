@@ -3,33 +3,33 @@
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static NetworkInterface * m_pInstance = nullptr;
+static NetworkInterface * instance_ = nullptr;
 static QByteArray JSON_CONTENT_TYPE = "application/json";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-NetworkInterface::NetworkInterface( QObject * pParent ) :
-    QObject( pParent ),
-    m_pManager( new QNetworkAccessManager( this ) ),
-    m_pZeroConf( new QZeroConf( this ) )
+NetworkInterface::NetworkInterface( QObject * parent ) :
+    QObject( parent ),
+    manager_( new QNetworkAccessManager( this ) ),
+    zeroConf_( new QZeroConf( this ) )
 {
     setObjectName( "NetworkInterface" );
 
-    connect( m_pManager, &QNetworkAccessManager::finished, this, &NetworkInterface::handleReply );
-    connect( m_pZeroConf, &QZeroConf::serviceAdded, this, &NetworkInterface::handleZeroConfServiceAdded );
+    connect( manager_, &QNetworkAccessManager::finished, this, &NetworkInterface::handleReply );
+    connect( zeroConf_, &QZeroConf::serviceAdded, this, &NetworkInterface::handleZeroConfServiceAdded );
 
     // Configure a timeout on browsing for ZeroConf services.
-    m_ZeroConfBrowseTimer.setInterval( 15 * 1000 );
-    m_ZeroConfBrowseTimer.setSingleShot( true );
-    connect( &m_ZeroConfBrowseTimer, &QTimer::timeout, this, [=]{
-        QString ServiceType = m_ZeroConfBrowseRequests.dequeue();
-        qDebug() << "Failed to find ZeroConf service type: " << ServiceType;
-        m_pZeroConf->stopBrowser();
+    zeroConfBrowseTimer_.setInterval( 15 * 1000 );
+    zeroConfBrowseTimer_.setSingleShot( true );
+    connect( &zeroConfBrowseTimer_, &QTimer::timeout, this, [=]{
+        QString serviceType = zeroConfBrowseRequests_.dequeue();
+        qDebug() << "Failed to find ZeroConf service type: " << serviceType;
+        zeroConf_->stopBrowser();
 
         // Are there more requests pending?
-        if ( !m_ZeroConfBrowseRequests.isEmpty() )
+        if ( !zeroConfBrowseRequests_.isEmpty() )
         {
-            m_pZeroConf->startBrowser( m_ZeroConfBrowseRequests.front(), QAbstractSocket::IPv4Protocol );
-            m_ZeroConfBrowseTimer.start();
+            zeroConf_->startBrowser( zeroConfBrowseRequests_.front(), QAbstractSocket::IPv4Protocol );
+            zeroConfBrowseTimer_.start();
         }
     });
 }
@@ -37,66 +37,66 @@ NetworkInterface::NetworkInterface( QObject * pParent ) :
 
 NetworkInterface * NetworkInterface::instance()
 {
-    if ( nullptr == m_pInstance )
+    if ( nullptr == instance_ )
     {
-        m_pInstance = new NetworkInterface();
+        instance_ = new NetworkInterface();
     }
 
-    return m_pInstance;
+    return instance_;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void NetworkInterface::sendRequest( const QUrl & Destination,
-                                    QObject * pSender,
-                                    QNetworkAccessManager::Operation eRequestType,
-                                    const QByteArray & Body,
-                                    const QByteArray & ContentType,
-                                    const QByteArray & Authorization )
+void NetworkInterface::sendRequest( const QUrl & destination,
+                                    QObject * sender,
+                                    QNetworkAccessManager::Operation requestType,
+                                    const QByteArray & body,
+                                    const QByteArray & contentType,
+                                    const QByteArray & authorization )
 {
-    if ( Destination.isValid() )
+    if ( destination.isValid() )
     {
-        QNetworkRequest Request( Destination );
+        QNetworkRequest request( destination );
 
         // Attach the application information to the request.
-        static QByteArray ApplicationInfo = QString( "%1 %2" )
+        static QByteArray applicationInfo = QString( "%1 %2" )
                 .arg( QCoreApplication::applicationName(), QCoreApplication::applicationVersion() ).toUtf8();
-        Request.setRawHeader( "User-Agent", ApplicationInfo );
+        request.setRawHeader( "User-Agent", applicationInfo );
 
         // Was a sender specified for context?
-        if ( nullptr != pSender )
+        if ( nullptr != sender )
         {
-            Request.setOriginatingObject( pSender );
+            request.setOriginatingObject( sender );
         }
 
         // Were a body and corresponding content type supplied?
-        if ( ( ( !Body.isEmpty() ) && ( !ContentType.isEmpty() ) )
-             || ( QNetworkAccessManager::PostOperation == eRequestType ) )
+        if ( ( !body.isEmpty() && !contentType.isEmpty() )
+             || ( QNetworkAccessManager::PostOperation == requestType ) )
         {
-            Request.setHeader( QNetworkRequest::ContentTypeHeader, ContentType );
+            request.setHeader( QNetworkRequest::ContentTypeHeader, contentType );
         }
 
         // Was an authorization token supplied?
-        if ( !Authorization.isEmpty() )
+        if ( !authorization.isEmpty() )
         {
-            Request.setRawHeader( "Authorization", Authorization );
+            request.setRawHeader( "Authorization", authorization );
         }
 
-        switch ( eRequestType )
+        switch ( requestType )
         {
         case QNetworkAccessManager::GetOperation:
-            m_pManager->get( Request );
+            manager_->get( request );
             break;
 
         case QNetworkAccessManager::PostOperation:
-            m_pManager->post( Request, Body );
+            manager_->post( request, body );
             break;
 
         case QNetworkAccessManager::PutOperation:
-            m_pManager->put( Request, Body );
+            manager_->put( request, body );
             break;
 
         case QNetworkAccessManager::DeleteOperation:
-            m_pManager->deleteResource( Request );
+            manager_->deleteResource( request );
             break;
 
         default:
@@ -111,31 +111,31 @@ void NetworkInterface::sendRequest( const QUrl & Destination,
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void NetworkInterface::sendJSONRequest( const QUrl & Destination,
-                                        QObject * pSender,
-                                        QNetworkAccessManager::Operation eRequestType,
-                                        const QJsonDocument & Body,
-                                        const QByteArray & Authorization )
+void NetworkInterface::sendJSONRequest( const QUrl & destination,
+                                        QObject * sender,
+                                        QNetworkAccessManager::Operation requestType,
+                                        const QJsonDocument & body,
+                                        const QByteArray & authorization )
 {
-    sendRequest( Destination,
-                 pSender,
-                 eRequestType,
-                 Body.toJson( QJsonDocument::Compact ),
+    sendRequest( destination,
+                 sender,
+                 requestType,
+                 body.toJson( QJsonDocument::Compact ),
                  JSON_CONTENT_TYPE,
-                 Authorization );
+                 authorization );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void NetworkInterface::browseZeroConf( const QString & ServiceType )
+void NetworkInterface::browseZeroConf( const QString & serviceType )
 {
-    if ( !ServiceType.isEmpty() )
+    if ( !serviceType.isEmpty() )
     {
-        bool bOnlyRequest = m_ZeroConfBrowseRequests.isEmpty();
-        m_ZeroConfBrowseRequests.enqueue( ServiceType );
-        if ( bOnlyRequest )
+        bool onlyRequest = zeroConfBrowseRequests_.isEmpty();
+        zeroConfBrowseRequests_.enqueue( serviceType );
+        if ( onlyRequest )
         {
-            m_pZeroConf->startBrowser( ServiceType, QAbstractSocket::IPv4Protocol );
-            m_ZeroConfBrowseTimer.start();
+            zeroConf_->startBrowser( serviceType, QAbstractSocket::IPv4Protocol );
+            zeroConfBrowseTimer_.start();
         }
     }
     else
@@ -145,42 +145,42 @@ void NetworkInterface::browseZeroConf( const QString & ServiceType )
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void NetworkInterface::handleReply( QNetworkReply * pReply )
+void NetworkInterface::handleReply( QNetworkReply * reply )
 {
-    int iStatusCode = pReply->attribute( QNetworkRequest::HttpStatusCodeAttribute ).toInt();
-    QObject * pSender = pReply->request().originatingObject();
-    QByteArray Body = pReply->readAll();
+    int statusCode = reply->attribute( QNetworkRequest::HttpStatusCodeAttribute ).toInt();
+    QObject * sender = reply->request().originatingObject();
+    QByteArray body = reply->readAll();
 
     // Emit an additional signal if this is JSON content.
-    if ( pReply->header( QNetworkRequest::ContentTypeHeader ).toString().startsWith( JSON_CONTENT_TYPE ) )
+    if ( reply->header( QNetworkRequest::ContentTypeHeader ).toString().startsWith( JSON_CONTENT_TYPE ) )
     {
-        emit jsonReplyReceived( iStatusCode, pSender, QJsonDocument::fromJson( Body ) );
+        emit jsonReplyReceived( statusCode, sender, QJsonDocument::fromJson( body ) );
     }
 
-    emit replyReceived( iStatusCode, pSender, Body );
-    pReply->deleteLater();
+    emit replyReceived( statusCode, sender, body );
+    reply->deleteLater();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void NetworkInterface::handleZeroConfServiceAdded( QZeroConfService pService )
+void NetworkInterface::handleZeroConfServiceAdded( QZeroConfService service )
 {
-    if ( ( !m_ZeroConfBrowseRequests.isEmpty() )
-         && ( pService->type().startsWith( m_ZeroConfBrowseRequests.front() ) ) )
+    if ( !zeroConfBrowseRequests_.isEmpty()
+         && service->type().startsWith( zeroConfBrowseRequests_.front() ) )
     {
-        emit zeroConfServiceFound( m_ZeroConfBrowseRequests.dequeue(), pService->ip().toString() );
-        m_pZeroConf->stopBrowser();
+        emit zeroConfServiceFound( zeroConfBrowseRequests_.dequeue(), service->ip().toString() );
+        zeroConf_->stopBrowser();
 
         // Are there more requests pending?
-        if ( !m_ZeroConfBrowseRequests.isEmpty() )
+        if ( !zeroConfBrowseRequests_.isEmpty() )
         {
             // Yes, start looking for the next one.
-            m_pZeroConf->startBrowser( m_ZeroConfBrowseRequests.front(), QAbstractSocket::IPv4Protocol );
-            m_ZeroConfBrowseTimer.start();  // Restart
+            zeroConf_->startBrowser( zeroConfBrowseRequests_.front(), QAbstractSocket::IPv4Protocol );
+            zeroConfBrowseTimer_.start();  // Restart
         }
         else
         {
             // No, stop looking.
-            m_ZeroConfBrowseTimer.stop();
+            zeroConfBrowseTimer_.stop();
         }
     }
     else

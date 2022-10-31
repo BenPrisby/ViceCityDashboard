@@ -8,20 +8,20 @@
 static const QString PLAYER_BASE_URL = "https://api.spotify.com/v1/me/player";
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCSpotify::VCSpotify( const QString & Name, QObject * pParent ) :
-    VCPlugin( Name, pParent ),
-    m_bIsActive( false ),
-    m_bIsPlaying( false ),
-    m_bShuffleEnabled( false ),
-    m_bRepeatOneEnabled( false ),
-    m_bRepeatAllEnabled( false ),
-    m_iTrackPosition( 0 ),
-    m_iTrackDuration( 0 ),
-    m_iDeviceVolume( 0 ),
-    m_Market( QLocale::system().name().split( QChar( '_' ) ).last() )
+VCSpotify::VCSpotify( const QString & name, QObject * parent ) :
+    VCPlugin( name, parent ),
+    isActive_( false ),
+    isPlaying_( false ),
+    shuffleEnabled_( false ),
+    repeatOneEnabled_( false ),
+    repeatAllEnabled_( false ),
+    trackPosition_( 0 ),
+    trackDuration_( 0 ),
+    deviceVolume_( 0 ),
+    market_( QLocale::system().name().split( QChar( '_' ) ).last() )
 {
-    m_UpdateTimer.setInterval( 1000 );
-    m_UpdateTimer.stop();
+    updateTimer_.setInterval( 1000 );
+    updateTimer_.stop();
 
     // Handle network responses.
     connect( NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCSpotify::handleNetworkReply );
@@ -32,25 +32,25 @@ VCSpotify::VCSpotify( const QString & Name, QObject * pParent ) :
     connect( this, &VCSpotify::refreshTokenChanged, this, &VCSpotify::refreshAccessToken );
 
     // Configure a timer to periodically refresh the access token.
-    m_AccessTokenRefreshTimer.setInterval( 59 * 60 * 1000 );  // 1 minute less than the standard expiry time
-    m_AccessTokenRefreshTimer.setSingleShot( false );
-    connect( &m_AccessTokenRefreshTimer, &QTimer::timeout, this, &VCSpotify::refreshAccessToken );
+    accessTokenRefreshTimer_.setInterval( 59 * 60 * 1000 );  // 1 minute less than the standard expiry time
+    accessTokenRefreshTimer_.setSingleShot( false );
+    connect( &accessTokenRefreshTimer_, &QTimer::timeout, this, &VCSpotify::refreshAccessToken );
 
     // Configure a timer to set the state as idle if a response is not received.
-    m_InactivityTimer.setInterval( 5 * 1000 );
-    m_InactivityTimer.setSingleShot( true );
-    connect( &m_InactivityTimer, &QTimer::timeout, this, [=]{
-        if ( m_bIsActive )
+    inactivityTimer_.setInterval( 5 * 1000 );
+    inactivityTimer_.setSingleShot( true );
+    connect( &inactivityTimer_, &QTimer::timeout, this, [=]{
+        if ( isActive_ )
         {
-            m_bIsActive = false;
+            isActive_ = false;
             emit isActiveChanged();
 
             // Clear some of the playback state.
-            m_iTrackPosition = 0;
+            trackPosition_ = 0;
             emit trackPositionChanged();
-            m_iTrackDuration = 0;
+            trackDuration_ = 0;
             emit trackDurationChanged();
-            m_PlaylistName.clear();
+            playlistName_.clear();
             emit playlistNameChanged();
         }
     });
@@ -58,218 +58,218 @@ VCSpotify::VCSpotify( const QString & Name, QObject * pParent ) :
     // Configure a timer to use as a reference to hold off processing after submitting an action.
     // BDP: This helps with keeping things responsive until the API reports the updated state, after which if there is
     //      still a disagreement, the properties will update as normal.
-    m_ActionSubmissionTimer.setInterval( m_UpdateTimer.interval() / 2 );
-    m_ActionSubmissionTimer.setSingleShot( true );
+    actionSubmissionTimer_.setInterval( updateTimer_.interval() / 2 );
+    actionSubmissionTimer_.setSingleShot( true );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::refresh()
 {
     // Refresh current playback information.
-    static QUrl Destination( QString( "%1?market=%2" ).arg( PLAYER_BASE_URL, m_Market ) );
-    sendRequest( Destination );
+    static QUrl destination( QString( "%1?market=%2" ).arg( PLAYER_BASE_URL, market_ ) );
+    sendRequest( destination );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::refreshDevices()
 {
-    if ( !m_AccessTokenAuthorization.isEmpty() )
+    if ( !accessTokenAuthorization_.isEmpty() )
     {
-        static QUrl Destination( QString( "%1/devices" ).arg( PLAYER_BASE_URL ) );
-        sendRequest( Destination );
+        static QUrl destination( QString( "%1/devices" ).arg( PLAYER_BASE_URL ) );
+        sendRequest( destination );
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::refreshUserProfile()
 {
-    if ( !m_AccessTokenAuthorization.isEmpty() )
+    if ( !accessTokenAuthorization_.isEmpty() )
     {
-        static QUrl Destination( "https://api.spotify.com/v1/me" );
-        sendRequest( Destination );
+        static QUrl destination( "https://api.spotify.com/v1/me" );
+        sendRequest( destination );
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::refreshPlaylists()
 {
-    if ( !m_AccessTokenAuthorization.isEmpty() )
+    if ( !accessTokenAuthorization_.isEmpty() )
     {
-        static QUrl Destination( "https://api.spotify.com/v1/me/playlists" );
-        sendRequest( Destination );
+        static QUrl destination( "https://api.spotify.com/v1/me/playlists" );
+        sendRequest( destination );
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::play( const QString & URI )
+void VCSpotify::play( const QString & uri )
 {
-    QString Destination = QString( "%1/play" ).arg( PLAYER_BASE_URL );
-    if ( !m_bIsActive )
+    QString destination = QString( "%1/play" ).arg( PLAYER_BASE_URL );
+    if ( !isActive_ )
     {
         // Idle, so a device must be specified for playing to start.
-        if ( !m_PreferredDeviceID.isEmpty() )
+        if ( !preferredDeviceID_.isEmpty() )
         {
-            qDebug() << "Spotify playback is not active, so defaulting to playing on device: " << m_PreferredDevice;
-            Destination.append( QString( "?device_id=%1" ).arg( m_PreferredDeviceID ) );
+            qDebug() << "Spotify playback is not active, so defaulting to playing on device: " << preferredDevice_;
+            destination.append( QString( "?device_id=%1" ).arg( preferredDeviceID_ ) );
         }
         else
         {
             qDebug() << "Spotify playback is not active, but there is no preferred device URI to start on";
         }
     }
-    QJsonDocument Body;
-    if ( !URI.isEmpty() )
+    QJsonDocument body;
+    if ( !uri.isEmpty() )
     {
-        Body.setObject( QJsonObject { { "context_uri", URI } } );
+        body.setObject( QJsonObject { { "context_uri", uri } } );
     }
-    sendRequest( QUrl( Destination ), QNetworkAccessManager::PutOperation, Body );
+    sendRequest( QUrl( destination ), QNetworkAccessManager::PutOperation, body );
 
     // Assume that we have started playing unless we are told otherwise.
-    m_bIsPlaying = true;
+    isPlaying_ = true;
     emit isPlayingChanged();
-    m_ActionSubmissionTimer.start();
+    actionSubmissionTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::pause()
 {
-    QUrl Destination( QString( "%1/pause" ).arg( PLAYER_BASE_URL ) );
-    sendRequest( Destination, QNetworkAccessManager::PutOperation );
+    QUrl destination( QString( "%1/pause" ).arg( PLAYER_BASE_URL ) );
+    sendRequest( destination, QNetworkAccessManager::PutOperation );
 
     // Assume that we have paused unless we are told otherwise.
-    m_bIsPlaying = false;
+    isPlaying_ = false;
     emit isPlayingChanged();
-    m_ActionSubmissionTimer.start();
+    actionSubmissionTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::previous()
 {
-    QUrl Destination( QString( "%1/previous" ).arg( PLAYER_BASE_URL ) );
-    sendRequest( Destination, QNetworkAccessManager::PostOperation );
+    QUrl destination( QString( "%1/previous" ).arg( PLAYER_BASE_URL ) );
+    sendRequest( destination, QNetworkAccessManager::PostOperation );
 
     // Reset track progress.
-    m_iTrackPosition = 0;
+    trackPosition_ = 0;
     emit trackPositionChanged();
-    m_iTrackDuration = 0;
+    trackDuration_ = 0;
     emit trackDurationChanged();
-    m_ActionSubmissionTimer.start();
+    actionSubmissionTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::next()
 {
-    QUrl Destination( QString( "%1/next" ).arg( PLAYER_BASE_URL ) );
-    sendRequest( Destination, QNetworkAccessManager::PostOperation );
+    QUrl destination( QString( "%1/next" ).arg( PLAYER_BASE_URL ) );
+    sendRequest( destination, QNetworkAccessManager::PostOperation );
 
     // Assume the track is at the beginning.
-    m_iTrackPosition = 0;
+    trackPosition_ = 0;
     emit trackPositionChanged();
-    m_iTrackDuration = 0;
+    trackDuration_ = 0;
     emit trackDurationChanged();
-    m_ActionSubmissionTimer.start();
+    actionSubmissionTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::seek( const int iPosition )
+void VCSpotify::seek( const int position )
 {
-    QUrl Destination( QString( "%1/seek?position_ms=%2" ).arg( PLAYER_BASE_URL ).arg( iPosition * 1000 ) );
-    sendRequest( Destination, QNetworkAccessManager::PutOperation );
+    QUrl destination( QString( "%1/seek?position_ms=%2" ).arg( PLAYER_BASE_URL ).arg( position * 1000 ) );
+    sendRequest( destination, QNetworkAccessManager::PutOperation );
 
     // Assume the seek request will be accepted.
-    m_iTrackPosition = iPosition;
+    trackPosition_ = position;
     emit trackPositionChanged();
-    m_ActionSubmissionTimer.start();
+    actionSubmissionTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::enableShuffle( bool bValue )
+void VCSpotify::enableShuffle( bool value )
 {
-    QUrl Destination( QString( "%1/shuffle?state=%2" ).arg( PLAYER_BASE_URL, bValue ? "true" : "false" ) );
-    sendRequest( Destination, QNetworkAccessManager::PutOperation );
+    QUrl destination( QString( "%1/shuffle?state=%2" ).arg( PLAYER_BASE_URL, value ? "true" : "false" ) );
+    sendRequest( destination, QNetworkAccessManager::PutOperation );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::enableRepeat( bool bValue, bool bAll )
+void VCSpotify::enableRepeat( bool value, bool all )
 {
-    QString State = ( bValue ? ( bAll ? "context" : "track" ) : "off" );
-    QUrl Destination( QString( "%1/repeat?state=%2" ).arg( PLAYER_BASE_URL, State ) );
-    sendRequest( Destination, QNetworkAccessManager::PutOperation );
+    QString state = ( value ? ( all ? "context" : "track" ) : "off" );
+    QUrl destination( QString( "%1/repeat?state=%2" ).arg( PLAYER_BASE_URL, state ) );
+    sendRequest( destination, QNetworkAccessManager::PutOperation );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::commandDeviceVolume( int iValue )
+void VCSpotify::commandDeviceVolume( int value )
 {
-    QUrl Destination( QString( "%1/volume?volume_percent=%2" ).arg( PLAYER_BASE_URL ).arg( iValue ) );
-    sendRequest( Destination, QNetworkAccessManager::PutOperation );
+    QUrl destination( QString( "%1/volume?volume_percent=%2" ).arg( PLAYER_BASE_URL ).arg( value ) );
+    sendRequest( destination, QNetworkAccessManager::PutOperation );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::search( const QString & Query )
+void VCSpotify::search( const QString & query )
 {
-    if ( !Query.isEmpty() )
+    if ( !query.isEmpty() )
     {
-        QUrl Destination( QString( "https://api.spotify.com/v1/search?type=track&market=%1&limit=20&q=%2" )
-                              .arg( m_Market, QUrl::toPercentEncoding( Query ) ) );
-        sendRequest( Destination );
+        QUrl destination( QString( "https://api.spotify.com/v1/search?type=track&market=%1&limit=20&q=%2" )
+                              .arg( market_, QUrl::toPercentEncoding( query ) ) );
+        sendRequest( destination );
     }
-    else if ( !m_SearchResults.isEmpty() )
+    else if ( !searchResults_.isEmpty() )
     {
-        m_SearchResults.clear();
+        searchResults_.clear();
         emit searchResultsChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::queue( const QString & URI )
+void VCSpotify::queue( const QString & uri )
 {
-    QUrl Destination( QString( "%1/queue?uri=%2" ).arg( PLAYER_BASE_URL, URI ) );
-    sendRequest( Destination, QNetworkAccessManager::PostOperation );
+    QUrl destination( QString( "%1/queue?uri=%2" ).arg( PLAYER_BASE_URL, uri ) );
+    sendRequest( destination, QNetworkAccessManager::PostOperation );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::transfer( const QString & DeviceID )
+void VCSpotify::transfer( const QString & deviceID )
 {
-    QJsonDocument Body( QJsonObject { { "device_ids", QJsonArray { DeviceID } } } );
-    sendRequest( QUrl( PLAYER_BASE_URL ), QNetworkAccessManager::PutOperation, Body );
+    QJsonDocument body( QJsonObject { { "device_ids", QJsonArray { deviceID } } } );
+    sendRequest( QUrl( PLAYER_BASE_URL ), QNetworkAccessManager::PutOperation, body );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCSpotify::formatDuration( const int iValue )
+QString VCSpotify::formatDuration( const int value )
 {
-    int iSeconds = iValue % 60;
-    QString Seconds = QString::number( iSeconds );
-    if ( 10 > iSeconds )
+    int seconds = value % 60;
+    QString secondsDisplay = QString::number( seconds );
+    if ( 10 > seconds )
     {
-        Seconds = Seconds.rightJustified( 2, QChar( '0' ) );
+        secondsDisplay = secondsDisplay.rightJustified( 2, QChar( '0' ) );
     }
-    return QString( "%1:%2" ).arg( iValue / 60 ).arg( Seconds );
+    return QString( "%1:%2" ).arg( value / 60 ).arg( secondsDisplay );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body )
+void VCSpotify::handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body )
 {
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
+                QJsonObject responseObject = body.object();
 
                 // First, check if this reply contains an updated access token.
-                if ( ResponseObject.contains( "access_token" ) )
+                if ( responseObject.contains( "access_token" ) )
                 {
-                    m_AccessToken = ResponseObject.value( "access_token" ).toString();
-                    m_AccessTokenType = ResponseObject.value( "token_type" ).toString();
+                    accessToken_ = responseObject.value( "access_token" ).toString();
+                    accessTokenType_ = responseObject.value( "token_type" ).toString();
 
                     // Ensure the refresh timer interval is still sufficient.
-                    int iExpiresIn = ResponseObject.value( "expires_in" ).toInt();
-                    int iInterval = ( iExpiresIn - 60 ) * 1000;
-                    if ( ( 0 < iInterval ) && ( m_AccessTokenRefreshTimer.interval() > iInterval ) )
+                    int expiresIn = responseObject.value( "expires_in" ).toInt();
+                    int interval = ( expiresIn - 60 ) * 1000;
+                    if ( ( 0 < interval ) && ( accessTokenRefreshTimer_.interval() > interval ) )
                     {
                         // Bump the interval.
-                        m_AccessTokenRefreshTimer.setInterval( iInterval );
+                        accessTokenRefreshTimer_.setInterval( interval );
                     }
                     else
                     {
@@ -277,11 +277,11 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                     }
 
                     // Update the authorization header to use in requests.
-                    m_AccessTokenAuthorization = QString( "%1 %2" ).arg( m_AccessTokenType, m_AccessToken ).toUtf8();
+                    accessTokenAuthorization_ = QString( "%1 %2" ).arg( accessTokenType_, accessToken_ ).toUtf8();
 
                     // Start/restart timers since we just got a fresh access token.
-                    m_UpdateTimer.start();
-                    m_AccessTokenRefreshTimer.start();
+                    updateTimer_.start();
+                    accessTokenRefreshTimer_.start();
 
                     // Refresh data right away in case a previous request was rejected.
                     refresh();
@@ -290,427 +290,427 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                     refreshDevices();
 
                     qDebug() << "Received new access token from Spotify, asking again in "
-                             << ( m_AccessTokenRefreshTimer.interval() / 1000 ) << " seconds";
+                             << ( accessTokenRefreshTimer_.interval() / 1000 ) << " seconds";
                 }
-                else if ( ResponseObject.contains( "is_playing" ) )
+                else if ( responseObject.contains( "is_playing" ) )
                 {
                     // Playback information.
                     // Kick the inactivity timer.
-                    m_InactivityTimer.start();
+                    inactivityTimer_.start();
 
                     // Indicate an active state.
-                    if ( !m_bIsActive )
+                    if ( !isActive_ )
                     {
-                        m_bIsActive = true;
+                        isActive_ = true;
                         emit isActiveChanged();
                     }
 
-                    bool bIsPlaying = ResponseObject.value( "is_playing" ).toBool();
-                    if ( ( m_bIsPlaying != bIsPlaying ) && ( !m_ActionSubmissionTimer.isActive() ) )
+                    bool isPlaying = responseObject.value( "is_playing" ).toBool();
+                    if ( ( isPlaying_ != isPlaying ) && !actionSubmissionTimer_.isActive() )
                     {
-                        m_bIsPlaying = bIsPlaying;
+                        isPlaying_ = isPlaying;
                         emit isPlayingChanged();
                     }
-                    if ( ResponseObject.contains( "device" ) )
+                    if ( responseObject.contains( "device" ) )
                     {
-                        QJsonObject DeviceObject = ResponseObject.value( "device" ).toObject();
-                        if ( DeviceObject.contains( "name" ) )
+                        QJsonObject deviceObject = responseObject.value( "device" ).toObject();
+                        if ( deviceObject.contains( "name" ) )
                         {
-                            QString DeviceName = DeviceObject.value( "name" ).toString();
-                            if ( m_DeviceName != DeviceName )
+                            QString deviceName = deviceObject.value( "name" ).toString();
+                            if ( deviceName_ != deviceName )
                             {
-                                m_DeviceName = DeviceName;
+                                deviceName_ = deviceName;
                                 emit deviceNameChanged();
                             }
                         }
-                        if ( DeviceObject.contains( "type" ) )
+                        if ( deviceObject.contains( "type" ) )
                         {
-                            QString DeviceType = DeviceObject.value( "type" ).toString();
-                            if ( m_DeviceType != DeviceType )
+                            QString deviceType = deviceObject.value( "type" ).toString();
+                            if ( deviceType_ != deviceType )
                             {
-                                m_DeviceType = DeviceType;
+                                deviceType_ = deviceType;
                                 emit deviceTypeChanged();
                             }
                         }
-                        if ( DeviceObject.contains( "volume_percent" )
-                             && ( !DeviceObject.value( "volume_percent" ).isNull() ) )
+                        if ( deviceObject.contains( "volume_percent" )
+                             && !deviceObject.value( "volume_percent" ).isNull() )
                         {
-                            int iVolume = DeviceObject.value( "volume_percent" ).toInt();
-                            if ( m_iDeviceVolume != iVolume )
+                            int volume = deviceObject.value( "volume_percent" ).toInt();
+                            if ( deviceVolume_ != volume )
                             {
-                                m_iDeviceVolume = iVolume;
+                                deviceVolume_ = volume;
                                 emit deviceVolumeChanged();
                             }
                         }
                     }
-                    if ( ResponseObject.contains( "shuffle_state" ) )
+                    if ( responseObject.contains( "shuffle_state" ) )
                     {
-                        bool bShuffleEnabled = ResponseObject.value( "shuffle_state" ).toBool();
-                        if ( m_bShuffleEnabled != bShuffleEnabled )
+                        bool shuffleEnabled = responseObject.value( "shuffle_state" ).toBool();
+                        if ( shuffleEnabled_ != shuffleEnabled )
                         {
-                            m_bShuffleEnabled = bShuffleEnabled;
+                            shuffleEnabled_ = shuffleEnabled;
                             emit shuffleEnabledChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "repeat_state" ) )
+                    if ( responseObject.contains( "repeat_state" ) )
                     {
-                        QString RepeatState = ResponseObject.value( "repeat_state" ).toString();
-                        bool bRepeatOneEnabled = ( "track" == RepeatState );
-                        bool bRepeatAllEnabled = ( "context" == RepeatState );
-                        if ( m_bRepeatOneEnabled != bRepeatOneEnabled )
+                        QString repeatState = responseObject.value( "repeat_state" ).toString();
+                        bool repeatOneEnabled = ( "track" == repeatState );
+                        bool repeatAllEnabled = ( "context" == repeatState );
+                        if ( repeatOneEnabled_ != repeatOneEnabled )
                         {
-                            m_bRepeatOneEnabled = bRepeatOneEnabled;
+                            repeatOneEnabled_ = repeatOneEnabled;
                             emit repeatOneEnabledChanged();
                         }
-                        if ( m_bRepeatAllEnabled != bRepeatAllEnabled )
+                        if ( repeatAllEnabled_ != repeatAllEnabled )
                         {
-                            m_bRepeatAllEnabled = bRepeatAllEnabled;
+                            repeatAllEnabled_ = repeatAllEnabled;
                             emit repeatAllEnabledChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "progress_ms" ) )
+                    if ( responseObject.contains( "progress_ms" ) )
                     {
-                        int iTrackPosition = ResponseObject.value( "progress_ms" ).toInt() / 1000;
-                        if ( ( m_iTrackPosition != iTrackPosition ) && ( !m_ActionSubmissionTimer.isActive() ) )
+                        int trackPosition = responseObject.value( "progress_ms" ).toInt() / 1000;
+                        if ( ( trackPosition_ != trackPosition ) && !actionSubmissionTimer_.isActive() )
                         {
-                            m_iTrackPosition = iTrackPosition;
+                            trackPosition_ = trackPosition;
                             emit trackPositionChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "context" ) )
+                    if ( responseObject.contains( "context" ) )
                     {
-                        QJsonObject ContextObject = ResponseObject.value( "context" ).toObject();
-                        if ( ContextObject.contains( "type" ) && ContextObject.contains( "uri" ) )
+                        QJsonObject contextObject = responseObject.value( "context" ).toObject();
+                        if ( contextObject.contains( "type" ) && contextObject.contains( "uri" ) )
                         {
-                            QString ContextType = ContextObject.value( "type" ).toString();
-                            if ( "playlist" == ContextType )
+                            QString contextType = contextObject.value( "type" ).toString();
+                            if ( "playlist" == contextType )
                             {
-                                QString URI = ContextObject.value( "uri" ).toString();
-                                QString PlaylistID = URI.split( QChar( ':' ) ).last();
+                                QString uri = contextObject.value( "uri" ).toString();
+                                QString playlistID = uri.split( QChar( ':' ) ).last();
 
                                 // Request the name of the playlist.
-                                QUrl Destination( QString( "https://api.spotify.com/v1/playlists/%1?fields=name,uri" )
-                                                      .arg( PlaylistID ) );
-                                sendRequest( Destination );
+                                QUrl destination( QString( "https://api.spotify.com/v1/playlists/%1?fields=name,uri" )
+                                                      .arg( playlistID ) );
+                                sendRequest( destination );
                             }
-                            else if ( !m_PlaylistName.isEmpty() )
+                            else if ( !playlistName_.isEmpty() )
                             {
                                 // Clear stale context.
-                                m_PlaylistName.clear();
+                                playlistName_.clear();
                                 emit playlistNameChanged();
                             }
                         }
-                        else if ( ContextObject.isEmpty() )
+                        else if ( contextObject.isEmpty() )
                         {
-                            m_PlaylistName.clear();
+                            playlistName_.clear();
                             emit playlistNameChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "item" ) )
+                    if ( responseObject.contains( "item" ) )
                     {
-                        QJsonObject ItemObject = ResponseObject.value( "item" ).toObject();
-                        if ( ItemObject.contains( "name" ) )
+                        QJsonObject itemObject = responseObject.value( "item" ).toObject();
+                        if ( itemObject.contains( "name" ) )
                         {
-                            QString TrackName = ItemObject.value( "name" ).toString();
-                            if ( m_TrackName != TrackName )
+                            QString trackName = itemObject.value( "name" ).toString();
+                            if ( trackName_ != trackName )
                             {
-                                m_TrackName = TrackName;
+                                trackName_ = trackName;
                                 emit trackNameChanged();
                             }
                         }
-                        if ( ItemObject.contains( "duration_ms" ) )
+                        if ( itemObject.contains( "duration_ms" ) )
                         {
-                            int iTrackDuration = ItemObject.value( "duration_ms" ).toInt() / 1000;
-                            if ( ( m_iTrackDuration != iTrackDuration ) && ( !m_ActionSubmissionTimer.isActive() ) )
+                            int trackDuration = itemObject.value( "duration_ms" ).toInt() / 1000;
+                            if ( ( trackDuration_ != trackDuration ) && !actionSubmissionTimer_.isActive() )
                             {
-                                m_iTrackDuration = iTrackDuration;
+                                trackDuration_ = trackDuration;
                                 emit trackDurationChanged();
                             }
                         }
-                        if ( ItemObject.contains( "album" ) )
+                        if ( itemObject.contains( "album" ) )
                         {
-                            QJsonObject AlbumObject = ItemObject.value( "album" ).toObject();
-                            if ( AlbumObject.contains( "name" ) )
+                            QJsonObject albumObject = itemObject.value( "album" ).toObject();
+                            if ( albumObject.contains( "name" ) )
                             {
-                                QString TrackAlbum = AlbumObject.value( "name" ).toString();
-                                if ( m_TrackAlbum != TrackAlbum )
+                                QString trackAlbum = albumObject.value( "name" ).toString();
+                                if ( trackAlbum_ != trackAlbum )
                                 {
-                                    m_TrackAlbum = TrackAlbum;
+                                    trackAlbum_ = trackAlbum;
                                     emit trackAlbumChanged();
                                 }
                             }
-                            if ( AlbumObject.contains( "images" ) )
+                            if ( albumObject.contains( "images" ) )
                             {
                                 // Take the first image, which is the highest resolution.
-                                QJsonArray AlbumImagesArray = AlbumObject.value( "images" ).toArray();
-                                if ( !AlbumImagesArray.isEmpty() )
+                                QJsonArray albumImagesArray = albumObject.value( "images" ).toArray();
+                                if ( !albumImagesArray.isEmpty() )
                                 {
-                                    QJsonObject AlbumImageObject = AlbumImagesArray.first().toObject();
-                                    if ( AlbumImageObject.contains( "url" ) )
+                                    QJsonObject albumImageObject = albumImagesArray.first().toObject();
+                                    if ( albumImageObject.contains( "url" ) )
                                     {
-                                        QUrl TrackAlbumArt( AlbumImageObject.value( "url" ).toString() );
-                                        if ( m_TrackAlbumArt != TrackAlbumArt )
+                                        QUrl trackAlbumArt( albumImageObject.value( "url" ).toString() );
+                                        if ( trackAlbumArt_ != trackAlbumArt )
                                         {
-                                            m_TrackAlbumArt = TrackAlbumArt;
+                                            trackAlbumArt_ = trackAlbumArt;
                                             emit trackAlbumArtChanged();
                                         }
                                     }
                                 }
-                                else if ( !m_TrackAlbumArt.isEmpty() )
+                                else if ( !trackAlbumArt_.isEmpty() )
                                 {
                                     // No artwork for the track, clear any previous value.
-                                    m_TrackAlbumArt.clear();
+                                    trackAlbumArt_.clear();
                                     emit trackAlbumArtChanged();
                                 }
                             }
                         }
-                        if ( ItemObject.contains( "artists" ) )
+                        if ( itemObject.contains( "artists" ) )
                         {
-                            const QJsonArray ArtistsArray = ItemObject.value( "artists" ).toArray();
-                            if ( !ArtistsArray.isEmpty() )
+                            const QJsonArray artistsArray = itemObject.value( "artists" ).toArray();
+                            if ( !artistsArray.isEmpty() )
                             {
-                                QString TrackArtist;
-                                for ( const auto & Artist : ArtistsArray )
+                                QString trackArtist;
+                                for ( const auto & artist : artistsArray )
                                 {
-                                    QJsonObject ArtistObject = Artist.toObject();
-                                    if ( ArtistObject.contains( "name" ) )
+                                    QJsonObject artistObject = artist.toObject();
+                                    if ( artistObject.contains( "name" ) )
                                     {
-                                        QString ArtistName = ArtistObject.value( "name" ).toString();
-                                        if ( !ArtistName.isEmpty() )
+                                        QString artistName = artistObject.value( "name" ).toString();
+                                        if ( !artistName.isEmpty() )
                                         {
-                                            if ( !TrackArtist.isEmpty() )
+                                            if ( !trackArtist.isEmpty() )
                                             {
-                                                TrackArtist.append( ", " );
+                                                trackArtist.append( ", " );
                                             }
-                                            TrackArtist.append( ArtistName );
+                                            trackArtist.append( artistName );
                                         }
                                     }
                                 }
-                                if ( ( !TrackArtist.isEmpty() ) && ( m_TrackArtist != TrackArtist ) )
+                                if ( ( !trackArtist.isEmpty() ) && ( trackArtist_ != trackArtist ) )
                                 {
-                                    m_TrackArtist = TrackArtist;
+                                    trackArtist_ = trackArtist;
                                     emit trackArtistChanged();
                                 }
                             }
                         }
                     }
                 }
-                else if ( ( 2 == ResponseObject.size() ) && ResponseObject.contains( "name" )
-                          && ResponseObject.contains( "uri" ) )
+                else if ( ( 2 == responseObject.size() ) && responseObject.contains( "name" )
+                          && responseObject.contains( "uri" ) )
                 {
                     // Playlist name.
-                    QString PlaylistName = ResponseObject.value( "name" ).toString();
-                    if ( m_PlaylistName != PlaylistName )
+                    QString playlistName = responseObject.value( "name" ).toString();
+                    if ( playlistName_ != playlistName )
                     {
-                        m_PlaylistName = PlaylistName;
+                        playlistName_ = playlistName;
                         emit playlistNameChanged();
                     }
                 }
-                else if ( ResponseObject.contains( "tracks" ) )
+                else if ( responseObject.contains( "tracks" ) )
                 {
                     // Search results.
-                    QVariantList SearchResultsModel;
-                    QJsonObject TracksObject = ResponseObject.value( "tracks" ).toObject();
-                    if ( TracksObject.contains( "items" ) )
+                    QVariantList searchResultsModel;
+                    QJsonObject tracksObject = responseObject.value( "tracks" ).toObject();
+                    if ( tracksObject.contains( "items" ) )
                     {
-                        const QJsonArray ItemsArray = TracksObject.value( "items" ).toArray();
-                        for ( const auto & Item : ItemsArray )
+                        const QJsonArray itemsArray = tracksObject.value( "items" ).toArray();
+                        for ( const auto & item : itemsArray )
                         {
-                            QJsonObject ItemObject = Item.toObject();
-                            if ( !ItemObject.isEmpty() )
+                            QJsonObject itemObject = item.toObject();
+                            if ( !itemObject.isEmpty() )
                             {
-                                QVariantMap SearchResult { { "name", ItemObject.value( "name" ).toString() },
-                                                           { "uri", ItemObject.value( "uri" ).toString() } };
-                                if ( ItemObject.contains( "artists" ) )
+                                QVariantMap searchResult { { "name", itemObject.value( "name" ).toString() },
+                                                           { "uri", itemObject.value( "uri" ).toString() } };
+                                if ( itemObject.contains( "artists" ) )
                                 {
-                                    const QJsonArray ArtistsArray = ItemObject.value( "artists" ).toArray();
-                                    if ( !ArtistsArray.isEmpty() )
+                                    const QJsonArray artistsArray = itemObject.value( "artists" ).toArray();
+                                    if ( !artistsArray.isEmpty() )
                                     {
-                                        QString TrackArtist;
-                                        for ( const auto & Artist : ArtistsArray )
+                                        QString trackArtist;
+                                        for ( const auto & artist : artistsArray )
                                         {
-                                            QJsonObject ArtistObject = Artist.toObject();
-                                            if ( ArtistObject.contains( "name" ) )
+                                            QJsonObject artistObject = artist.toObject();
+                                            if ( artistObject.contains( "name" ) )
                                             {
-                                                QString ArtistName = ArtistObject.value( "name" ).toString();
-                                                if ( !ArtistName.isEmpty() )
+                                                QString artistName = artistObject.value( "name" ).toString();
+                                                if ( !artistName.isEmpty() )
                                                 {
-                                                    if ( !TrackArtist.isEmpty() )
+                                                    if ( !trackArtist.isEmpty() )
                                                     {
-                                                        TrackArtist.append( ", " );
+                                                        trackArtist.append( ", " );
                                                     }
-                                                    TrackArtist.append( ArtistName );
+                                                    trackArtist.append( artistName );
                                                 }
                                             }
                                         }
-                                        SearchResult[ "artist" ] = TrackArtist;
+                                        searchResult[ "artist" ] = trackArtist;
                                     }
                                 }
-                                if ( ItemObject.contains( "album" ) )
+                                if ( itemObject.contains( "album" ) )
                                 {
-                                    QJsonObject AlbumObject = ItemObject.value( "album" ).toObject();
-                                    if ( AlbumObject.contains( "name" ) )
+                                    QJsonObject albumObject = itemObject.value( "album" ).toObject();
+                                    if ( albumObject.contains( "name" ) )
                                     {
-                                        SearchResult[ "album" ] = AlbumObject.value( "name" ).toString();
+                                        searchResult[ "album" ] = albumObject.value( "name" ).toString();
                                     }
-                                    if ( AlbumObject.contains( "images" ) )
+                                    if ( albumObject.contains( "images" ) )
                                     {
                                         // Take the first image, which is the highest resolution.
-                                        QJsonArray AlbumImagesArray = AlbumObject.value( "images" ).toArray();
-                                        if ( !AlbumImagesArray.isEmpty() )
+                                        QJsonArray albumImagesArray = albumObject.value( "images" ).toArray();
+                                        if ( !albumImagesArray.isEmpty() )
                                         {
-                                            QJsonObject AlbumImageObject = AlbumImagesArray.first().toObject();
-                                            if ( AlbumImageObject.contains( "url" ) )
+                                            QJsonObject albumImageObject = albumImagesArray.first().toObject();
+                                            if ( albumImageObject.contains( "url" ) )
                                             {
-                                                SearchResult[ "image" ] =
-                                                    QUrl( AlbumImageObject.value( "url" ).toString() );
+                                                searchResult[ "image" ] =
+                                                    QUrl( albumImageObject.value( "url" ).toString() );
                                             }
                                         }
                                     }
                                 }
 
-                                SearchResultsModel.append( SearchResult );
+                                searchResultsModel.append( searchResult );
                             }
                         }
                     }
 
-                    if ( m_SearchResults != SearchResultsModel )
+                    if ( searchResults_ != searchResultsModel )
                     {
-                        m_SearchResults = SearchResultsModel;
+                        searchResults_ = searchResultsModel;
                         emit searchResultsChanged();
                     }
                 }
-                else if ( ResponseObject.contains( "items" ) )
+                else if ( responseObject.contains( "items" ) )
                 {
                     // Playlists information.
-                    QVariantList PlaylistsModel;
-                    const QJsonArray PlaylistsArray = ResponseObject.value( "items" ).toArray();
-                    for ( const auto & Playlist : PlaylistsArray )
+                    QVariantList playlistsModel;
+                    const QJsonArray playlistsArray = responseObject.value( "items" ).toArray();
+                    for ( const auto & playlist : playlistsArray )
                     {
-                        QJsonObject PlaylistObject = Playlist.toObject();
-                        if ( !PlaylistObject.isEmpty() )
+                        QJsonObject playlistObject = playlist.toObject();
+                        if ( !playlistObject.isEmpty() )
                         {
-                            QVariantMap PlaylistItem { { "name", PlaylistObject.value( "name" ).toString() },
-                                                       { "uri", PlaylistObject.value( "uri" ).toString() },
-                                                       { "isPublic", PlaylistObject.value( "public" ).toBool() } };
-                            if ( PlaylistObject.contains( "tracks" ) )
+                            QVariantMap playlistItem { { "name", playlistObject.value( "name" ).toString() },
+                                                       { "uri", playlistObject.value( "uri" ).toString() },
+                                                       { "isPublic", playlistObject.value( "public" ).toBool() } };
+                            if ( playlistObject.contains( "tracks" ) )
                             {
-                                QJsonObject TracksObject = PlaylistObject.value( "tracks" ).toObject();
-                                PlaylistItem[ "trackCount" ] = TracksObject.value( "total" ).toInt();
+                                QJsonObject tracksObject = playlistObject.value( "tracks" ).toObject();
+                                playlistItem[ "trackCount" ] = tracksObject.value( "total" ).toInt();
                             }
-                            if ( PlaylistObject.contains( "images" ) )
+                            if ( playlistObject.contains( "images" ) )
                             {
                                 // Take the first image, which is the highest resolution.
-                                QJsonArray ImagesArray = PlaylistObject.value( "images" ).toArray();
-                                if ( !ImagesArray.isEmpty() )
+                                QJsonArray imagesArray = playlistObject.value( "images" ).toArray();
+                                if ( !imagesArray.isEmpty() )
                                 {
-                                    QJsonObject ImageObject = ImagesArray.first().toObject();
-                                    if ( ImageObject.contains( "url" ) )
+                                    QJsonObject imageObject = imagesArray.first().toObject();
+                                    if ( imageObject.contains( "url" ) )
                                     {
-                                        PlaylistItem[ "image" ] = QUrl( ImageObject.value( "url" ).toString() );
+                                        playlistItem[ "image" ] = QUrl( imageObject.value( "url" ).toString() );
                                     }
                                 }
                             }
 
-                            PlaylistsModel.append( PlaylistItem );
+                            playlistsModel.append( playlistItem );
                         }
                     }
 
-                    if ( m_Playlists != PlaylistsModel )
+                    if ( playlists_ != playlistsModel )
                     {
-                        m_Playlists = PlaylistsModel;
+                        playlists_ = playlistsModel;
                         emit playlistsChanged();
                     }
                 }
-                else if ( ResponseObject.contains( "devices" ) )
+                else if ( responseObject.contains( "devices" ) )
                 {
                     // Devices information.
-                    QVariantList DevicesModel;
-                    const QJsonArray DevicesArray = ResponseObject.value( "devices" ).toArray();
-                    for ( const auto & Device : DevicesArray )
+                    QVariantList devicesModel;
+                    const QJsonArray devicesArray = responseObject.value( "devices" ).toArray();
+                    for ( const auto & device : devicesArray )
                     {
-                        QJsonObject DeviceObject = Device.toObject();
-                        if ( !DeviceObject.isEmpty() )
+                        QJsonObject deviceObject = device.toObject();
+                        if ( !deviceObject.isEmpty() )
                         {
-                            QString Name = DeviceObject.value( "name" ).toString();
-                            QString ID = DeviceObject.value( "id" ).toString();
+                            QString name = deviceObject.value( "name" ).toString();
+                            QString id = deviceObject.value( "id" ).toString();
 
                             // Is this the preferred device?
-                            if ( m_PreferredDevice == Name )
+                            if ( preferredDevice_ == name )
                             {
                                 // Yes, store its ID.
-                                if ( m_PreferredDeviceID != ID )
+                                if ( preferredDeviceID_ != id )
                                 {
-                                    m_PreferredDeviceID = ID;
-                                    qDebug() << "Received ID of preferred Spotify device: " << m_PreferredDevice;
+                                    preferredDeviceID_ = id;
+                                    qDebug() << "Received ID of preferred Spotify device: " << preferredDevice_;
                                 }
                             }
 
-                            QVariantMap PlaylistItem { { "name", Name }, { "id", ID } };
-                            DevicesModel.append( PlaylistItem );
+                            QVariantMap playlistItem { { "name", name }, { "id", id } };
+                            devicesModel.append( playlistItem );
                         }
                     }
 
-                    if ( !DevicesModel.isEmpty() )
+                    if ( !devicesModel.isEmpty() )
                     {
                         // Arrange alphabetically.
-                        std::sort( DevicesModel.begin(),
-                                   DevicesModel.end(),
-                                   [=]( const QVariant & Left, const QVariant & Right ) {
-                                       return Left.toMap().value( "name" ).toString()
-                                              < Right.toMap().value( "name" ).toString();
+                        std::sort( devicesModel.begin(),
+                                   devicesModel.end(),
+                                   [=]( const QVariant & left, const QVariant & right ) {
+                                       return left.toMap().value( "name" ).toString()
+                                              < right.toMap().value( "name" ).toString();
                                    } );
                     }
 
-                    if ( m_Devices != DevicesModel )
+                    if ( devices_ != devicesModel )
                     {
-                        m_Devices = DevicesModel;
+                        devices_ = devicesModel;
                         emit devicesChanged();
                     }
                 }
                 else
                 {
                     // Assume this is user profile information.
-                    if ( ResponseObject.contains( "display_name" ) )
+                    if ( responseObject.contains( "display_name" ) )
                     {
-                        QString UserName = ResponseObject.value( "display_name" ).toString();
-                        if ( m_UserName != UserName )
+                        QString userName = responseObject.value( "display_name" ).toString();
+                        if ( userName_ != userName )
                         {
-                            m_UserName = UserName;
+                            userName_ = userName;
                             emit userNameChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "email" ) )
+                    if ( responseObject.contains( "email" ) )
                     {
-                        QString Email = ResponseObject.value( "email" ).toString();
-                        if ( m_UserEmail != Email )
+                        QString email = responseObject.value( "email" ).toString();
+                        if ( userEmail_ != email )
                         {
-                            m_UserEmail = Email;
+                            userEmail_ = email;
                             emit userEmailChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "product" ) )
+                    if ( responseObject.contains( "product" ) )
                     {
-                        QString Subscription = ResponseObject.value( "product" ).toString();
-                        if ( m_UserSubscription != Subscription )
+                        QString subscription = responseObject.value( "product" ).toString();
+                        if ( userSubscription_ != subscription )
                         {
-                            m_UserSubscription = Subscription;
+                            userSubscription_ = subscription;
                             emit userSubscriptionChanged();
                         }
                     }
-                    if ( ResponseObject.contains( "images" ) )
+                    if ( responseObject.contains( "images" ) )
                     {
                         // Only be concerned with the first image.
-                        QJsonArray ImagesArray = ResponseObject.value( "images" ).toArray();
-                        if ( !ImagesArray.isEmpty() )
+                        QJsonArray imagesArray = responseObject.value( "images" ).toArray();
+                        if ( !imagesArray.isEmpty() )
                         {
-                            QJsonObject ImageObject = ImagesArray.first().toObject();
-                            if ( ImageObject.contains( "url" ) )
+                            QJsonObject imageObject = imagesArray.first().toObject();
+                            if ( imageObject.contains( "url" ) )
                             {
-                                QUrl UserImage( ImageObject.value( "url" ).toString() );
-                                if ( m_UserImage != UserImage )
+                                QUrl userImage( imageObject.value( "url" ).toString() );
+                                if ( userImage_ != userImage )
                                 {
-                                    m_UserImage = UserImage;
+                                    userImage_ = userImage;
                                     emit userImageChanged();
                                 }
                             }
@@ -724,22 +724,22 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
                 qDebug() << "Failed to parse reply from Spotify";
             }
         }
-        else if ( 204 == iStatusCode )
+        else if ( 204 == statusCode )
         {
             // Success with no content in the response, ignore.
         }
-        else if ( 401 == iStatusCode )
+        else if ( 401 == statusCode )
         {
             // Access token expired, invalidate the current one, stop making requests, and ask for a new one.
             qDebug() << "Spotify access token expired, so requesting a new one";
-            m_AccessTokenAuthorization.clear();
-            m_UpdateTimer.stop();
-            m_AccessTokenRefreshTimer.stop();
+            accessTokenAuthorization_.clear();
+            updateTimer_.stop();
+            accessTokenRefreshTimer_.stop();
             refreshAccessToken();
         }
         else
         {
-            qDebug() << "Ignoring unsuccessful reply from Spotify with status code: " << iStatusCode;
+            qDebug() << "Ignoring unsuccessful reply from Spotify with status code: " << statusCode;
         }
     }
 }
@@ -747,27 +747,27 @@ void VCSpotify::handleNetworkReply( int iStatusCode, QObject * pSender, const QJ
 
 void VCSpotify::refreshAccessToken()
 {
-    if ( ( !m_ClientID.isEmpty() ) && ( !m_ClientSecret.isEmpty() ) && ( !m_RefreshToken.isEmpty() ) )
+    if ( !clientID_.isEmpty() && !clientSecret_.isEmpty() && !refreshToken_.isEmpty() )
     {
         qDebug() << "Refreshing Spotify access token";
-        static QUrl Destination( "https://accounts.spotify.com/api/token" );
-        QUrlQuery Query { { "grant_type", "refresh_token" }, { "refresh_token", m_RefreshToken } };
-        QByteArray ClientInfo = QString( "%1:%2" ).arg( m_ClientID, m_ClientSecret ).toUtf8().toBase64();
-        QByteArray Authorization = ClientInfo.prepend( "Basic " );
-        NetworkInterface::instance()->sendRequest( Destination,
+        static QUrl destination( "https://accounts.spotify.com/api/token" );
+        QUrlQuery query { { "grant_type", "refresh_token" }, { "refresh_token", refreshToken_ } };
+        QByteArray clientInfo = QString( "%1:%2" ).arg( clientID_, clientSecret_ ).toUtf8().toBase64();
+        QByteArray authorization = clientInfo.prepend( "Basic " );
+        NetworkInterface::instance()->sendRequest( destination,
                                                    this,
                                                    QNetworkAccessManager::PostOperation,
-                                                   Query.toString( QUrl::FullyEncoded ).toUtf8(),
+                                                   query.toString( QUrl::FullyEncoded ).toUtf8(),
                                                    "application/x-www-form-urlencoded",
-                                                   Authorization );
+                                                   authorization );
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCSpotify::sendRequest( const QUrl & Destination,
-                             const QNetworkAccessManager::Operation eRequestType,
-                             const QJsonDocument & Body )
+void VCSpotify::sendRequest( const QUrl & destination,
+                             const QNetworkAccessManager::Operation requestType,
+                             const QJsonDocument & body )
 {
-    NetworkInterface::instance()->sendJSONRequest( Destination, this, eRequestType, Body, m_AccessTokenAuthorization );
+    NetworkInterface::instance()->sendJSONRequest( destination, this, requestType, body, accessTokenAuthorization_ );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

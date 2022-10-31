@@ -14,9 +14,9 @@ class HueAmbianceLight : public HueLight
     Q_PROPERTY( QColor ambientColor      READ ambientColor         NOTIFY colorTemperatureChanged )
 
 public:
-    explicit HueAmbianceLight( int iID, QObject * pParent = nullptr );
+    explicit HueAmbianceLight( int id, QObject * parent = nullptr );
 
-    int colorTemperature() const { return m_iColorTemperature; }
+    int colorTemperature() const { return colorTemperature_; }
     int minColorTemperature() const;
     int maxColorTemperature() const;
     QColor ambientColor() const;
@@ -25,12 +25,12 @@ signals:
     void colorTemperatureChanged();
 
 public slots:
-    void commandColorTemperature( int iColorTemperature );
+    void commandColorTemperature( int colorTemperature );
 
 protected:
-    int m_iColorTemperature;
+    int colorTemperature_;
 
-    void handleStateData( const QJsonObject & State ) override;
+    void handleStateData( const QJsonObject & state ) override;
 
 private:
     Q_DISABLE_COPY_MOVE( HueAmbianceLight )

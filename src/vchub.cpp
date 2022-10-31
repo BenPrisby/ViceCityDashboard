@@ -12,27 +12,27 @@
 #include "vcconfig.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static VCHub * m_pInstance = nullptr;
+static VCHub * instance_ = nullptr;
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCHub::VCHub( QObject * pParent ) :
     QObject( pParent ),
-    m_bIsActive( true ),
-    m_CurrentDateTime( QDateTime::currentDateTime() ),
-    m_Hostname( QHostInfo::localHostName() ),
-    m_Platform( QSysInfo::prettyProductName().split( QChar( '(' ) ).first().trimmed() ),
-    m_Architecture( QSysInfo::currentCpuArchitecture() ),
-    m_QtVersion( qVersion() ),
-    m_bUse24HourClock( false ),
-    m_bDarkerBackground( false ),
-    m_bScreensaverEnabled( true ),
-    m_pHue( new VCHue( "Hue", this ) ),
-    m_pNanoleaf( new VCNanoleaf( "Nanoleaf", this ) ),
-    m_pPiHole( new VCPiHole( "PiHole", this ) ),
-    m_pWeather( new VCWeather( "Weather", this ) ),
-    m_pFacts( new VCFacts( "Facts", this ) ),
-    m_pSpotify( new VCSpotify( "Spotify", this ) ),
-    m_bIsRunningScene( false )
+    isActive_( true ),
+    currentDateTime_( QDateTime::currentDateTime() ),
+    hostname_( QHostInfo::localHostName() ),
+    platform_( QSysInfo::prettyProductName().split( QChar( '(' ) ).first().trimmed() ),
+    architecture_( QSysInfo::currentCpuArchitecture() ),
+    qtVersion_( qVersion() ),
+    use24HourClock_( false ),
+    darkerBackground_( false ),
+    screensaverEnabled_( true ),
+    hue_( new VCHue( "Hue", this ) ),
+    nanoleaf_( new VCNanoleaf( "Nanoleaf", this ) ),
+    pihole_( new VCPiHole( "PiHole", this ) ),
+    weather_( new VCWeather( "Weather", this ) ),
+    facts_( new VCFacts( "Facts", this ) ),
+    spotify_( new VCSpotify( "Spotify", this ) ),
+    isRunningScene_( false )
 {
     setObjectName( "Hub" );
     qDebug() << "Initializing dashboard hub";
@@ -42,78 +42,78 @@ VCHub::VCHub( QObject * pParent ) :
 
 #ifdef QT_DEBUG
     // Reload the config file if it changes externally.
-    connect( &m_ConfigFileWatcher, &QFileSystemWatcher::fileChanged, this, [=]( const QString & Path ) {
+    connect( &configFileWatcher_, &QFileSystemWatcher::fileChanged, this, [=]( const QString & Path ) {
         qDebug() << "Reloading config file because it has changed externally";
         ( void )loadConfig( Path );
     } );
 #endif
 
     // Periodically refresh the current date and time.
-    m_CurrentDateTimeRefreshTimer.setInterval( 10 * 1000 );
-    m_CurrentDateTimeRefreshTimer.setSingleShot( false );
-    connect( &m_CurrentDateTimeRefreshTimer, &QTimer::timeout, this, &VCHub::updateCurrentDateTime );
-    m_CurrentDateTimeRefreshTimer.start();
+    currentDateTimeRefreshTimer_.setInterval( 10 * 1000 );
+    currentDateTimeRefreshTimer_.setSingleShot( false );
+    connect( &currentDateTimeRefreshTimer_, &QTimer::timeout, this, &VCHub::updateCurrentDateTime );
+    currentDateTimeRefreshTimer_.start();
 
     // Periodically refresh the IP addresses.
-    m_IPAddressesRefreshTimer.setInterval( 15 * 1000 );
-    m_IPAddressesRefreshTimer.setSingleShot( false );
-    connect( &m_IPAddressesRefreshTimer, &QTimer::timeout, this, &VCHub::refreshIPAddresses );
-    m_IPAddressesRefreshTimer.start();
+    ipAddressesRefreshTimer_.setInterval( 15 * 1000 );
+    ipAddressesRefreshTimer_.setSingleShot( false );
+    connect( &ipAddressesRefreshTimer_, &QTimer::timeout, this, &VCHub::refreshIPAddresses );
+    ipAddressesRefreshTimer_.start();
     refreshIPAddresses();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCHub * VCHub::instance()
 {
-    if ( nullptr == m_pInstance )
+    if ( nullptr == instance_ )
     {
-        m_pInstance = new VCHub();
+        instance_ = new VCHub();
     }
 
-    return m_pInstance;
+    return instance_;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHub::setActive( const bool bValue )
+void VCHub::setActive( const bool value )
 {
-    static const QList<VCPlugin *> Plugins { m_pHue, m_pNanoleaf, m_pPiHole, m_pWeather, m_pFacts, m_pSpotify };
+    static const QList<VCPlugin *> plugins { hue_, nanoleaf_, pihole_, weather_, facts_, spotify_ };
 
-    if ( m_bIsActive != bValue )
+    if ( isActive_ != value )
     {
-        m_bIsActive = bValue;
+        isActive_ = value;
         emit isActiveChanged();
 
         // Propagate the active state to each plugin.
-        for ( auto * pPlugin : Plugins )
+        for ( auto plugin : plugins )
         {
-            pPlugin->setActive( bValue );
+            plugin->setActive( value );
         }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHub::setUse24HourClock( const bool bValue )
+void VCHub::setUse24HourClock( const bool value )
 {
-    if ( m_bUse24HourClock != bValue )
+    if ( use24HourClock_ != value )
     {
-        m_bUse24HourClock = bValue;
+        use24HourClock_ = value;
         emit use24HourClockChanged();
 
         // Update the time display right away.
         updateCurrentDateTime();
 
         // Indicate that any QDateTime properties should be reevaluated by emitting the NOTIFY signal.
-        const QObjectList Children = children();
-        for ( auto * pChild : Children )
+        const QObjectList childrenList = children();
+        for ( auto child : childrenList )
         {
-            const QMetaObject * pChildMetaObject = pChild->metaObject();
-            int iPropertyCount = pChildMetaObject->propertyCount();
-            for ( int i = 0; i < iPropertyCount; i++ )
+            const QMetaObject * childMeta = child->metaObject();
+            int propertyCount = childMeta->propertyCount();
+            for ( int i = 0; i < propertyCount; i++ )
             {
-                QMetaProperty Property = pChildMetaObject->property( i );
-                if ( ( QVariant::DateTime == Property.type() ) && Property.hasNotifySignal() )
+                QMetaProperty property = childMeta->property( i );
+                if ( ( QVariant::DateTime == property.type() ) && property.hasNotifySignal() )
                 {
-                    Property.notifySignal().invoke( pChild );
+                    property.notifySignal().invoke( child );
                 }
             }
         }
@@ -121,287 +121,287 @@ void VCHub::setUse24HourClock( const bool bValue )
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-bool VCHub::loadConfig( const QString & Path )
+bool VCHub::loadConfig( const QString & path )
 {
-    bool bReturn = VCConfig::instance()->load( Path );
+    bool success = VCConfig::instance()->load( path );
 
-    if ( bReturn )
+    if ( success )
     {
         // Translate the home map path if it is relative.
-        if ( ( !m_HomeMap.isEmpty() ) && QFileInfo( m_HomeMap ).isRelative() )
+        if ( !homeMap_.isEmpty() && QFileInfo( homeMap_ ).isRelative() )
         {
             // Assume the same directory as the config file.
-            m_HomeMap = QFileInfo( Path ).dir().filePath( m_HomeMap );
+            homeMap_ = QFileInfo( path ).dir().filePath( homeMap_ );
             emit homeMapChanged();
         }
 
 #ifdef QT_DEBUG
         // Watch the config file on disk.
-        if ( m_ConfigFileWatcher.files().isEmpty() )
+        if ( configFileWatcher_.files().isEmpty() )
         {
-            m_ConfigFileWatcher.addPath( Path );
+            configFileWatcher_.addPath( path );
         }
 #endif
     }
 
-    return bReturn;
+    return success;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCHub::runScene( const QString & Scene )
+void VCHub::runScene( const QString & scene )
 {
-    QVariantList Steps = extractSceneSteps( Scene );
-    if ( !Steps.isEmpty() )
+    QVariantList steps = extractSceneSteps( scene );
+    if ( !steps.isEmpty() )
     {
         // Indicate that execution is starting.
-        m_bIsRunningScene = true;
+        isRunningScene_ = true;
         emit isRunningSceneChanged();
 
         // Scenes steps are constructed as a list of objects that contain device and state information.
-        qDebug() << "Processing scene " << Scene << " with " << Steps.size() << " steps";
-        for ( int i = 0; i < Steps.size(); i++ )
+        qDebug() << "Processing scene " << scene << " with " << steps.size() << " steps";
+        for ( int i = 0; i < steps.size(); i++ )
         {
-            int iStepNumber = i + 1;
-            QVariantMap Step = Steps.at( i ).toMap();
+            int stepNumber = i + 1;
+            QVariantMap step = steps.at( i ).toMap();
 
             // Ensure the expected structure is present.
-            if ( Step.contains( "device" ) && Step.contains( "state" ) )
+            if ( step.contains( "device" ) && step.contains( "state" ) )
             {
-                QVariantMap Device = Step.value( "device" ).toMap();
-                QString Name = Device.value( "name" ).toString();
-                QString Class = Device.value( "class" ).toString();
-                QVariantMap State = Step.value( "state" ).toMap();
+                QVariantMap device = step.value( "device" ).toMap();
+                QString name = device.value( "name" ).toString();
+                QString className = device.value( "class" ).toString();
+                QVariantMap state = step.value( "state" ).toMap();
 
                 // Execute the actions of the step based on the device class.
-                if ( "hue" == Class )
+                if ( "hue" == className )
                 {
                     // Locate the Hue device by name.
-                    const QList<HueDevice *> & HueDevices = m_pHue->devices();
-                    HueDevice * pHueDevice = nullptr;
-                    for ( auto * const pDevice : HueDevices )
+                    const QList<HueDevice *> & hueDevices = hue_->devices();
+                    HueDevice * hueDevice = nullptr;
+                    for ( auto * const device : hueDevices )
                     {
-                        if ( Name == pDevice->name() )
+                        if ( name == device->name() )
                         {
-                            pHueDevice = pDevice;
+                            hueDevice = device;
                             break;
                         }
                     }
 
                     // Check if the device has been discovered.
-                    if ( nullptr != pHueDevice )
+                    if ( nullptr != hueDevice )
                     {
-                        qDebug() << "Executing step " << iStepNumber << " on Hue device: " << Name;
+                        qDebug() << "Executing step " << stepNumber << " on Hue device: " << name;
 
                         // Apply state properties from most to least generic.
-                        if ( State.contains( "on" ) )
+                        if ( state.contains( "on" ) )
                         {
                             qDebug() << "\t=> Command power";
-                            pHueDevice->commandPower( State.take( "on" ).toBool() );
+                            hueDevice->commandPower( state.take( "on" ).toBool() );
                         }
-                        if ( State.contains( "brightness" ) )
+                        if ( state.contains( "brightness" ) )
                         {
                             // This must be a light.
-                            auto * pHueLight = qobject_cast<HueLight *>( pHueDevice );
-                            if ( nullptr != pHueLight )
+                            auto hueLight = qobject_cast<HueLight *>( hueDevice );
+                            if ( nullptr != hueLight )
                             {
                                 qDebug() << "\t=> Command brightness";
-                                pHueLight->commandBrightness( State.take( "brightness" ).toDouble() );
+                                hueLight->commandBrightness( state.take( "brightness" ).toDouble() );
                             }
                             else
                             {
-                                State.remove( "brightness" );  // Still consume the value
-                                qDebug() << "Encountered brightness command for Hue device " << Name
-                                         << " that is not a light in step " << iStepNumber
-                                         << " when processing scene: " << Scene;
+                                state.remove( "brightness" );  // Still consume the value
+                                qDebug() << "Encountered brightness command for Hue device " << name
+                                         << " that is not a light in step " << stepNumber
+                                         << " when processing scene: " << scene;
                             }
                         }
-                        if ( State.contains( "colorTemperature" ) )
+                        if ( state.contains( "colorTemperature" ) )
                         {
                             // This must be an ambiance light.
-                            auto * pHueLight = qobject_cast<HueAmbianceLight *>( pHueDevice );
-                            if ( nullptr != pHueLight )
+                            auto hueLight = qobject_cast<HueAmbianceLight *>( hueDevice );
+                            if ( nullptr != hueLight )
                             {
                                 qDebug() << "\t=> Command color temperature";
-                                pHueLight->commandColorTemperature( State.take( "colorTemperature" ).toInt() );
+                                hueLight->commandColorTemperature( state.take( "colorTemperature" ).toInt() );
                             }
                             else
                             {
-                                State.remove( "colorTemperature" );  // Still consume the value
-                                qDebug() << "Encountered color temperature command for Hue device " << Name
-                                         << " that is not an ambiance light in step " << iStepNumber
-                                         << " when processing scene: " << Scene;
+                                state.remove( "colorTemperature" );  // Still consume the value
+                                qDebug() << "Encountered color temperature command for Hue device " << name
+                                         << " that is not an ambiance light in step " << stepNumber
+                                         << " when processing scene: " << scene;
                             }
                         }
-                        if ( State.contains( "xy" ) )
+                        if ( state.contains( "xy" ) )
                         {
                             // This must be a color light.
-                            auto * pHueLight = qobject_cast<HueColorLight *>( pHueDevice );
-                            if ( nullptr != pHueLight )
+                            auto hueLight = qobject_cast<HueColorLight *>( hueDevice );
+                            if ( nullptr != hueLight )
                             {
                                 qDebug() << "\t=> Command XY color";
-                                QVariantList XY = State.take( "xy" ).toList();
-                                pHueLight->commandColor( XY.at( 0 ).toDouble(), XY.at( 1 ).toDouble() );
+                                QVariantList xy = state.take( "xy" ).toList();
+                                hueLight->commandColor( xy.at( 0 ).toDouble(), xy.at( 1 ).toDouble() );
                             }
                             else
                             {
-                                State.remove( "xy" );  // Still consume the value
-                                qDebug() << "Encountered XY color command for Hue device " << Name
-                                         << " that is not a color light in step " << iStepNumber
-                                         << " when processing scene: " << Scene;
+                                state.remove( "xy" );  // Still consume the value
+                                qDebug() << "Encountered XY color command for Hue device " << name
+                                         << " that is not a color light in step " << stepNumber
+                                         << " when processing scene: " << scene;
                             }
                         }
-                        if ( State.contains( "hue" ) )
+                        if ( state.contains( "hue" ) )
                         {
                             // This must be a color light.
-                            auto * pHueLight = qobject_cast<HueColorLight *>( pHueDevice );
-                            if ( nullptr != pHueLight )
+                            auto hueLight = qobject_cast<HueColorLight *>( hueDevice );
+                            if ( nullptr != hueLight )
                             {
                                 qDebug() << "\t=> Command hue color";
-                                pHueLight->commandColor( State.take( "hue" ).toInt() );
+                                hueLight->commandColor( state.take( "hue" ).toInt() );
                             }
                             else
                             {
-                                State.remove( "hue" );  // Still consume the value
-                                qDebug() << "Encountered hue color command for Hue device " << Name
-                                         << " that is not a color light in step " << iStepNumber
-                                         << " when processing scene: " << Scene;
+                                state.remove( "hue" );  // Still consume the value
+                                qDebug() << "Encountered hue color command for Hue device " << name
+                                         << " that is not a color light in step " << stepNumber
+                                         << " when processing scene: " << scene;
                             }
                         }
-                        if ( !State.isEmpty() )
+                        if ( !state.isEmpty() )
                         {
-                            qDebug() << "Detected unsupported state properties " << State.keys() << " for Hue device "
-                                     << Name << " in step " << iStepNumber << " when processing scene: " << Scene;
+                            qDebug() << "Detected unsupported state properties " << state.keys() << " for Hue device "
+                                     << name << " in step " << stepNumber << " when processing scene: " << scene;
                         }
                     }
                     else
                     {
-                        qDebug() << "Encountered unknown Hue device name " << Name << " in step " << iStepNumber
-                                 << " when processing scene: " << Scene;
+                        qDebug() << "Encountered unknown Hue device name " << name << " in step " << stepNumber
+                                 << " when processing scene: " << scene;
                     }
                 }
-                else if ( "nanoleaf" == Class )
+                else if ( "nanoleaf" == className )
                 {
                     // Ensure this is the discovered Nanoleaf.
-                    if ( Name == m_pNanoleaf->name() )
+                    if ( name == nanoleaf_->name() )
                     {
-                        qDebug() << "Executing step " << iStepNumber << " on Nanoleaf: " << Name;
-                        if ( State.contains( "on" ) )
+                        qDebug() << "Executing step " << stepNumber << " on Nanoleaf: " << name;
+                        if ( state.contains( "on" ) )
                         {
                             qDebug() << "\t=> Command power";
-                            m_pNanoleaf->commandPower( State.take( "on" ).toBool() );
+                            nanoleaf_->commandPower( state.take( "on" ).toBool() );
                         }
-                        if ( State.contains( "effect" ) )
+                        if ( state.contains( "effect" ) )
                         {
                             qDebug() << "\t=> Select effect";
-                            m_pNanoleaf->selectEffect( State.take( "effect" ).toString() );
+                            nanoleaf_->selectEffect( state.take( "effect" ).toString() );
                         }
-                        if ( !State.isEmpty() )
+                        if ( !state.isEmpty() )
                         {
-                            qDebug() << "Detected unsupported state properties " << State.keys() << " for Nanoleaf "
-                                     << Name << " in step " << iStepNumber << " when processing scene: " << Scene;
+                            qDebug() << "Detected unsupported state properties " << state.keys() << " for Nanoleaf "
+                                     << name << " in step " << stepNumber << " when processing scene: " << scene;
                         }
                     }
                     else
                     {
-                        qDebug() << "Encountered unknown Nanoleaf name " << Name << " in step " << iStepNumber
-                                 << " when processing scene: " << Scene;
+                        qDebug() << "Encountered unknown Nanoleaf name " << name << " in step " << stepNumber
+                                 << " when processing scene: " << scene;
                     }
                 }
                 else
                 {
-                    qDebug() << "Encountered unsupported class " << Class << " in step " << iStepNumber
-                             << " when processing scene: " << Scene;
+                    qDebug() << "Encountered unsupported class " << className << " in step " << stepNumber
+                             << " when processing scene: " << scene;
                 }
             }
             else
             {
-                qDebug() << "Missing device and/or state for step " << iStepNumber << " in scene: " << Scene;
+                qDebug() << "Missing device and/or state for step " << stepNumber << " in scene: " << scene;
             }
 
             // Insert a brief pause in between steps to prevent overloading the devices.
-            QTime Future = QTime::currentTime().addMSecs( 200 );
-            for ( ; Future > QTime::currentTime(); /* Passage of time. */ )
+            QTime future = QTime::currentTime().addMSecs( 200 );
+            for ( ; future > QTime::currentTime(); /* Passage of time. */ )
             {
                 QCoreApplication::processEvents( QEventLoop::AllEvents, 500 );
             }
         }
 
-        qDebug() << "Finished processing scene: " << Scene;
-        m_bIsRunningScene = false;
+        qDebug() << "Finished processing scene: " << scene;
+        isRunningScene_ = false;
         emit isRunningSceneChanged();
     }
     else
     {
         // No steps, assume this means the scene was not found.
-        qDebug() << "Ignoring request to run unknown scene: " << Scene;
+        qDebug() << "Ignoring request to run unknown scene: " << scene;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QStringList VCHub::parseSceneColors( const QString & Scene )
+QStringList VCHub::parseSceneColors( const QString & scene )
 {
-    QStringList Colors;
+    QStringList colors;
 
     // Pull any called-out colors from the step states.
-    const QVariantList Steps = extractSceneSteps( Scene );
-    if ( !Steps.isEmpty() )
+    const QVariantList steps = extractSceneSteps( scene );
+    if ( !steps.isEmpty() )
     {
-        for ( const auto & Step : Steps )
+        for ( const auto & step : steps )
         {
-            QVariantMap State = Step.toMap().value( "state" ).toMap();
-            if ( State.contains( "xy" ) )
+            QVariantMap state = step.toMap().value( "state" ).toMap();
+            if ( state.contains( "xy" ) )
             {
-                QVariantList XY = State.value( "xy" ).toList();
-                if ( 2  == XY.size() )
+                QVariantList xy = state.value( "xy" ).toList();
+                if ( 2  == xy.size() )
                 {
-                    QColor Color = HueColorLight::xyToColor( XY.at( 0 ).toDouble(), XY.at( 1 ).toDouble() );
-                    if ( Color.isValid() )
+                    QColor color = HueColorLight::xyToColor( xy.at( 0 ).toDouble(), xy.at( 1 ).toDouble() );
+                    if ( color.isValid() )
                     {
-                        Colors.append( Color.name() );
+                        colors.append( color.name() );
                     }
                 }
             }
-            if ( State.contains( "hue" ) )
+            if ( state.contains( "hue" ) )
             {
-                QColor Color = HueColorLight::hueToColor( State.value( "hue" ).toInt() );
-                if ( Color.isValid() )
+                QColor color = HueColorLight::hueToColor( state.value( "hue" ).toInt() );
+                if ( color.isValid() )
                 {
-                    Colors.append( Color.name() );
+                    colors.append( color.name() );
                 }
             }
         }
     }
 
     // Sort the list alphabetically so duplicate colors are adjacent.
-    if ( !Colors.isEmpty() )
+    if ( !colors.isEmpty() )
     {
-        std::sort( Colors.begin(), Colors.end() );
+        std::sort( colors.begin(), colors.end() );
     }
 
-    return Colors;
+    return colors;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::dayOfWeek( const QDateTime & DateTime ) const
+QString VCHub::dayOfWeek( const QDateTime & dateTime ) const
 {
-    return DateTime.toString( "dddd" );
+    return dateTime.toString( "dddd" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatTime( const QDateTime & DateTime ) const
+QString VCHub::formatTime( const QDateTime & dateTime ) const
 {
-    return DateTime.toString( use24HourClock() ? "hh:mm" : "h:mm AP" );
+    return dateTime.toString( use24HourClock() ? "hh:mm" : "h:mm AP" );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatInt( int iValue, const QString & Unit ) const
+QString VCHub::formatInt( int value, const QString & unit ) const
 {
-    QString Display = QLocale::system().toString( iValue );
-    if ( !Unit.isEmpty() )
+    QString display = QLocale::system().toString( value );
+    if ( !unit.isEmpty() )
     {
-        Display.append( QString( " %1" ).arg( Unit ) );
+        display.append( QString( " %1" ).arg( unit ) );
     }
-    return Display;
+    return display;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -416,23 +416,23 @@ QString VCHub::formatDecimal( double dValue, const QString & Unit ) const
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QString VCHub::formatPercentage( double dValue, bool bWholeNumber ) const
+QString VCHub::formatPercentage( double value, bool wholeNumber ) const
 {
-    return QString( "%1%" ).arg( QLocale::system().toString( dValue, 'f', bWholeNumber ? 0 : 1 ) );
+    return QString( "%1%" ).arg( QLocale::system().toString( value, 'f', wholeNumber ? 0 : 1 ) );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 QString VCHub::screenshotPath() const
 {
-    QString Format = QString( "yyyy-MM-dd %1" ).arg( use24HourClock() ? "hh.mm.ss" : "h.mm.ss AP" );
-    QString Filename = QString( "VC Screenshot %1.png" ).arg( QDateTime::currentDateTime().toString( Format ) );
-    return QDir( QStandardPaths::writableLocation( QStandardPaths::DesktopLocation ) ).absoluteFilePath( Filename );
+    QString format = QString( "yyyy-MM-dd %1" ).arg( use24HourClock() ? "hh.mm.ss" : "h.mm.ss AP" );
+    QString filename = QString( "VC Screenshot %1.png" ).arg( QDateTime::currentDateTime().toString( format ) );
+    return QDir( QStandardPaths::writableLocation( QStandardPaths::DesktopLocation ) ).absoluteFilePath( filename );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCHub::updateCurrentDateTime()
 {
-    m_CurrentDateTime = QDateTime::currentDateTime();
+    currentDateTime_ = QDateTime::currentDateTime();
     emit currentDateTimeChanged();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -440,27 +440,27 @@ void VCHub::updateCurrentDateTime()
 void VCHub::refreshIPAddresses()
 {
     // Examine all of the system network interfaces and any associated IP addresses they may have.
-    const QList<QNetworkInterface> Interfaces = QNetworkInterface::allInterfaces();
-    for ( const auto & Interface : Interfaces )
+    const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+    for ( const auto & interface : interfaces )
     {
         // Avoid loopback, P2P, or otherwise virtual interfaces.
-        if ( ( QNetworkInterface::Ethernet == Interface.type() ) || ( QNetworkInterface::Wifi == Interface.type() ) )
+        if ( ( QNetworkInterface::Ethernet == interface.type() ) || ( QNetworkInterface::Wifi == interface.type() ) )
         {
-            const QList<QNetworkAddressEntry> AddressEntries = Interface.addressEntries();
-            for ( const auto & AddressEntry : AddressEntries )
+            const QList<QNetworkAddressEntry> addressEntries = interface.addressEntries();
+            for ( const auto & addressEntry : addressEntries )
             {
-                QHostAddress Address = AddressEntry.ip();
-                if ( ( QAbstractSocket::IPv4Protocol == Address.protocol() ) && ( !Address.isLoopback() ) )
+                QHostAddress address = addressEntry.ip();
+                if ( ( QAbstractSocket::IPv4Protocol == address.protocol() ) && !address.isLoopback() )
                 {
-                    QString IPAddress = Address.toString();
-                    if ( ( QNetworkInterface::Ethernet == Interface.type() ) && ( m_EthernetIPAddress != IPAddress ) )
+                    QString ipAddress = address.toString();
+                    if ( ( QNetworkInterface::Ethernet == interface.type() ) && ( ethernetIPAddress_ != ipAddress ) )
                     {
-                        m_EthernetIPAddress = IPAddress;
+                        ethernetIPAddress_ = ipAddress;
                         emit ethernetIPAddressChanged();
                     }
-                    else if ( ( QNetworkInterface::Wifi == Interface.type() ) && ( m_EthernetIPAddress != IPAddress ) )
+                    else if ( ( QNetworkInterface::Wifi == interface.type() ) && ( ethernetIPAddress_ != ipAddress ) )
                     {
-                        m_WifiIPAddress = IPAddress;
+                        wifiIPAddress_ = ipAddress;
                         emit wifiIPAddressChanged();
                     }
                 }
@@ -470,30 +470,30 @@ void VCHub::refreshIPAddresses()
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QVariantList VCHub::extractSceneSteps( const QString & Scene )
+QVariantList VCHub::extractSceneSteps( const QString & scene )
 {
-    QVariantList Steps;
+    QVariantList steps;
 
     // Find the scene in the list and extract its steps.
-    for ( const auto & SceneItem : qAsConst( m_Scenes ) )
+    for ( const auto & sceneItem : qAsConst( scenes_ ) )
     {
-        QVariantMap SceneMap = SceneItem.toMap();
-        QString Name = SceneMap.value( "name" ).toString();
-        if ( ( !Name.isEmpty() ) && ( Scene == Name ) )
+        QVariantMap sceneMap = sceneItem.toMap();
+        QString name = sceneMap.value( "name" ).toString();
+        if ( !name.isEmpty() && ( scene == name ) )
         {
-            Steps = SceneMap.value( "steps" ).toList();
+            steps = sceneMap.value( "steps" ).toList();
             break;
         }
     }
 
-    return Steps;
+    return steps;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-QObject * vchub_singletontype_provider( QQmlEngine * pEngine, QJSEngine * pScriptEngine )
+QObject * vchub_singletontype_provider( QQmlEngine * engine, QJSEngine * scriptEngine )
 {
-    ( void )pEngine;
-    ( void )pScriptEngine;
+    ( void )engine;
+    ( void )scriptEngine;
 
     return VCHub::instance();
 }

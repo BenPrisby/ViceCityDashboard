@@ -7,19 +7,19 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-static VCConfig * m_pInstance = nullptr;
+static VCConfig * instance_ = nullptr;
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCConfig::VCConfig( QObject * pParent ) : QObject( pParent )
+VCConfig::VCConfig( QObject * parent ) : QObject( parent )
 {
     // Find our save slot in the Meta-Object system.
-    const QMetaObject * pMetaObject = metaObject();
-    for ( int i = 0; i < pMetaObject->methodCount(); i++ )
+    const QMetaObject * meta = metaObject();
+    for ( int i = 0; i < meta->methodCount(); i++ )
     {
-        QMetaMethod Method = pMetaObject->method( i );
-        if ( "save" == Method.name() )
+        QMetaMethod method = meta->method( i );
+        if ( "save" == method.name() )
         {
-            m_SaveMethod = Method;
+            saveMethod_ = method;
             break;
         }
     }
@@ -28,157 +28,157 @@ VCConfig::VCConfig( QObject * pParent ) : QObject( pParent )
 
 VCConfig * VCConfig::instance()
 {
-    if ( nullptr == m_pInstance )
+    if ( nullptr == instance_ )
     {
-        m_pInstance = new VCConfig( VCHub::instance() );  // BDP: The parent allows key resolution.
+        instance_ = new VCConfig( VCHub::instance() );  // BDP: The parent allows key resolution.
     }
 
-    return m_pInstance;
+    return instance_;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-bool VCConfig::load( const QString & Path )
+bool VCConfig::load( const QString & path )
 {
-    bool bReturn = false;
+    bool success = false;
 
     // Ensure the path refers to a writable file.
-    if ( QFile::exists( Path ) && QFileInfo( Path ).isWritable() )
+    if ( QFile::exists( path ) && QFileInfo( path ).isWritable() )
     {
-        QFile ConfigFile( Path );
-        if ( ConfigFile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+        QFile configFile( path );
+        if ( configFile.open( QIODevice::ReadOnly | QIODevice::Text ) )
         {
-            qDebug() << "Loading config file: " << Path;
-            QJsonDocument ConfigDocument = QJsonDocument::fromJson( ConfigFile.readAll() );
-            if ( ConfigDocument.isObject() )
+            qDebug() << "Loading config file: " << path;
+            QJsonDocument configDocument = QJsonDocument::fromJson( configFile.readAll() );
+            if ( configDocument.isObject() )
             {
-                QJsonObject Config = ConfigDocument.object();
-                m_Keys.clear();
-                const QStringList Keys = Config.keys();
-                for ( const auto & Key : Keys )
+                QJsonObject Config = configDocument.object();
+                keys_.clear();
+                const QStringList keys = Config.keys();
+                for ( const auto & key : keys )
                 {
-                    KeyContext Context = keyToContext( Key );
+                    KeyContext context = keyToContext( key );
 
                     // Did the key resolve to a valid object and property name?
-                    if ( ( nullptr != Context.first ) && ( !Context.second.isEmpty() ) )
+                    if ( context.first && !context.second.isEmpty() )
                     {
-                        QObject * pObject = Context.first;
-                        QString Property = Context.second;
+                        QObject * object = context.first;
+                        QString property = context.second;
 
                         // Ensure the property exists.
-                        if ( pObject->property( Property.toStdString().c_str() ).isValid() )
+                        if ( object->property( property.toStdString().c_str() ).isValid() )
                         {
                             // Find the property's NOTIFY signal to drive saving back the file.
-                            QMetaMethod NotifySignal;
-                            const QMetaObject * pMetaObject = pObject->metaObject();
-                            for ( int i = 0; i < pMetaObject->propertyCount(); i++ )
+                            QMetaMethod notifySignal;
+                            const QMetaObject * meta = object->metaObject();
+                            for ( int i = 0; i < meta->propertyCount(); i++ )
                             {
-                                QMetaProperty MetaProperty = pMetaObject->property( i );
-                                if ( Property == MetaProperty.name() )
+                                QMetaProperty metaProperty = meta->property( i );
+                                if ( property == metaProperty.name() )
                                 {
-                                    if ( MetaProperty.hasNotifySignal() )
+                                    if ( metaProperty.hasNotifySignal() )
                                     {
-                                        NotifySignal = MetaProperty.notifySignal();
+                                        notifySignal = metaProperty.notifySignal();
 
                                         // Break any existing connection to prevent an unintended save while loading.
-                                        disconnect( pObject, NotifySignal, this, m_SaveMethod );
+                                        disconnect( object, notifySignal, this, saveMethod_ );
                                         break;
                                     }
                                     else
                                     {
-                                        qWarning() << "No NOTIFY signal for property in config key: " << Key;
+                                        qWarning() << "No NOTIFY signal for property in config key: " << key;
                                     }
                                 }
                             }
 
                             // Set the property to the value specified in the file.
-                            pObject->setProperty( Property.toStdString().c_str(), Config.value( Key ).toVariant() );
+                            object->setProperty( property.toStdString().c_str(), Config.value( key ).toVariant() );
 
                             // Save the key name to track it now that is has been validated.
-                            m_Keys.append( Key );
+                            keys_.append( key );
 
                             // Connect or reconnect the notify signal.
-                            if ( NotifySignal.isValid() )
+                            if ( notifySignal.isValid() )
                             {
-                                connect( pObject, NotifySignal, this, m_SaveMethod );
+                                connect( object, notifySignal, this, saveMethod_ );
                             }
                         }
                         else
                         {
-                            qWarning() << "Ignoring config key because the property does not exist: " << Key;
+                            qWarning() << "Ignoring config key because the property does not exist: " << key;
                         }
                     }
                     else
                     {
-                        qWarning() << "Ignoring config key because it does not resolve: " << Key;
+                        qWarning() << "Ignoring config key because it does not resolve: " << key;
                     }
                 }
 
-                m_Path = Path;
-                bReturn = true;
+                path_ = path;
+                success = true;
             }
             else
             {
-                qWarning() << "Failed to parse config file structure: " << Path;
-                bReturn = false;
+                qWarning() << "Failed to parse config file structure: " << path;
+                success = false;
             }
-            ConfigFile.close();
+            configFile.close();
         }
         else
         {
-            qWarning() << "Failed to open config file: " << Path;
-            bReturn = false;
+            qWarning() << "Failed to open config file: " << path;
+            success = false;
         }
     }
     else
     {
-        qWarning() << "Ignoring config file path because it does not refer to an existing, writable file: " << Path;
-        bReturn = false;
+        qWarning() << "Ignoring config file path because it does not refer to an existing, writable file: " << path;
+        success = false;
     }
 
-    return bReturn;
+    return success;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 bool VCConfig::save()
 {
-    bool bReturn = false;
+    bool success = false;
 
     // Ensure that a config has been previously loaded.
-    if ( ( !m_Path.isEmpty() ) && ( !m_Keys.isEmpty() ) )
+    if ( !path_.isEmpty() && !keys_.isEmpty() )
     {
-        QJsonObject Config;
-        for ( const auto & Key : qAsConst( m_Keys ) )
+        QJsonObject config;
+        for ( const auto & key : qAsConst( keys_ ) )
         {
-            KeyContext Context = keyToContext( Key );
+            KeyContext context = keyToContext( key );
 
             // This should always resolve since this is a validated key, but do a sanity check anyway.
-            if ( ( nullptr != Context.first ) && ( !Context.second.isEmpty() ) )
+            if ( context.first && !context.second.isEmpty() )
             {
-                QObject * pObject = Context.first;
-                QString Property = Context.second;
+                QObject * object = context.first;
+                QString property = context.second;
 
                 // Record the latest property value.
-                Config[ Key ] = QJsonValue::fromVariant( pObject->property( Property.toStdString().c_str() ) );
+                config[ key ] = QJsonValue::fromVariant( object->property( property.toStdString().c_str() ) );
             }
             else
             {
-                qWarning() << "Not saving config key because it does not resolve: " << Key;
+                qWarning() << "Not saving config key because it does not resolve: " << key;
             }
         }
 
-        if ( !Config.isEmpty() )
+        if ( !config.isEmpty() )
         {
-            QFile ConfigFile( m_Path );
-            if ( ConfigFile.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text ) )
+            QFile configFile( path_ );
+            if ( configFile.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text ) )
             {
-                ConfigFile.write( QJsonDocument( Config ).toJson() );
-                ConfigFile.close();
-                qDebug() << "Saved config file: " << m_Path;
-                bReturn = true;
+                configFile.write( QJsonDocument( config ).toJson() );
+                configFile.close();
+                qDebug() << "Saved config file: " << path_;
+                success = true;
             }
             else
             {
-                qWarning() << "Failed to open config file when trying to save: " << m_Path;
+                qWarning() << "Failed to open config file when trying to save: " << path_;
             }
         }
         else
@@ -191,32 +191,32 @@ bool VCConfig::save()
         qDebug() << "Not saving config because one was not previously loaded";
     }
 
-    return bReturn;
+    return success;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-KeyContext VCConfig::keyToContext( const QString & Key )
+KeyContext VCConfig::keyToContext( const QString & key )
 {
-    QObject * pObject = nullptr;
-    QString PropertyName;
+    QObject * object = nullptr;
+    QString propertyName;
 
     // Keys are references into the Meta-Object system using object names, with the property to set at the end.
-    QStringList Parts = Key.split( QChar( '.' ) );
-    if ( 2 == Parts.size() )
+    QStringList parts = key.split( QChar( '.' ) );
+    if ( 2 == parts.size() )
     {
         // Drop the property name.
-        PropertyName = Parts.takeLast();
+        propertyName = parts.takeLast();
 
         // Treat the parent as the top-most item in the heirarchy.
-        pObject = parent();
+        object = parent();
 
         // If the object name is not the parent's, recurse down into the children to find it.
-        if ( pObject->objectName() != Parts.first() )
+        if ( object->objectName() != parts.first() )
         {
-            pObject = pObject->findChild<QObject *>( Parts.first() );
+            object = object->findChild<QObject *>( parts.first() );
         }
     }
 
-    return KeyContext { pObject, PropertyName };
+    return KeyContext { object, propertyName };
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

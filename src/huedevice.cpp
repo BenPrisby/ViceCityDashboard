@@ -4,140 +4,140 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-HueDevice::HueDevice( int iID, QObject * pParent ) :
-    QObject( pParent ),
-    m_iID( iID ),
-    m_bIsReachable( false ),
-    m_bIsOn( false )
+HueDevice::HueDevice( int id, QObject * parent ) :
+    QObject( parent ),
+    id_( id ),
+    isReachable_( false ),
+    isOn_( false )
 {
-    qDebug() << "Created Hue device with ID: " << m_iID;
+    qDebug() << "Created Hue device with ID: " << id_;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueDevice::setRoom( const QString & Value )
+void HueDevice::setRoom( const QString & value )
 {
-    if ( m_Room != Value )
+    if ( room_ != value )
     {
-        m_Room = Value;
+        room_ = value;
         emit roomChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueDevice::commandPower( const bool bOn )
+void HueDevice::commandPower( const bool on )
 {
-    VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "on", bOn } } );
+    VCHub::instance()->hue()->commandDeviceState( id_, QJsonObject { { "on", on } } );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueDevice::handleResponse( const QJsonDocument & Response )
+void HueDevice::handleResponse( const QJsonDocument & response )
 {
     // Is this a direct reply to a command?
-    if ( Response.isArray() )
+    if ( response.isArray() )
     {
         // Yes, unpack the response structure.
         // BDP: There are a few layers to unpack here, but it seems to be to support multiple replies in the same
         //      message. We will only be sending one at a time, but still support multiple.
-        QJsonObject State;
-        const QJsonArray ResponseArray = Response.array();
-        for ( const auto & ResponseItem : ResponseArray )
+        QJsonObject state;
+        const QJsonArray responseArray = response.array();
+        for ( const auto & responseItem : responseArray )
         {
-            QJsonObject ResponseObject = ResponseItem.toObject();
-            if ( ResponseObject.contains( "success" ) )
+            QJsonObject responseObject = responseItem.toObject();
+            if ( responseObject.contains( "success" ) )
             {
-                QJsonObject SuccessObject = ResponseObject.value( "success" ).toObject();
-                const QStringList Arguments = SuccessObject.keys();
-                for ( const auto & Argument : Arguments )
+                QJsonObject successObject = responseObject.value( "success" ).toObject();
+                const QStringList arguments = successObject.keys();
+                for ( const auto & argument : arguments )
                 {
                     // The reply is identified by the API endpoint portion at the end of the URL.
-                    if ( Argument.startsWith( QString( "/lights/%1/state/" ).arg( m_iID ) ) )
+                    if ( argument.startsWith( QString( "/lights/%1/state/" ).arg( id_ ) ) )
                     {
                         // The final token will be the state property that was set.
-                        QStringList Parts = Argument.split( QChar( '/' ) );
-                        State.insert( Parts.last(), SuccessObject.value( Argument ) );
+                        QStringList parts = argument.split( QChar( '/' ) );
+                        state.insert( parts.last(), successObject.value( argument ) );
                     }
                     else
                     {
-                        qDebug() << "Got unexpected argument when handling response for Hue device: " << m_iID;
+                        qDebug() << "Got unexpected argument when handling response for Hue device: " << id_;
                     }
                 }
             }
             else
             {
-                qDebug() << "Received error when handling response for Hue device: " << m_iID;
+                qDebug() << "Received error when handling response for Hue device: " << id_;
             }
         }
 
         // Process any collected data, providing it in the expected structure.
-        handleResponseData( QJsonObject { { "state", State } } );
+        handleResponseData( QJsonObject { { "state", state } } );
     }
-    else if ( Response.isObject() )
+    else if ( response.isObject() )
     {
         // No, pass through.
-        handleResponseData( Response.object() );
+        handleResponseData( response.object() );
     }
     else
     {
-        qDebug() << "Failed to parse response for Hue device: " << m_iID;
+        qDebug() << "Failed to parse response for Hue device: " << id_;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueDevice::handleStateData( const QJsonObject & State )
+void HueDevice::handleStateData( const QJsonObject & state )
 {
-    if ( State.contains( "reachable" ) )
+    if ( state.contains( "reachable" ) )
     {
-        bool bReachable = State.value( "reachable" ).toBool();
-        if ( m_bIsReachable != bReachable )
+        bool reachable = state.value( "reachable" ).toBool();
+        if ( isReachable_ != reachable )
         {
-            m_bIsReachable = bReachable;
+            isReachable_ = reachable;
             emit isReachableChanged();
         }
     }
-    if ( State.contains( "on" ) )
+    if ( state.contains( "on" ) )
     {
-        bool bOn = State.value( "on" ).toBool();
-        if ( m_bIsOn != bOn )
+        bool on = state.value( "on" ).toBool();
+        if ( isOn_ != on )
         {
-            m_bIsOn = bOn;
+            isOn_ = on;
             emit isOnChanged();
         }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueDevice::handleResponseData( const QJsonObject & Response )
+void HueDevice::handleResponseData( const QJsonObject & response )
 {
     // Process top-level values.
-    if ( Response.contains( "name" ) )
+    if ( response.contains( "name" ) )
     {
-        QString Name = Response.value( "name" ).toString();
-        if ( m_Name != Name )
+        QString name = response.value( "name" ).toString();
+        if ( name_ != name )
         {
-            m_Name = Name;
+            name_ = name;
             emit nameChanged();
         }
     }
-    if ( Response.contains( "type" ) )
+    if ( response.contains( "type" ) )
     {
-        QString Type = Response.value( "type" ).toString();
-        if ( m_Type != Type )
+        QString type = response.value( "type" ).toString();
+        if ( type_ != type )
         {
-            m_Type = Type;
+            type_ = type;
             emit typeChanged();
         }
     }
-    if ( Response.contains( "productname" ) )
+    if ( response.contains( "productname" ) )
     {
-        QString ProductName = Response.value( "productname" ).toString();
-        if ( m_ProductName != ProductName )
+        QString productName = response.value( "productname" ).toString();
+        if ( productName_ != productName )
         {
-            m_ProductName = ProductName;
+            productName_ = productName;
             emit productNameChanged();
         }
     }
 
     // Unpack and process state information.
-    handleStateData( Response.value( "state" ).toObject() );
+    handleStateData( response.value( "state" ).toObject() );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

@@ -9,7 +9,7 @@
 class VCPiHole final : public VCPlugin
 {
     Q_OBJECT
-    Q_PROPERTY( QString serverHostname      READ serverHostname      MEMBER m_ServerHostname  NOTIFY serverHostnameChanged )
+    Q_PROPERTY( QString serverHostname      READ serverHostname      MEMBER serverHostname_  NOTIFY serverHostnameChanged )
     Q_PROPERTY( QString serverIPAddress     READ serverIPAddress                              NOTIFY serverIPAddressChanged )
     Q_PROPERTY( bool isEnabled              READ isEnabled                                    NOTIFY isEnabledChanged )
     Q_PROPERTY( int totalQueries            READ totalQueries                                 NOTIFY totalQueriesChanged )
@@ -19,16 +19,16 @@ class VCPiHole final : public VCPlugin
     Q_PROPERTY( QVariantMap historicalData  READ historicalData                               NOTIFY historicalDataChanged )
 
 public:
-    explicit VCPiHole( const QString & Name, QObject * pParent = nullptr );
+    explicit VCPiHole( const QString & name, QObject * parent = nullptr );
 
-    const QString & serverHostname() const { return m_ServerHostname; }
-    const QString & serverIPAddress() const { return m_ServerIPAddress; }
-    bool isEnabled() const { return m_bIsEnabled; }
-    int totalQueries() const { return m_iTotalQueries; }
-    int blockedQueries() const { return m_iBlockedQueries; }
-    double percentBlocked() const { return m_dPercentBlocked; }
-    int blockedDomains() const { return m_iBlockedDomains; }
-    const QVariantMap & historicalData() const { return m_HistoricalData; }
+    const QString & serverHostname() const { return serverHostname_; }
+    const QString & serverIPAddress() const { return serverIPAddress_; }
+    bool isEnabled() const { return isEnabled_; }
+    int totalQueries() const { return totalQueries_; }
+    int blockedQueries() const { return blockedQueries_; }
+    double percentBlocked() const { return percentBlocked_; }
+    int blockedDomains() const { return blockedDomains_; }
+    const QVariantMap & historicalData() const { return historicalData_; }
 
 signals:
     void serverHostnameChanged();
@@ -45,21 +45,21 @@ public slots:
     void refreshHistoricalData();
 
 private slots:
-    void handleHostLookup( const QHostInfo & Host );
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
+    void handleHostLookup( const QHostInfo & host );
+    void handleNetworkReply( int iStatusCode, QObject * sender, const QJsonDocument & body );
 
 private:
-    QString m_ServerHostname;
-    QString m_ServerIPAddress;
-    bool m_bIsEnabled;
-    int m_iTotalQueries;
-    int m_iBlockedQueries;
-    double m_dPercentBlocked;
-    int m_iBlockedDomains;
-    QVariantMap m_HistoricalData;
+    QString serverHostname_;
+    QString serverIPAddress_;
+    bool isEnabled_;
+    int totalQueries_;
+    int blockedQueries_;
+    double percentBlocked_;
+    int blockedDomains_;
+    QVariantMap historicalData_;
 
-    QUrl m_SummaryDestination;
-    QUrl m_HistoricalDataDestination;
+    QUrl summaryDestination_;
+    QUrl historicalDataDestination_;
 
     Q_DISABLE_COPY_MOVE( VCPiHole )
 };

@@ -10,26 +10,26 @@ class HueColorLight final : public HueAmbianceLight
     Q_PROPERTY( int hue       READ hue    NOTIFY colorChanged )
 
 public:
-    explicit HueColorLight( int iID, QObject * pParent = nullptr );
+    explicit HueColorLight( int id, QObject * parent = nullptr );
 
-    const QColor & color() const { return m_Color; }
-    int hue() const { return m_Color.hue(); }
+    const QColor & color() const { return color_; }
+    int hue() const { return color_.hue(); }
 
-    static QColor xyToColor( double dX, double dY );
-    static QColor hueToColor( int iHue );
+    static QColor xyToColor( double x, double y );
+    static QColor hueToColor( int hue );
 
 signals:
     void colorChanged();
 
 public slots:
-    void commandColor( const QColor & Color );
-    void commandColor( int iHue );
-    void commandColor( double dX, double dY );
+    void commandColor( const QColor & color );
+    void commandColor( int hue );
+    void commandColor( double x, double y );
 
 private:
-    QColor m_Color;
+    QColor color_;
 
-    void handleStateData( const QJsonObject & State ) override;
+    void handleStateData( const QJsonObject & state ) override;
 
     Q_DISABLE_COPY_MOVE( HueColorLight )
 };

@@ -26,7 +26,7 @@ static const QHash<int, QColor> COLOR_TEMPERATURE_MAP = {
 };
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-HueAmbianceLight::HueAmbianceLight( int iID, QObject * pParent ) : HueLight( iID, pParent ), m_iColorTemperature( 0 )
+HueAmbianceLight::HueAmbianceLight( int id, QObject * parent ) : HueLight( id, parent ), colorTemperature_( 0 )
 {
     // Nothing else to do.
 }
@@ -47,50 +47,50 @@ int HueAmbianceLight::maxColorTemperature() const
 QColor HueAmbianceLight::ambientColor() const
 {
     // Take the nearest reference point.
-    int iRemainder = m_iColorTemperature % 100;
-    int iReference = m_iColorTemperature - iRemainder;
-    if ( 50 <= iRemainder )
+    int remainder = colorTemperature_ % 100;
+    int reference = colorTemperature_ - remainder;
+    if ( 50 <= remainder )
     {
-        iReference += 100;
+        reference += 100;
     }
 
-    return COLOR_TEMPERATURE_MAP.value( iReference );
+    return COLOR_TEMPERATURE_MAP.value( reference );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueAmbianceLight::commandColorTemperature( int iColorTemperature )
+void HueAmbianceLight::commandColorTemperature( int colorTemperature )
 {
-    if ( ( minColorTemperature() <= iColorTemperature ) && ( maxColorTemperature() >= iColorTemperature ) )
+    if ( ( minColorTemperature() <= colorTemperature ) && ( maxColorTemperature() >= colorTemperature ) )
     {
         // If the light is not on, turn it on or else the command will fail.
-        if ( !m_bIsOn )
+        if ( !isOn_ )
         {
             commandPower( true );
         }
 
         // Scale from kelvins to mirek.
-        iColorTemperature = qRound( 1.0e6 / iColorTemperature );
-        VCHub::instance()->hue()->commandDeviceState( m_iID, QJsonObject { { "ct", iColorTemperature } } );
+        colorTemperature = qRound( 1.0e6 / colorTemperature );
+        VCHub::instance()->hue()->commandDeviceState( id_, QJsonObject { { "ct", colorTemperature } } );
     }
     else
     {
-        qDebug() << "Ignoring request to set invalid color temperature for light with ID: " << m_iID;
+        qDebug() << "Ignoring request to set invalid color temperature for light with ID: " << id_;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void HueAmbianceLight::handleStateData( const QJsonObject & State )
+void HueAmbianceLight::handleStateData( const QJsonObject & state )
 {
     // Call the parent.
-    HueLight::handleStateData( State );
+    HueLight::handleStateData( state );
 
-    if ( State.contains( "ct" ) )
+    if ( state.contains( "ct" ) )
     {
         // Scale from mirek to kelvins.
-        int iColorTemperature = qRound( 1.0e6 / State.value( "ct" ).toInt() );
-        if ( m_iColorTemperature != iColorTemperature )
+        int colorTemperature = qRound( 1.0e6 / state.value( "ct" ).toInt() );
+        if ( colorTemperature_ != colorTemperature )
         {
-            m_iColorTemperature = iColorTemperature;
+            colorTemperature_ = colorTemperature;
             emit colorTemperatureChanged();
         }
     }

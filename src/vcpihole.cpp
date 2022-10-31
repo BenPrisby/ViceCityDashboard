@@ -4,16 +4,16 @@
 #include "networkinterface.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCPiHole::VCPiHole( const QString & Name, QObject * pParent ) :
-    VCPlugin( Name, pParent ),
-    m_bIsEnabled( false ),
-    m_iTotalQueries( 0 ),
-    m_iBlockedQueries( 0 ),
-    m_dPercentBlocked( qQNaN() ),
-    m_iBlockedDomains( 0 )
+VCPiHole::VCPiHole( const QString & name, QObject * parent ) :
+    VCPlugin( name, parent ),
+    isEnabled_( false ),
+    totalQueries_( 0 ),
+    blockedQueries_( 0 ),
+    percentBlocked_( qQNaN() ),
+    blockedDomains_( 0 )
 {
     // Don't start refreshing until the Pi Hole server has been found.
-    m_UpdateTimer.stop();
+    updateTimer_.stop();
     setUpdateInterval( 1000 );
 
     // Handle network responses.
@@ -21,9 +21,9 @@ VCPiHole::VCPiHole( const QString & Name, QObject * pParent ) :
 
     // Look for the Pi Hole server when the hostname is populated.
     connect( this, &VCPiHole::serverHostnameChanged, this, [=] {
-        if ( !m_ServerHostname.isEmpty() )
+        if ( !serverHostname_.isEmpty() )
         {
-            ( void )QHostInfo::lookupHost( m_ServerHostname, this, &VCPiHole::handleHostLookup );
+            ( void )QHostInfo::lookupHost( serverHostname_, this, &VCPiHole::handleHostLookup );
         }
     } );
 }
@@ -31,33 +31,33 @@ VCPiHole::VCPiHole( const QString & Name, QObject * pParent ) :
 
 void VCPiHole::refresh()
 {
-    NetworkInterface::instance()->sendJSONRequest( m_SummaryDestination, this );
+    NetworkInterface::instance()->sendJSONRequest( summaryDestination_, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCPiHole::refreshHistoricalData()
 {
-    NetworkInterface::instance()->sendJSONRequest( m_HistoricalDataDestination, this );
+    NetworkInterface::instance()->sendJSONRequest( historicalDataDestination_, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCPiHole::handleHostLookup( const QHostInfo & Host )
+void VCPiHole::handleHostLookup( const QHostInfo & host )
 {
-    if ( QHostInfo::NoError == Host.error() )
+    if ( QHostInfo::NoError == host.error() )
     {
-        const QList<QHostAddress> Addresses = Host.addresses();
-        for ( const auto & Address : Addresses )
+        const QList<QHostAddress> addresses = host.addresses();
+        for ( const auto & address : addresses )
         {
-            if ( QAbstractSocket::IPv4Protocol == Address.protocol() )
+            if ( QAbstractSocket::IPv4Protocol == address.protocol() )
             {
-                m_ServerIPAddress = Address.toString();
-                qDebug() << "Pi Hole server found at IP address: " << m_ServerIPAddress;
+                serverIPAddress_ = address.toString();
+                qDebug() << "Pi Hole server found at IP address: " << serverIPAddress_;
 
                 // Update the destination URL and start refreshing information.
-                QString BaseURL = QString( "http://%1/admin/api.php" ).arg( m_ServerIPAddress );
-                m_SummaryDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "summaryRaw" ) );
-                m_HistoricalDataDestination = QUrl( QString( "%1?%2" ).arg( BaseURL, "overTimeData10mins" ) );
-                m_UpdateTimer.start();
+                QString baseURL = QString( "http://%1/admin/api.php" ).arg( serverIPAddress_ );
+                summaryDestination_ = QUrl( QString( "%1?%2" ).arg( baseURL, "summaryRaw" ) );
+                historicalDataDestination_ = QUrl( QString( "%1?%2" ).arg( baseURL, "overTimeData10mins" ) );
+                updateTimer_.start();
                 refresh();
                 refreshHistoricalData();
                 break;
@@ -70,123 +70,123 @@ void VCPiHole::handleHostLookup( const QHostInfo & Host )
     }
     else
     {
-        qDebug() << "Failed to find Pi Hole server on the local network with error: " << Host.errorString();
+        qDebug() << "Failed to find Pi Hole server on the local network with error: " << host.errorString();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCPiHole::handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body )
+void VCPiHole::handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body )
 {
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
-                if ( ResponseObject.contains( "status" ) )
+                QJsonObject responseObject = body.object();
+                if ( responseObject.contains( "status" ) )
                 {
-                    bool bEnabled = ( "enabled" == ResponseObject.value( "status" ).toString() );
-                    if ( m_bIsEnabled != bEnabled )
+                    bool enabled = ( "enabled" == responseObject.value( "status" ).toString() );
+                    if ( isEnabled_ != enabled )
                     {
-                        m_bIsEnabled = bEnabled;
+                        isEnabled_ = enabled;
                         emit isEnabledChanged();
                     }
                 }
-                if ( ResponseObject.contains( "dns_queries_today" ) )
+                if ( responseObject.contains( "dns_queries_today" ) )
                 {
-                    int iTotalQueries = ResponseObject.value( "dns_queries_today" ).toInt();
-                    if ( m_iTotalQueries != iTotalQueries )
+                    int totalQueries = responseObject.value( "dns_queries_today" ).toInt();
+                    if ( totalQueries_ != totalQueries )
                     {
-                        m_iTotalQueries = iTotalQueries;
+                        totalQueries_ = totalQueries;
                         emit totalQueriesChanged();
                     }
                 }
-                if ( ResponseObject.contains( "ads_blocked_today" ) )
+                if ( responseObject.contains( "ads_blocked_today" ) )
                 {
-                    int iBlockedQueries = ResponseObject.value( "ads_blocked_today" ).toInt();
-                    if ( m_iBlockedQueries != iBlockedQueries )
+                    int blockedQueries = responseObject.value( "ads_blocked_today" ).toInt();
+                    if ( blockedQueries_ != blockedQueries )
                     {
-                        m_iBlockedQueries = iBlockedQueries;
+                        blockedQueries_ = blockedQueries;
                         emit blockedQueriesChanged();
                     }
                 }
-                if ( ResponseObject.contains( "ads_percentage_today" ) )
+                if ( responseObject.contains( "ads_percentage_today" ) )
                 {
                     // BDP: We could easily calculate this, but since it's included in the response just use it.
-                    double dPercentBlocked = ResponseObject.value( "ads_percentage_today" ).toDouble();
-                    if ( m_dPercentBlocked != dPercentBlocked )
+                    double percentBlocked = responseObject.value( "ads_percentage_today" ).toDouble();
+                    if ( percentBlocked_ != percentBlocked )
                     {
-                        m_dPercentBlocked = dPercentBlocked;
+                        percentBlocked_ = percentBlocked;
                         emit percentBlockedChanged();
                     }
                 }
-                if ( ResponseObject.contains( "domains_being_blocked" ) )
+                if ( responseObject.contains( "domains_being_blocked" ) )
                 {
-                    int iBlockedDomains = ResponseObject.value( "domains_being_blocked" ).toInt();
-                    if ( m_iBlockedDomains != iBlockedDomains )
+                    int blockedDomains = responseObject.value( "domains_being_blocked" ).toInt();
+                    if ( blockedDomains_ != blockedDomains )
                     {
-                        m_iBlockedDomains = iBlockedDomains;
+                        blockedDomains_ = blockedDomains;
                         emit blockedDomainsChanged();
                     }
                 }
-                if ( ResponseObject.contains( "domains_over_time" ) && ResponseObject.contains( "ads_over_time" ) )
+                if ( responseObject.contains( "domains_over_time" ) && responseObject.contains( "ads_over_time" ) )
                 {
-                    QJsonObject DomainsOverTime = ResponseObject.value( "domains_over_time" ).toObject();
-                    QJsonObject AdsOverTime = ResponseObject.value( "ads_over_time" ).toObject();
-                    if ( ( !DomainsOverTime.isEmpty() ) && ( DomainsOverTime.size() == AdsOverTime.size() ) )
+                    QJsonObject domainsOverTime = responseObject.value( "domains_over_time" ).toObject();
+                    QJsonObject adsOverTime = responseObject.value( "ads_over_time" ).toObject();
+                    if ( !domainsOverTime.isEmpty() && ( domainsOverTime.size() == adsOverTime.size() ) )
                     {
-                        QVariantList Timestamps;
-                        QVariantList TotalQueries;
-                        QVariantList BlockedQueries;
-                        QVariantList AllowedQueries;
-                        QVariantList BlockPercentages;
-                        int iMaxTotalQueries = 0;
-                        double dMinBlockPercentage = 100.0;
-                        double dMaxBlockPercentage = 0.0;
+                        QVariantList timestamps;
+                        QVariantList totalQueries;
+                        QVariantList blockedQueries;
+                        QVariantList allowedQueries;
+                        QVariantList blockPercentages;
+                        int maxTotalQueries = 0;
+                        double minBlockPercentage = 100.0;
+                        double maxBlockPercentage = 0.0;
 
-                        const QStringList Keys = DomainsOverTime.keys();
-                        for ( const auto & Key : Keys )
+                        const QStringList keys = domainsOverTime.keys();
+                        for ( const auto & key : keys )
                         {
-                            Timestamps.append( Key.toInt() );
+                            timestamps.append( key.toInt() );
                         }
-                        std::sort( Timestamps.begin(), Timestamps.end() );  // Arrange chronologically
-                        for ( const auto & Timestamp : Timestamps )
+                        std::sort( timestamps.begin(), timestamps.end() );  // Arrange chronologically
+                        for ( const auto & timestamp : timestamps )
                         {
-                            int iTotal = DomainsOverTime.value( Timestamp.toString() ).toInt();
-                            int iBlocked = AdsOverTime.value( Timestamp.toString() ).toInt();
-                            int iAllowed = iTotal - iBlocked;
-                            double dBlockPercentage = ( static_cast<double>( iBlocked ) / iTotal ) * 100.0;
+                            int total = domainsOverTime.value( timestamp.toString() ).toInt();
+                            int blocked = adsOverTime.value( timestamp.toString() ).toInt();
+                            int allowed = total - blocked;
+                            double blockPercentage = ( static_cast<double>( blocked ) / total ) * 100.0;
 
-                            TotalQueries.append( iTotal );
-                            BlockedQueries.append( iBlocked );
-                            AllowedQueries.append( iAllowed );
-                            BlockPercentages.append( dBlockPercentage );
+                            totalQueries.append( total );
+                            blockedQueries.append( blocked );
+                            allowedQueries.append( allowed );
+                            blockPercentages.append( blockPercentage );
 
                             // Keep track of minimums and maximums in the sets.
-                            if ( iMaxTotalQueries < iTotal )
+                            if ( maxTotalQueries < total )
                             {
-                                iMaxTotalQueries = iTotal;
+                                maxTotalQueries = total;
                             }
-                            if ( dMinBlockPercentage > dBlockPercentage )
+                            if ( minBlockPercentage > blockPercentage )
                             {
-                                dMinBlockPercentage = dBlockPercentage;
+                                minBlockPercentage = blockPercentage;
                             }
-                            if ( dMaxBlockPercentage < dBlockPercentage )
+                            if ( maxBlockPercentage < blockPercentage )
                             {
-                                dMaxBlockPercentage = dBlockPercentage;
+                                maxBlockPercentage = blockPercentage;
                             }
                         }
 
                         // Expose as a model for graphing in QML, with lists of data points and some statistics.
-                        m_HistoricalData = QVariantMap { { "timestamps", Timestamps },
-                                                         { "totalQueries", TotalQueries },
-                                                         { "maxTotalQueries", iMaxTotalQueries },
-                                                         { "blockedQueries", BlockedQueries },
-                                                         { "allowedQueries", AllowedQueries },
-                                                         { "blockPercentages", BlockPercentages },
-                                                         { "minBlockPercentage", dMinBlockPercentage },
-                                                         { "maxBlockPercentage", dMaxBlockPercentage } };
+                        historicalData_ = QVariantMap { { "timestamps", timestamps },
+                                                         { "totalQueries", totalQueries },
+                                                         { "maxTotalQueries", maxTotalQueries },
+                                                         { "blockedQueries", blockedQueries },
+                                                         { "allowedQueries", allowedQueries },
+                                                         { "blockPercentages", blockPercentages },
+                                                         { "minBlockPercentage", minBlockPercentage },
+                                                         { "maxBlockPercentage", maxBlockPercentage } };
                         emit historicalDataChanged();
                     }
                 }
@@ -198,7 +198,7 @@ void VCPiHole::handleNetworkReply( int iStatusCode, QObject * pSender, const QJs
         }
         else
         {
-            qDebug() << "Ignoring unsuccessful reply from Pi Hole server with status code: " << iStatusCode;
+            qDebug() << "Ignoring unsuccessful reply from Pi Hole server with status code: " << statusCode;
         }
     }
     else

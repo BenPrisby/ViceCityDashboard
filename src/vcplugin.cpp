@@ -3,19 +3,19 @@
 #include "vcplugin.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCPlugin::VCPlugin( const QString & Name, QObject * pParent ) :
-    QObject( pParent ), m_PluginName( Name ), m_iUpdateInterval( 10 * 1000 ), m_bIsActive( true )
+VCPlugin::VCPlugin( const QString & name, QObject * parent ) :
+    QObject( parent ), pluginName_( name ), updateInterval_( 10 * 1000 ), isActive_(true )
 {
-    if ( !m_PluginName.isEmpty() )
+    if ( !pluginName_.isEmpty() )
     {
-        setObjectName( m_PluginName );
-        qDebug() << "Initializing plugin: " << m_PluginName;
+        setObjectName( pluginName_ );
+        qDebug() << "Initializing plugin: " << pluginName_;
 
         // Configure the update timer for periodically refreshing any attached data.
-        m_UpdateTimer.setInterval( m_iUpdateInterval );
-        m_UpdateTimer.setSingleShot( false );
-        connect( &m_UpdateTimer, &QTimer::timeout, this, &VCPlugin::refresh );
-        m_UpdateTimer.start();
+        updateTimer_.setInterval( updateInterval_ );
+        updateTimer_.setSingleShot( false );
+        connect( &updateTimer_, &QTimer::timeout, this, &VCPlugin::refresh );
+        updateTimer_.start();
     }
     else
     {
@@ -24,32 +24,32 @@ VCPlugin::VCPlugin( const QString & Name, QObject * pParent ) :
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCPlugin::setUpdateInterval( const int iValue )
+void VCPlugin::setUpdateInterval( const int value )
 {
-    if ( m_iUpdateInterval != iValue )
+    if ( updateInterval_ != value )
     {
-        m_iUpdateInterval = iValue;
-        m_UpdateTimer.setInterval( m_iUpdateInterval );
+        updateInterval_ = value;
+        updateTimer_.setInterval( updateInterval_ );
         emit updateIntervalChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCPlugin::setActive( const bool bValue )
+void VCPlugin::setActive( const bool value )
 {
-    if ( m_bIsActive != bValue )
+    if ( isActive_ != value )
     {
-        m_bIsActive = bValue;
+        isActive_ = value;
         emit isActiveChanged();
 
-        if ( m_bIsActive )
+        if ( isActive_ )
         {
-            m_UpdateTimer.start();
+            updateTimer_.start();
             refresh();
         }
         else
         {
-            m_UpdateTimer.stop();
+            updateTimer_.stop();
         }
     }
 }

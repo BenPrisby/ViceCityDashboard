@@ -15,35 +15,35 @@ class NetworkInterface final : public QObject
 public:
     static NetworkInterface * instance();
 
-    void sendRequest( const QUrl & Destination,
-                      QObject * pSender = nullptr,
-                      QNetworkAccessManager::Operation eRequestType = QNetworkAccessManager::GetOperation,
-                      const QByteArray & Body = QByteArray(),
-                      const QByteArray & ContentType = "text/plain",
-                      const QByteArray & Authorization = QByteArray() );
-    void sendJSONRequest( const QUrl & Destination,
-                          QObject * pSender = nullptr,
-                          QNetworkAccessManager::Operation eRequestType = QNetworkAccessManager::GetOperation,
-                          const QJsonDocument & Body = QJsonDocument(),
-                          const QByteArray & Authorization = QByteArray() );
-    void browseZeroConf( const QString & ServiceType );
+    void sendRequest( const QUrl & destination,
+                      QObject * sender = nullptr,
+                      QNetworkAccessManager::Operation requestType = QNetworkAccessManager::GetOperation,
+                      const QByteArray & body = QByteArray(),
+                      const QByteArray & contentType = "text/plain",
+                      const QByteArray & authorization = QByteArray() );
+    void sendJSONRequest( const QUrl & destination,
+                          QObject * sender = nullptr,
+                          QNetworkAccessManager::Operation requestType = QNetworkAccessManager::GetOperation,
+                          const QJsonDocument & body = QJsonDocument(),
+                          const QByteArray & authorization = QByteArray() );
+    void browseZeroConf( const QString & serviceType );
 
 signals:
-    void replyReceived( int iStatusCode, QObject * pSender, const QByteArray & Body );
-    void jsonReplyReceived( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
-    void zeroConfServiceFound( const QString & ServiceType, const QString & IPAddress );
+    void replyReceived( int statusCode, QObject * sender, const QByteArray & body );
+    void jsonReplyReceived( int statusCode, QObject * sender, const QJsonDocument & body );
+    void zeroConfServiceFound( const QString & serviceType, const QString & ipAddress );
 
 private slots:
-    void handleReply( QNetworkReply * pReply );
-    void handleZeroConfServiceAdded( QZeroConfService pService );
+    void handleReply( QNetworkReply * reply );
+    void handleZeroConfServiceAdded( QZeroConfService service );
 
 private:
-    explicit NetworkInterface( QObject * pParent = nullptr );
+    explicit NetworkInterface( QObject * parent = nullptr );
 
-    QNetworkAccessManager * m_pManager;
-    QZeroConf * m_pZeroConf;
-    QQueue<QString> m_ZeroConfBrowseRequests;
-    QTimer m_ZeroConfBrowseTimer;
+    QNetworkAccessManager * manager_;
+    QZeroConf * zeroConf_;
+    QQueue<QString> zeroConfBrowseRequests_;
+    QTimer zeroConfBrowseTimer_;
 
     Q_DISABLE_COPY_MOVE( NetworkInterface )
 };

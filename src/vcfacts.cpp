@@ -3,9 +3,9 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCFacts::VCFacts( const QString & Name, QObject * pParent ) :
-    VCPlugin( Name, pParent ),
-    m_RequestURL( QString( "https://uselessfacts.jsph.pl/random.json?language=%1" ).arg( QLocale::system().bcp47Name() ) )
+VCFacts::VCFacts( const QString & name, QObject * parent ) :
+    VCPlugin( name, parent ),
+    requestURL_( QString( "https://uselessfacts.jsph.pl/random.json?language=%1" ).arg( QLocale::system().bcp47Name() ) )
 {
     setUpdateInterval( 60 * 1000 );
 
@@ -18,26 +18,26 @@ VCFacts::VCFacts( const QString & Name, QObject * pParent ) :
 
 void VCFacts::refresh()
 {
-    NetworkInterface::instance()->sendJSONRequest( m_RequestURL, this );
+    NetworkInterface::instance()->sendJSONRequest( requestURL_, this );
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCFacts::handleNetworkReply( const int iStatusCode, QObject * const pSender, const QJsonDocument & Body )
+void VCFacts::handleNetworkReply( const int statusCode, QObject * const sender, const QJsonDocument & body )
 {
-    if ( this == pSender )
+    if ( this == sender )
     {
-        if ( 200 == iStatusCode )
+        if ( 200 == statusCode )
         {
-            if ( Body.isObject() )
+            if ( body.isObject() )
             {
-                QJsonObject ResponseObject = Body.object();
-                if ( ResponseObject.contains( "text" ) )
+                QJsonObject responseObject = body.object();
+                if ( responseObject.contains( "text" ) )
                 {
-                    QString Fact = ResponseObject.value( "text" ).toString().simplified()
+                    QString fact = responseObject.value( "text" ).toString().simplified()
                             .replace( QChar( '`' ), QChar( '\'' ) );
-                    if ( !Fact.isEmpty() )
+                    if ( !fact.isEmpty() )
                     {
-                        m_Fact = Fact;
+                        fact_ = fact;
                         emit factChanged();
                     }
                     else

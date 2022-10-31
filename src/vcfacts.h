@@ -11,9 +11,9 @@ class VCFacts final : public VCPlugin
     Q_PROPERTY( QString fact  READ fact  NOTIFY factChanged )
 
 public:
-    VCFacts( const QString & Name, QObject * pParent = nullptr );
+    VCFacts( const QString & name, QObject * parent = nullptr );
 
-    const QString & fact() const { return m_Fact; }
+    const QString & fact() const { return fact_; }
 
 signals:
     void factChanged();
@@ -22,12 +22,12 @@ public slots:
     void refresh() override;
 
 private slots:
-    void handleNetworkReply( int iStatusCode, QObject * pSender, const QJsonDocument & Body );
+    void handleNetworkReply( int statusCode, QObject * sender, const QJsonDocument & body );
 
 private:
-    QString m_Fact;
+    QString fact_;
 
-    QUrl m_RequestURL;
+    QUrl requestURL_;
 
     Q_DISABLE_COPY_MOVE( VCFacts )
 };
