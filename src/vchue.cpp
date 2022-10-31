@@ -54,7 +54,7 @@ void VCHue::refreshGroups() {
 
 void VCHue::commandDeviceState(const int id, const QJsonObject &parameters) {
     HueDevice *device = deviceTable_.value(id, nullptr);
-    if (nullptr != device) {
+    if (device) {
         QUrl url(QString("%1/%2/state").arg(lightsURL_.toString()).arg(id));
         NetworkInterface::instance()->sendJSONRequest(
             url, device, QNetworkAccessManager::PutOperation, QJsonDocument(parameters));
@@ -74,10 +74,10 @@ void VCHue::handleZeroConfServiceFound(const QString &serviceType, const QString
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 static bool sortDevice(const HueDevice *const left, const HueDevice *const right) {
-    if (nullptr == left) {
+    if (!left) {
         return false;
     }
-    if (nullptr == right) {
+    if (!right) {
         return true;
     }
     return left->id() < right->id();
@@ -102,7 +102,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
                             if (!itemObject.contains("lights")) {
                                 // Device information, is there already a record of this device?
                                 HueDevice *device = deviceTable_.value(id, nullptr);
-                                if (nullptr == device) {
+                                if (!device) {
                                     // Inspect the device type to determine the correct object type.
                                     QString type = itemObject.value("type").toString().toLower();
                                     if ("dimmable light" == type) {
@@ -138,7 +138,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
                                         int lightID = light.toString().toInt(&ok);
                                         if (ok) {
                                             HueDevice *device = deviceTable_.value(lightID, nullptr);
-                                            if (nullptr != device) {
+                                            if (device) {
                                                 // Tell the device which room it's in.
                                                 device->setRoom(name);
                                             } else {
@@ -166,7 +166,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject *sender, const QJsonDocum
         }
     } else {
         auto device = qobject_cast<HueDevice *>(sender);
-        if (nullptr != device) {
+        if (device) {
             if (200 == statusCode) {
                 // Dispatch to the device.
                 device->handleResponse(body);

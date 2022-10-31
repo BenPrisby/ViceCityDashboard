@@ -25,7 +25,7 @@ VCConfig::VCConfig(QObject *parent) : QObject(parent) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCConfig *VCConfig::instance() {
-    if (nullptr == instance_) {
+    if (!instance_) {
         instance_ = new VCConfig(VCHub::instance());  // BDP: The parent allows key resolution.
     }
 

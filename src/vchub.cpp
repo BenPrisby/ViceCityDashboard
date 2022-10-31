@@ -64,7 +64,7 @@ VCHub::VCHub(QObject *pParent)
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 VCHub *VCHub::instance() {
-    if (nullptr == instance_) {
+    if (!instance_) {
         instance_ = new VCHub();
     }
 
@@ -167,7 +167,7 @@ void VCHub::runScene(const QString &scene) {
                     }
 
                     // Check if the device has been discovered.
-                    if (nullptr != hueDevice) {
+                    if (hueDevice) {
                         qDebug() << "Executing step " << stepNumber << " on Hue device: " << name;
 
                         // Apply state properties from most to least generic.
@@ -178,7 +178,7 @@ void VCHub::runScene(const QString &scene) {
                         if (state.contains("brightness")) {
                             // This must be a light.
                             auto hueLight = qobject_cast<HueLight *>(hueDevice);
-                            if (nullptr != hueLight) {
+                            if (hueLight) {
                                 qDebug() << "\t=> Command brightness";
                                 hueLight->commandBrightness(state.take("brightness").toDouble());
                             } else {
@@ -191,7 +191,7 @@ void VCHub::runScene(const QString &scene) {
                         if (state.contains("colorTemperature")) {
                             // This must be an ambiance light.
                             auto hueLight = qobject_cast<HueAmbianceLight *>(hueDevice);
-                            if (nullptr != hueLight) {
+                            if (hueLight) {
                                 qDebug() << "\t=> Command color temperature";
                                 hueLight->commandColorTemperature(state.take("colorTemperature").toInt());
                             } else {
@@ -204,7 +204,7 @@ void VCHub::runScene(const QString &scene) {
                         if (state.contains("xy")) {
                             // This must be a color light.
                             auto hueLight = qobject_cast<HueColorLight *>(hueDevice);
-                            if (nullptr != hueLight) {
+                            if (hueLight) {
                                 qDebug() << "\t=> Command XY color";
                                 QVariantList xy = state.take("xy").toList();
                                 hueLight->commandColor(xy.at(0).toDouble(), xy.at(1).toDouble());
@@ -218,7 +218,7 @@ void VCHub::runScene(const QString &scene) {
                         if (state.contains("hue")) {
                             // This must be a color light.
                             auto hueLight = qobject_cast<HueColorLight *>(hueDevice);
-                            if (nullptr != hueLight) {
+                            if (hueLight) {
                                 qDebug() << "\t=> Command hue color";
                                 hueLight->commandColor(state.take("hue").toInt());
                             } else {

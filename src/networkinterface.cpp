@@ -32,7 +32,7 @@ NetworkInterface::NetworkInterface(QObject* parent)
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 NetworkInterface* NetworkInterface::instance() {
-    if (nullptr == instance_) {
+    if (!instance_) {
         instance_ = new NetworkInterface();
     }
 
@@ -55,7 +55,7 @@ void NetworkInterface::sendRequest(const QUrl& destination,
         request.setRawHeader("User-Agent", applicationInfo);
 
         // Was a sender specified for context?
-        if (nullptr != sender) {
+        if (sender) {
             request.setOriginatingObject(sender);
         }
 
