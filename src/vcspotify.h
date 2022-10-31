@@ -103,7 +103,7 @@ class VCSpotify final : public VCPlugin {
     void refreshUserProfile();
     void refreshPlaylists();
 
-    void play(const QString& uri = QString());
+    void play(const QString& uri = {});
     void pause();
     void previous();
     void next();

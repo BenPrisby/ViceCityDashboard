@@ -87,8 +87,8 @@ class VCHub final : public QObject {
 
     QString dayOfWeek(const QDateTime& dateTime) const;
     QString formatTime(const QDateTime& dateTime) const;
-    QString formatInt(int value, const QString& unit = QString()) const;
-    QString formatDecimal(double value, const QString& unit = QString()) const;
+    QString formatInt(int value, const QString& unit = {}) const;
+    QString formatDecimal(double value, const QString& unit = {}) const;
     QString formatPercentage(double value, bool wholeNumber = false) const;
     QUrl localFileToURL(const QString& path) const { return QUrl::fromLocalFile(path); }
     QString screenshotPath() const;

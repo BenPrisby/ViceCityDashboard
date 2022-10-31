@@ -21,14 +21,14 @@ class NetworkInterface final : public QObject {
     void sendRequest(const QUrl& destination,
                      QObject* sender = nullptr,
                      QNetworkAccessManager::Operation requestType = QNetworkAccessManager::GetOperation,
-                     const QByteArray& body = QByteArray(),
+                     const QByteArray& body = {},
                      const QByteArray& contentType = "text/plain",
-                     const QByteArray& authorization = QByteArray());
+                     const QByteArray& authorization = {});
     void sendJSONRequest(const QUrl& destination,
                          QObject* sender = nullptr,
                          QNetworkAccessManager::Operation requestType = QNetworkAccessManager::GetOperation,
-                         const QJsonDocument& body = QJsonDocument(),
-                         const QByteArray& authorization = QByteArray());
+                         const QJsonDocument& body = {},
+                         const QByteArray& authorization = {});
     void browseZeroConf(const QString& serviceType);
 
  signals:
