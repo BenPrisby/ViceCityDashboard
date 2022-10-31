@@ -20,7 +20,7 @@ VCSpotify::VCSpotify(const QString& name, QObject* parent)
       trackPosition_(0),
       trackDuration_(0),
       deviceVolume_(0),
-      market_(QLocale::system().name().split(QChar('_')).last()) {
+      market_(QLocale::system().name().split('_').last()) {
     updateTimer_.setInterval(1000);
     updateTimer_.stop();
 
@@ -213,7 +213,7 @@ QString VCSpotify::formatDuration(const int value) {
     int seconds = value % 60;
     QString secondsDisplay = QString::number(seconds);
     if (10 > seconds) {
-        secondsDisplay = secondsDisplay.rightJustified(2, QChar('0'));
+        secondsDisplay = secondsDisplay.rightJustified(2, '0');
     }
     return QString("%1:%2").arg(value / 60).arg(secondsDisplay);
 }
@@ -328,7 +328,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                             QString contextType = contextObject.value("type").toString();
                             if ("playlist" == contextType) {
                                 QString uri = contextObject.value("uri").toString();
-                                QString playlistID = uri.split(QChar(':')).last();
+                                QString playlistID = uri.split(':').last();
 
                                 // Request the name of the playlist.
                                 QUrl destination(

@@ -24,7 +24,7 @@ VCHub::VCHub(QObject *pParent)
       isActive_(true),
       currentDateTime_(QDateTime::currentDateTime()),
       hostname_(QHostInfo::localHostName()),
-      platform_(QSysInfo::prettyProductName().split(QChar('(')).first().trimmed()),
+      platform_(QSysInfo::prettyProductName().split('(').first().trimmed()),
       architecture_(QSysInfo::currentCpuArchitecture()),
       qtVersion_(qVersion()),
       use24HourClock_(false),

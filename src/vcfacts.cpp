@@ -28,8 +28,7 @@ void VCFacts::handleNetworkReply(const int statusCode, QObject* const sender, co
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
                 if (responseObject.contains("text")) {
-                    QString fact =
-                        responseObject.value("text").toString().simplified().replace(QChar('`'), QChar('\''));
+                    QString fact = responseObject.value("text").toString().simplified().replace('`', '\'');
                     if (!fact.isEmpty()) {
                         fact_ = fact;
                         emit factChanged();

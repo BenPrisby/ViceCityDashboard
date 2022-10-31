@@ -40,7 +40,7 @@ void HueDevice::handleResponse(const QJsonDocument& response) {
                     // The reply is identified by the API endpoint portion at the end of the URL.
                     if (argument.startsWith(QString("/lights/%1/state/").arg(id_))) {
                         // The final token will be the state property that was set.
-                        QStringList parts = argument.split(QChar('/'));
+                        QStringList parts = argument.split('/');
                         state.insert(parts.last(), successObject.value(argument));
                     } else {
                         qDebug() << "Got unexpected argument when handling response for Hue device: " << id_;

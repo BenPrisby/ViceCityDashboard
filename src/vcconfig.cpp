@@ -159,7 +159,7 @@ KeyContext VCConfig::keyToContext(const QString &key) {
     QString propertyName;
 
     // Keys are references into the Meta-Object system using object names, with the property to set at the end.
-    QStringList parts = key.split(QChar('.'));
+    QStringList parts = key.split('.');
     if (2 == parts.size()) {
         // Drop the property name.
         propertyName = parts.takeLast();
