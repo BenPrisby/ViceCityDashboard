@@ -56,8 +56,8 @@ compile_commands.json
 .DS_Store
 
 # Build artifacts
-bin/*
-build/*
+/bin/
+/build/
 
 # Archives
 /vicecitydashboard-src.tar.gz
