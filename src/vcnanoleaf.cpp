@@ -218,10 +218,18 @@ void VCNanoleaf::handleNetworkReply( int iStatusCode, QObject * pSender, const Q
                         }
                     }
 
-                    if ( ( !Effects.isEmpty() ) && ( m_Effects != Effects ) )
+                    if ( !Effects.isEmpty() )
                     {
-                        m_Effects = Effects;
-                        emit effectsChanged();
+                        // Sort alphabetically by name.
+                        std::sort( Effects.begin(), Effects.end(), []( const QVariant & Left, const QVariant & Right ) {
+                            return Left.toMap().value( "name" ).toString() < Right.toMap().value( "name" ).toString();
+                        } );
+
+                        if ( m_Effects != Effects )
+                        {
+                            m_Effects = Effects;
+                            emit effectsChanged();
+                        }
                     }
                 }
             }
