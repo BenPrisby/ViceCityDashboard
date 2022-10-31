@@ -8,7 +8,7 @@ class VCHue : public VCPlugin {
     Q_OBJECT
 
     // clang-format off
-    Q_PROPERTY(QList<HueDevice *> devices                          READ devices          NOTIFY devicesChanged)
+    Q_PROPERTY(QList<HueDevice*> devices                           READ devices          NOTIFY devicesChanged)
     Q_PROPERTY(int onDevicesCount                                  READ onDevicesCount   NOTIFY onDevicesCountChanged)
     Q_PROPERTY(QString bridgeIPAddress                             READ bridgeIPAddress  NOTIFY bridgeIPAddressChanged)
     Q_PROPERTY(QString bridgeUsername      MEMBER bridgeUsername_                        NOTIFY bridgeUsernameChanged)
