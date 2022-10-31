@@ -97,7 +97,7 @@ Window {
             anchors.bottom: parent.bottom
             anchors.margins: VCMargin.medium
 
-            TabHome{}
+            TabHome {}
 
             TabLights {}
 
