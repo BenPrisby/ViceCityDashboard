@@ -158,6 +158,7 @@ void NetworkInterface::handleReply( QNetworkReply * pReply )
     }
 
     emit replyReceived( iStatusCode, pSender, Body );
+    pReply->deleteLater();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
