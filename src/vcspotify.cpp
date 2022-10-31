@@ -404,7 +404,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                                         }
                                     }
                                 }
-                                if ((!trackArtist.isEmpty()) && (trackArtist_ != trackArtist)) {
+                                if (!trackArtist.isEmpty() && (trackArtist_ != trackArtist)) {
                                     trackArtist_ = trackArtist;
                                     emit trackArtistChanged();
                                 }
