@@ -162,7 +162,7 @@ void VCHub::runScene(const QString& scene) {
                     // Locate the Hue device by name.
                     const QList<HueDevice*>& hueDevices = hue_->devices();
                     HueDevice* hueDevice = nullptr;
-                    for (auto* const device : hueDevices) {
+                    for (auto device : hueDevices) {
                         if (name == device->name()) {
                             hueDevice = device;
                             break;
