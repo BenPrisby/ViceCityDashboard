@@ -12,14 +12,14 @@ VCPiHole::VCPiHole(const QString& name, QObject* parent)
       blockedQueries_(0),
       percentBlocked_(qQNaN()),
       blockedDomains_(0) {
-    // Don't start refreshing until the Pi Hole server has been found.
+    // Don't start refreshing until the Pi-hole server has been found.
     updateTimer_.stop();
     setUpdateInterval(1000);
 
     // Handle network responses.
     connect(NetworkInterface::instance(), &NetworkInterface::jsonReplyReceived, this, &VCPiHole::handleNetworkReply);
 
-    // Look for the Pi Hole server when the hostname is populated.
+    // Look for the Pi-hole server when the hostname is populated.
     connect(this, &VCPiHole::serverHostnameChanged, this, [this] {
         if (!serverHostname_.isEmpty()) {
             (void)QHostInfo::lookupHost(serverHostname_, this, &VCPiHole::handleHostLookup);
@@ -44,7 +44,7 @@ void VCPiHole::handleHostLookup(const QHostInfo& host) {
         for (const auto& address : addresses) {
             if (address.protocol() == QAbstractSocket::IPv4Protocol) {
                 serverIPAddress_ = address.toString();
-                qDebug() << "Pi Hole server found at IP address: " << serverIPAddress_;
+                qDebug() << "Pi-hole server found at IP address: " << serverIPAddress_;
 
                 // Update the destination URL and start refreshing information.
                 QString baseURL = QString("http://%1/admin/api.php").arg(serverIPAddress_);
@@ -59,7 +59,7 @@ void VCPiHole::handleHostLookup(const QHostInfo& host) {
             }
         }
     } else {
-        qDebug() << "Failed to find Pi Hole server on the local network with error: " << host.errorString();
+        qDebug() << "Failed to find Pi-hole server on the local network with error: " << host.errorString();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
