@@ -88,119 +88,122 @@ void VCNanoleaf::handleZeroConfServiceFound(const QString& serviceType, const QS
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
-    if (sender == this) {
-        if (statusCode == 200) {
-            if (body.isObject()) {
-                QJsonObject responseObject = body.object();
-                if (responseObject.contains("name")) {
-                    QString name = responseObject.value("name").toString();
-                    if (name_ != name) {
-                        name_ = name;
-                        emit nameChanged();
-                    }
-                }
-                if (responseObject.contains("effects")) {
-                    QJsonObject effectsObject = responseObject.value("effects").toObject();
-                    if (effectsObject.contains("select")) {
-                        QString selected = effectsObject.value("select").toString();
-
-                        // BDP: Ensure the commanded effect is applied, which seems to possibly take more than one try
-                        //      if the Nanoleaf has been sitting idle for a while.
-                        if (!commandedEffect_.isEmpty() && (commandedEffect_ != selected)) {
-                            // Command the effect again after a short delay.
-                            // TODO(BDP): Give up after a certain number of attempts?
-                            QTimer::singleShot(500, this, [this] { selectEffect(commandedEffect_); });
-                        } else {
-                            commandedEffect_.clear();
-
-                            if (selectedEffect_ != selected) {
-                                selectedEffect_ = selected;
-                                emit selectedEffectChanged();
-                            }
-                        }
-                    }
-                }
-                if (responseObject.contains("state")) {
-                    QJsonObject stateObject = responseObject.value("state").toObject();
-                    if (stateObject.contains("on")) {
-                        QJsonObject onObject = stateObject.value("on").toObject();
-                        if (onObject.contains("value")) {
-                            bool on = onObject.value("value").toBool();
-
-                            // BDP: Ensure the commanded power is applied.
-                            if (((commandedPower_ == 0) && on) || ((commandedPower_ == 1) && !on)) {
-                                // Command again after a short delay.
-                                QTimer::singleShot(500, this, [this] { commandPower(commandedPower_ == 1); });
-                            } else {
-                                commandedPower_ = -1;
-
-                                if (isOn_ != on) {
-                                    isOn_ = on;
-                                    emit isOnChanged();
-                                }
-                            }
-                        }
-                    }
-                }
-                if (responseObject.contains("animations")) {
-                    QVariantList effects;
-                    const QJsonArray animationsArray = responseObject.value("animations").toArray();
-                    for (const auto& animation : animationsArray) {
-                        QJsonObject animationObject = animation.toObject();
-                        if (!animationObject.isEmpty()) {
-                            QVariantMap effect{{"name", animationObject.value("animName").toString()}};
-
-                            QStringList colors;
-                            const QJsonArray paletteArray = animationObject.value("palette").toArray();
-                            for (const auto& palette : paletteArray) {
-                                QJsonObject paletteObject = palette.toObject();
-                                if (!paletteObject.isEmpty()) {
-                                    double hue = paletteObject.value("hue").toInt() / 359.0;
-                                    double saturation = paletteObject.value("saturation").toInt() / 100.0;
-                                    double brightness = paletteObject.value("brightness").toInt() / 100.0;
-                                    colors.append(QColor::fromHsvF(hue, saturation, brightness).name());
-                                }
-                            }
-                            effect["colors"] = colors;
-
-                            const QJsonArray optionsArray = animationObject.value("pluginOptions").toArray();
-                            for (const auto& option : optionsArray) {
-                                QJsonObject optionObject = option.toObject();
-                                if (!optionObject.isEmpty()) {
-                                    QString optionName = optionObject.value("name").toString();
-                                    if ((optionName == "delayTime") || (optionName == "transTime")) {
-                                        // These values are presented in tenths of a second, convert.
-                                        effect[optionName] = optionObject.value("value").toInt() / 10.0;
-                                    }
-                                }
-                            }
-
-                            effects.append(effect);
-                        }
-                    }
-
-                    if (!effects.isEmpty()) {
-                        // Sort alphabetically by name.
-                        std::sort(effects.begin(), effects.end(), [](const QVariant& left, const QVariant& right) {
-                            return left.toMap().value("name").toString() < right.toMap().value("name").toString();
-                        });
-
-                        if (effects_ != effects) {
-                            effects_ = effects;
-                            emit effectsChanged();
-                        }
-                    }
-                }
-            } else {
-                qDebug() << "Failed to parse response from Nanoleaf";
-            }
-        } else if (statusCode == 204) {
-            // Successful ACK of effect selection, but no content in the response.
-        } else {
-            qDebug() << "Ignoring unsuccessful reply from Nanoleaf with status code: " << statusCode;
-        }
-    } else {
+    if (sender != this) {
         // Not for us, ignore.
+        return;
+    }
+    if (statusCode == 204) {
+        // Successful ACK of effect selection, but no content in the response.
+        return;
+    }
+    if (statusCode != 200) {
+        qDebug() << "Ignoring unsuccessful reply from Nanoleaf with status code: " << statusCode;
+        return;
+    }
+    if (!body.isObject()) {
+        qDebug() << "Failed to parse response from Nanoleaf";
+        return;
+    }
+
+    QJsonObject responseObject = body.object();
+    if (responseObject.contains("name")) {
+        QString name = responseObject.value("name").toString();
+        if (name_ != name) {
+            name_ = name;
+            emit nameChanged();
+        }
+    }
+    if (responseObject.contains("effects")) {
+        QJsonObject effectsObject = responseObject.value("effects").toObject();
+        if (effectsObject.contains("select")) {
+            QString selected = effectsObject.value("select").toString();
+
+            // BDP: Ensure the commanded effect is applied, which seems to possibly take more than one try
+            //      if the Nanoleaf has been sitting idle for a while.
+            if (!commandedEffect_.isEmpty() && (commandedEffect_ != selected)) {
+                // Command the effect again after a short delay.
+                // TODO(BDP): Give up after a certain number of attempts?
+                QTimer::singleShot(500, this, [this] { selectEffect(commandedEffect_); });
+            } else {
+                commandedEffect_.clear();
+
+                if (selectedEffect_ != selected) {
+                    selectedEffect_ = selected;
+                    emit selectedEffectChanged();
+                }
+            }
+        }
+    }
+    if (responseObject.contains("state")) {
+        QJsonObject stateObject = responseObject.value("state").toObject();
+        if (stateObject.contains("on")) {
+            QJsonObject onObject = stateObject.value("on").toObject();
+            if (onObject.contains("value")) {
+                bool on = onObject.value("value").toBool();
+
+                // BDP: Ensure the commanded power is applied.
+                if (((commandedPower_ == 0) && on) || ((commandedPower_ == 1) && !on)) {
+                    // Command again after a short delay.
+                    QTimer::singleShot(500, this, [this] { commandPower(commandedPower_ == 1); });
+                } else {
+                    commandedPower_ = -1;
+
+                    if (isOn_ != on) {
+                        isOn_ = on;
+                        emit isOnChanged();
+                    }
+                }
+            }
+        }
+    }
+    if (responseObject.contains("animations")) {
+        QVariantList effects;
+        const QJsonArray animationsArray = responseObject.value("animations").toArray();
+        for (const auto& animation : animationsArray) {
+            QJsonObject animationObject = animation.toObject();
+            if (!animationObject.isEmpty()) {
+                QVariantMap effect{{"name", animationObject.value("animName").toString()}};
+
+                QStringList colors;
+                const QJsonArray paletteArray = animationObject.value("palette").toArray();
+                for (const auto& palette : paletteArray) {
+                    QJsonObject paletteObject = palette.toObject();
+                    if (!paletteObject.isEmpty()) {
+                        double hue = paletteObject.value("hue").toInt() / 359.0;
+                        double saturation = paletteObject.value("saturation").toInt() / 100.0;
+                        double brightness = paletteObject.value("brightness").toInt() / 100.0;
+                        colors.append(QColor::fromHsvF(hue, saturation, brightness).name());
+                    }
+                }
+                effect["colors"] = colors;
+
+                const QJsonArray optionsArray = animationObject.value("pluginOptions").toArray();
+                for (const auto& option : optionsArray) {
+                    QJsonObject optionObject = option.toObject();
+                    if (!optionObject.isEmpty()) {
+                        QString optionName = optionObject.value("name").toString();
+                        if ((optionName == "delayTime") || (optionName == "transTime")) {
+                            // These values are presented in tenths of a second, convert.
+                            effect[optionName] = optionObject.value("value").toInt() / 10.0;
+                        }
+                    }
+                }
+
+                effects.append(effect);
+            }
+        }
+
+        if (!effects.isEmpty()) {
+            // Sort alphabetically by name.
+            std::sort(effects.begin(), effects.end(), [](const QVariant& left, const QVariant& right) {
+                return left.toMap().value("name").toString() < right.toMap().value("name").toString();
+            });
+
+            if (effects_ != effects) {
+                effects_ = effects;
+                emit effectsChanged();
+            }
+        }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

@@ -222,383 +222,387 @@ void VCSpotify::refreshPlaylists() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
-    if (sender == this) {
-        if (statusCode == 200) {
-            if (body.isObject()) {
-                QJsonObject responseObject = body.object();
+    if (sender != this) {
+        // Not for us, ignore.
+        return;
+    }
+    if (statusCode == 204) {
+        // Success with no content in the response, ignore.
+        return;
+    }
+    if (statusCode == 401) {
+        // Access token expired, invalidate the current one, stop making requests, and ask for a new one.
+        qDebug() << "Spotify access token expired, so requesting a new one";
+        accessTokenAuthorization_.clear();
+        updateTimer_.stop();
+        accessTokenRefreshTimer_.stop();
+        refreshAccessToken();
+        return;
+    }
+    if (statusCode != 200) {
+        qDebug() << "Ignoring unsuccessful reply from Spotify with status code: " << statusCode;
+        return;
+    }
+    if (!body.isObject()) {
+        qDebug() << "Failed to parse reply from Spotify";
+        return;
+    }
 
-                // First, check if this reply contains an updated access token.
-                if (responseObject.contains("access_token")) {
-                    accessToken_ = responseObject.value("access_token").toString();
-                    accessTokenType_ = responseObject.value("token_type").toString();
+    QJsonObject responseObject = body.object();
 
-                    // Ensure the refresh timer interval is still sufficient.
-                    int expiresIn = responseObject.value("expires_in").toInt();
-                    int interval = (expiresIn - 60) * 1000;
-                    if ((interval > 0) && (interval < accessTokenRefreshTimer_.interval())) {
-                        // Bump the interval.
-                        accessTokenRefreshTimer_.setInterval(interval);
-                    } else {
-                        // Inside bounds, leave it alone.
+    // First, check if this reply contains an updated access token.
+    if (responseObject.contains("access_token")) {
+        accessToken_ = responseObject.value("access_token").toString();
+        accessTokenType_ = responseObject.value("token_type").toString();
+
+        // Ensure the refresh timer interval is still sufficient.
+        int expiresIn = responseObject.value("expires_in").toInt();
+        int interval = (expiresIn - 60) * 1000;
+        if ((interval > 0) && (interval < accessTokenRefreshTimer_.interval())) {
+            // Bump the interval.
+            accessTokenRefreshTimer_.setInterval(interval);
+        } else {
+            // Inside bounds, leave it alone.
+        }
+
+        // Update the authorization header to use in requests.
+        accessTokenAuthorization_ = QString("%1 %2").arg(accessTokenType_, accessToken_).toUtf8();
+
+        // Start/restart timers since we just got a fresh access token.
+        updateTimer_.start();
+        accessTokenRefreshTimer_.start();
+
+        // Refresh data right away in case a previous request was rejected.
+        refresh();
+        refreshUserProfile();
+        refreshPlaylists();
+        refreshDevices();
+
+        qDebug() << "Received new access token from Spotify, asking again in "
+                 << (accessTokenRefreshTimer_.interval() / 1000) << " seconds";
+    } else if (responseObject.contains("is_playing")) {
+        // Playback information.
+        // Kick the inactivity timer.
+        inactivityTimer_.start();
+
+        // Indicate an active state.
+        if (!isActive_) {
+            isActive_ = true;
+            emit isActiveChanged();
+        }
+
+        bool isPlaying = responseObject.value("is_playing").toBool();
+        if ((isPlaying_ != isPlaying) && !actionSubmissionTimer_.isActive()) {
+            isPlaying_ = isPlaying;
+            emit isPlayingChanged();
+        }
+        if (responseObject.contains("device")) {
+            QJsonObject deviceObject = responseObject.value("device").toObject();
+            if (deviceObject.contains("name")) {
+                QString deviceName = deviceObject.value("name").toString();
+                if (deviceName_ != deviceName) {
+                    deviceName_ = deviceName;
+                    emit deviceNameChanged();
+                }
+            }
+            if (deviceObject.contains("type")) {
+                QString deviceType = deviceObject.value("type").toString();
+                if (deviceType_ != deviceType) {
+                    deviceType_ = deviceType;
+                    emit deviceTypeChanged();
+                }
+            }
+            if (deviceObject.contains("volume_percent") && !deviceObject.value("volume_percent").isNull()) {
+                int volume = deviceObject.value("volume_percent").toInt();
+                if (deviceVolume_ != volume) {
+                    deviceVolume_ = volume;
+                    emit deviceVolumeChanged();
+                }
+            }
+        }
+        if (responseObject.contains("shuffle_state")) {
+            bool shuffleEnabled = responseObject.value("shuffle_state").toBool();
+            if (shuffleEnabled_ != shuffleEnabled) {
+                shuffleEnabled_ = shuffleEnabled;
+                emit shuffleEnabledChanged();
+            }
+        }
+        if (responseObject.contains("repeat_state")) {
+            QString repeatState = responseObject.value("repeat_state").toString();
+            bool repeatOneEnabled = (repeatState == "track");
+            bool repeatAllEnabled = (repeatState == "context");
+            if (repeatOneEnabled_ != repeatOneEnabled) {
+                repeatOneEnabled_ = repeatOneEnabled;
+                emit repeatOneEnabledChanged();
+            }
+            if (repeatAllEnabled_ != repeatAllEnabled) {
+                repeatAllEnabled_ = repeatAllEnabled;
+                emit repeatAllEnabledChanged();
+            }
+        }
+        if (responseObject.contains("progress_ms")) {
+            int trackPosition = responseObject.value("progress_ms").toInt() / 1000;
+            if ((trackPosition_ != trackPosition) && !actionSubmissionTimer_.isActive()) {
+                trackPosition_ = trackPosition;
+                emit trackPositionChanged();
+            }
+        }
+        if (responseObject.contains("context")) {
+            QJsonObject contextObject = responseObject.value("context").toObject();
+            if (contextObject.contains("type") && contextObject.contains("uri")) {
+                QString contextType = contextObject.value("type").toString();
+                if (contextType == "playlist") {
+                    QString uri = contextObject.value("uri").toString();
+                    QString playlistID = uri.split(':').last();
+
+                    // Request the name of the playlist.
+                    QUrl destination(
+                        QString("https://api.spotify.com/v1/playlists/%1?fields=name,uri").arg(playlistID));
+                    sendRequest(destination);
+                } else if (!playlistName_.isEmpty()) {
+                    // Clear stale context.
+                    playlistName_.clear();
+                    emit playlistNameChanged();
+                }
+            } else if (contextObject.isEmpty()) {
+                playlistName_.clear();
+                emit playlistNameChanged();
+            }
+        }
+        if (responseObject.contains("item")) {
+            QJsonObject itemObject = responseObject.value("item").toObject();
+            if (itemObject.contains("name")) {
+                QString trackName = itemObject.value("name").toString();
+                if (trackName_ != trackName) {
+                    trackName_ = trackName;
+                    emit trackNameChanged();
+                }
+            }
+            if (itemObject.contains("duration_ms")) {
+                int trackDuration = itemObject.value("duration_ms").toInt() / 1000;
+                if ((trackDuration_ != trackDuration) && !actionSubmissionTimer_.isActive()) {
+                    trackDuration_ = trackDuration;
+                    emit trackDurationChanged();
+                }
+            }
+            if (itemObject.contains("album")) {
+                QJsonObject albumObject = itemObject.value("album").toObject();
+                if (albumObject.contains("name")) {
+                    QString trackAlbum = albumObject.value("name").toString();
+                    if (trackAlbum_ != trackAlbum) {
+                        trackAlbum_ = trackAlbum;
+                        emit trackAlbumChanged();
                     }
-
-                    // Update the authorization header to use in requests.
-                    accessTokenAuthorization_ = QString("%1 %2").arg(accessTokenType_, accessToken_).toUtf8();
-
-                    // Start/restart timers since we just got a fresh access token.
-                    updateTimer_.start();
-                    accessTokenRefreshTimer_.start();
-
-                    // Refresh data right away in case a previous request was rejected.
-                    refresh();
-                    refreshUserProfile();
-                    refreshPlaylists();
-                    refreshDevices();
-
-                    qDebug() << "Received new access token from Spotify, asking again in "
-                             << (accessTokenRefreshTimer_.interval() / 1000) << " seconds";
-                } else if (responseObject.contains("is_playing")) {
-                    // Playback information.
-                    // Kick the inactivity timer.
-                    inactivityTimer_.start();
-
-                    // Indicate an active state.
-                    if (!isActive_) {
-                        isActive_ = true;
-                        emit isActiveChanged();
-                    }
-
-                    bool isPlaying = responseObject.value("is_playing").toBool();
-                    if ((isPlaying_ != isPlaying) && !actionSubmissionTimer_.isActive()) {
-                        isPlaying_ = isPlaying;
-                        emit isPlayingChanged();
-                    }
-                    if (responseObject.contains("device")) {
-                        QJsonObject deviceObject = responseObject.value("device").toObject();
-                        if (deviceObject.contains("name")) {
-                            QString deviceName = deviceObject.value("name").toString();
-                            if (deviceName_ != deviceName) {
-                                deviceName_ = deviceName;
-                                emit deviceNameChanged();
+                }
+                if (albumObject.contains("images")) {
+                    // Take the first image, which is the highest resolution.
+                    QJsonArray albumImagesArray = albumObject.value("images").toArray();
+                    if (!albumImagesArray.isEmpty()) {
+                        QJsonObject albumImageObject = albumImagesArray.first().toObject();
+                        if (albumImageObject.contains("url")) {
+                            QUrl trackAlbumArt(albumImageObject.value("url").toString());
+                            if (trackAlbumArt_ != trackAlbumArt) {
+                                trackAlbumArt_ = trackAlbumArt;
+                                emit trackAlbumArtChanged();
                             }
                         }
-                        if (deviceObject.contains("type")) {
-                            QString deviceType = deviceObject.value("type").toString();
-                            if (deviceType_ != deviceType) {
-                                deviceType_ = deviceType;
-                                emit deviceTypeChanged();
-                            }
-                        }
-                        if (deviceObject.contains("volume_percent") && !deviceObject.value("volume_percent").isNull()) {
-                            int volume = deviceObject.value("volume_percent").toInt();
-                            if (deviceVolume_ != volume) {
-                                deviceVolume_ = volume;
-                                emit deviceVolumeChanged();
-                            }
-                        }
+                    } else if (!trackAlbumArt_.isEmpty()) {
+                        // No artwork for the track, clear any previous value.
+                        trackAlbumArt_.clear();
+                        emit trackAlbumArtChanged();
                     }
-                    if (responseObject.contains("shuffle_state")) {
-                        bool shuffleEnabled = responseObject.value("shuffle_state").toBool();
-                        if (shuffleEnabled_ != shuffleEnabled) {
-                            shuffleEnabled_ = shuffleEnabled;
-                            emit shuffleEnabledChanged();
-                        }
-                    }
-                    if (responseObject.contains("repeat_state")) {
-                        QString repeatState = responseObject.value("repeat_state").toString();
-                        bool repeatOneEnabled = (repeatState == "track");
-                        bool repeatAllEnabled = (repeatState == "context");
-                        if (repeatOneEnabled_ != repeatOneEnabled) {
-                            repeatOneEnabled_ = repeatOneEnabled;
-                            emit repeatOneEnabledChanged();
-                        }
-                        if (repeatAllEnabled_ != repeatAllEnabled) {
-                            repeatAllEnabled_ = repeatAllEnabled;
-                            emit repeatAllEnabledChanged();
-                        }
-                    }
-                    if (responseObject.contains("progress_ms")) {
-                        int trackPosition = responseObject.value("progress_ms").toInt() / 1000;
-                        if ((trackPosition_ != trackPosition) && !actionSubmissionTimer_.isActive()) {
-                            trackPosition_ = trackPosition;
-                            emit trackPositionChanged();
-                        }
-                    }
-                    if (responseObject.contains("context")) {
-                        QJsonObject contextObject = responseObject.value("context").toObject();
-                        if (contextObject.contains("type") && contextObject.contains("uri")) {
-                            QString contextType = contextObject.value("type").toString();
-                            if (contextType == "playlist") {
-                                QString uri = contextObject.value("uri").toString();
-                                QString playlistID = uri.split(':').last();
-
-                                // Request the name of the playlist.
-                                QUrl destination(
-                                    QString("https://api.spotify.com/v1/playlists/%1?fields=name,uri").arg(playlistID));
-                                sendRequest(destination);
-                            } else if (!playlistName_.isEmpty()) {
-                                // Clear stale context.
-                                playlistName_.clear();
-                                emit playlistNameChanged();
-                            }
-                        } else if (contextObject.isEmpty()) {
-                            playlistName_.clear();
-                            emit playlistNameChanged();
-                        }
-                    }
-                    if (responseObject.contains("item")) {
-                        QJsonObject itemObject = responseObject.value("item").toObject();
-                        if (itemObject.contains("name")) {
-                            QString trackName = itemObject.value("name").toString();
-                            if (trackName_ != trackName) {
-                                trackName_ = trackName;
-                                emit trackNameChanged();
-                            }
-                        }
-                        if (itemObject.contains("duration_ms")) {
-                            int trackDuration = itemObject.value("duration_ms").toInt() / 1000;
-                            if ((trackDuration_ != trackDuration) && !actionSubmissionTimer_.isActive()) {
-                                trackDuration_ = trackDuration;
-                                emit trackDurationChanged();
-                            }
-                        }
-                        if (itemObject.contains("album")) {
-                            QJsonObject albumObject = itemObject.value("album").toObject();
-                            if (albumObject.contains("name")) {
-                                QString trackAlbum = albumObject.value("name").toString();
-                                if (trackAlbum_ != trackAlbum) {
-                                    trackAlbum_ = trackAlbum;
-                                    emit trackAlbumChanged();
+                }
+            }
+            if (itemObject.contains("artists")) {
+                const QJsonArray artistsArray = itemObject.value("artists").toArray();
+                if (!artistsArray.isEmpty()) {
+                    QString trackArtist;
+                    for (const auto& artist : artistsArray) {
+                        QJsonObject artistObject = artist.toObject();
+                        if (artistObject.contains("name")) {
+                            QString artistName = artistObject.value("name").toString();
+                            if (!artistName.isEmpty()) {
+                                if (!trackArtist.isEmpty()) {
+                                    trackArtist.append(", ");
                                 }
+                                trackArtist.append(artistName);
                             }
-                            if (albumObject.contains("images")) {
-                                // Take the first image, which is the highest resolution.
-                                QJsonArray albumImagesArray = albumObject.value("images").toArray();
-                                if (!albumImagesArray.isEmpty()) {
-                                    QJsonObject albumImageObject = albumImagesArray.first().toObject();
-                                    if (albumImageObject.contains("url")) {
-                                        QUrl trackAlbumArt(albumImageObject.value("url").toString());
-                                        if (trackAlbumArt_ != trackAlbumArt) {
-                                            trackAlbumArt_ = trackAlbumArt;
-                                            emit trackAlbumArtChanged();
+                        }
+                    }
+                    if (!trackArtist.isEmpty() && (trackArtist_ != trackArtist)) {
+                        trackArtist_ = trackArtist;
+                        emit trackArtistChanged();
+                    }
+                }
+            }
+        }
+    } else if ((responseObject.size() == 2) && responseObject.contains("name") && responseObject.contains("uri")) {
+        // Playlist name.
+        QString playlistName = responseObject.value("name").toString();
+        if (playlistName_ != playlistName) {
+            playlistName_ = playlistName;
+            emit playlistNameChanged();
+        }
+    } else if (responseObject.contains("tracks")) {
+        // Search results.
+        QVariantList searchResultsModel;
+        QJsonObject tracksObject = responseObject.value("tracks").toObject();
+        if (tracksObject.contains("items")) {
+            const QJsonArray itemsArray = tracksObject.value("items").toArray();
+            for (const auto& item : itemsArray) {
+                QJsonObject itemObject = item.toObject();
+                if (!itemObject.isEmpty()) {
+                    QVariantMap searchResult{{"name", itemObject.value("name").toString()},
+                                             {"uri", itemObject.value("uri").toString()}};
+                    if (itemObject.contains("artists")) {
+                        const QJsonArray artistsArray = itemObject.value("artists").toArray();
+                        if (!artistsArray.isEmpty()) {
+                            QString trackArtist;
+                            for (const auto& artist : artistsArray) {
+                                QJsonObject artistObject = artist.toObject();
+                                if (artistObject.contains("name")) {
+                                    QString artistName = artistObject.value("name").toString();
+                                    if (!artistName.isEmpty()) {
+                                        if (!trackArtist.isEmpty()) {
+                                            trackArtist.append(", ");
                                         }
-                                    }
-                                } else if (!trackAlbumArt_.isEmpty()) {
-                                    // No artwork for the track, clear any previous value.
-                                    trackAlbumArt_.clear();
-                                    emit trackAlbumArtChanged();
-                                }
-                            }
-                        }
-                        if (itemObject.contains("artists")) {
-                            const QJsonArray artistsArray = itemObject.value("artists").toArray();
-                            if (!artistsArray.isEmpty()) {
-                                QString trackArtist;
-                                for (const auto& artist : artistsArray) {
-                                    QJsonObject artistObject = artist.toObject();
-                                    if (artistObject.contains("name")) {
-                                        QString artistName = artistObject.value("name").toString();
-                                        if (!artistName.isEmpty()) {
-                                            if (!trackArtist.isEmpty()) {
-                                                trackArtist.append(", ");
-                                            }
-                                            trackArtist.append(artistName);
-                                        }
-                                    }
-                                }
-                                if (!trackArtist.isEmpty() && (trackArtist_ != trackArtist)) {
-                                    trackArtist_ = trackArtist;
-                                    emit trackArtistChanged();
-                                }
-                            }
-                        }
-                    }
-                } else if ((responseObject.size() == 2) && responseObject.contains("name") &&
-                           responseObject.contains("uri")) {
-                    // Playlist name.
-                    QString playlistName = responseObject.value("name").toString();
-                    if (playlistName_ != playlistName) {
-                        playlistName_ = playlistName;
-                        emit playlistNameChanged();
-                    }
-                } else if (responseObject.contains("tracks")) {
-                    // Search results.
-                    QVariantList searchResultsModel;
-                    QJsonObject tracksObject = responseObject.value("tracks").toObject();
-                    if (tracksObject.contains("items")) {
-                        const QJsonArray itemsArray = tracksObject.value("items").toArray();
-                        for (const auto& item : itemsArray) {
-                            QJsonObject itemObject = item.toObject();
-                            if (!itemObject.isEmpty()) {
-                                QVariantMap searchResult{{"name", itemObject.value("name").toString()},
-                                                         {"uri", itemObject.value("uri").toString()}};
-                                if (itemObject.contains("artists")) {
-                                    const QJsonArray artistsArray = itemObject.value("artists").toArray();
-                                    if (!artistsArray.isEmpty()) {
-                                        QString trackArtist;
-                                        for (const auto& artist : artistsArray) {
-                                            QJsonObject artistObject = artist.toObject();
-                                            if (artistObject.contains("name")) {
-                                                QString artistName = artistObject.value("name").toString();
-                                                if (!artistName.isEmpty()) {
-                                                    if (!trackArtist.isEmpty()) {
-                                                        trackArtist.append(", ");
-                                                    }
-                                                    trackArtist.append(artistName);
-                                                }
-                                            }
-                                        }
-                                        searchResult["artist"] = trackArtist;
-                                    }
-                                }
-                                if (itemObject.contains("album")) {
-                                    QJsonObject albumObject = itemObject.value("album").toObject();
-                                    if (albumObject.contains("name")) {
-                                        searchResult["album"] = albumObject.value("name").toString();
-                                    }
-                                    if (albumObject.contains("images")) {
-                                        // Take the first image, which is the highest resolution.
-                                        QJsonArray albumImagesArray = albumObject.value("images").toArray();
-                                        if (!albumImagesArray.isEmpty()) {
-                                            QJsonObject albumImageObject = albumImagesArray.first().toObject();
-                                            if (albumImageObject.contains("url")) {
-                                                searchResult["image"] = QUrl(albumImageObject.value("url").toString());
-                                            }
-                                        }
-                                    }
-                                }
-
-                                searchResultsModel.append(searchResult);
-                            }
-                        }
-                    }
-
-                    if (searchResults_ != searchResultsModel) {
-                        searchResults_ = searchResultsModel;
-                        emit searchResultsChanged();
-                    }
-                } else if (responseObject.contains("items")) {
-                    // Playlists information.
-                    QVariantList playlistsModel;
-                    const QJsonArray playlistsArray = responseObject.value("items").toArray();
-                    for (const auto& playlist : playlistsArray) {
-                        QJsonObject playlistObject = playlist.toObject();
-                        if (!playlistObject.isEmpty()) {
-                            QVariantMap playlistItem{{"name", playlistObject.value("name").toString()},
-                                                     {"uri", playlistObject.value("uri").toString()},
-                                                     {"isPublic", playlistObject.value("public").toBool()}};
-                            if (playlistObject.contains("tracks")) {
-                                QJsonObject tracksObject = playlistObject.value("tracks").toObject();
-                                playlistItem["trackCount"] = tracksObject.value("total").toInt();
-                            }
-                            if (playlistObject.contains("images")) {
-                                // Take the first image, which is the highest resolution.
-                                QJsonArray imagesArray = playlistObject.value("images").toArray();
-                                if (!imagesArray.isEmpty()) {
-                                    QJsonObject imageObject = imagesArray.first().toObject();
-                                    if (imageObject.contains("url")) {
-                                        playlistItem["image"] = QUrl(imageObject.value("url").toString());
+                                        trackArtist.append(artistName);
                                     }
                                 }
                             }
-
-                            playlistsModel.append(playlistItem);
+                            searchResult["artist"] = trackArtist;
                         }
                     }
-
-                    if (playlists_ != playlistsModel) {
-                        playlists_ = playlistsModel;
-                        emit playlistsChanged();
-                    }
-                } else if (responseObject.contains("devices")) {
-                    // Devices information.
-                    QVariantList devicesModel;
-                    const QJsonArray devicesArray = responseObject.value("devices").toArray();
-                    for (const auto& device : devicesArray) {
-                        QJsonObject deviceObject = device.toObject();
-                        if (!deviceObject.isEmpty()) {
-                            QString name = deviceObject.value("name").toString();
-                            QString id = deviceObject.value("id").toString();
-
-                            // Is this the preferred device?
-                            if (preferredDevice_ == name) {
-                                // Yes, store its ID.
-                                if (preferredDeviceID_ != id) {
-                                    preferredDeviceID_ = id;
-                                    qDebug() << "Received ID of preferred Spotify device: " << preferredDevice_;
+                    if (itemObject.contains("album")) {
+                        QJsonObject albumObject = itemObject.value("album").toObject();
+                        if (albumObject.contains("name")) {
+                            searchResult["album"] = albumObject.value("name").toString();
+                        }
+                        if (albumObject.contains("images")) {
+                            // Take the first image, which is the highest resolution.
+                            QJsonArray albumImagesArray = albumObject.value("images").toArray();
+                            if (!albumImagesArray.isEmpty()) {
+                                QJsonObject albumImageObject = albumImagesArray.first().toObject();
+                                if (albumImageObject.contains("url")) {
+                                    searchResult["image"] = QUrl(albumImageObject.value("url").toString());
                                 }
                             }
-
-                            QVariantMap playlistItem{{"name", name}, {"id", id}};
-                            devicesModel.append(playlistItem);
                         }
                     }
 
-                    if (!devicesModel.isEmpty()) {
-                        // Arrange alphabetically.
-                        std::sort(
-                            devicesModel.begin(), devicesModel.end(), [](const QVariant& left, const QVariant& right) {
-                                return left.toMap().value("name").toString() < right.toMap().value("name").toString();
-                            });
-                    }
+                    searchResultsModel.append(searchResult);
+                }
+            }
+        }
 
-                    if (devices_ != devicesModel) {
-                        devices_ = devicesModel;
-                        emit devicesChanged();
-                    }
-                } else {
-                    // Assume this is user profile information.
-                    if (responseObject.contains("display_name")) {
-                        QString userName = responseObject.value("display_name").toString();
-                        if (userName_ != userName) {
-                            userName_ = userName;
-                            emit userNameChanged();
-                        }
-                    }
-                    if (responseObject.contains("email")) {
-                        QString email = responseObject.value("email").toString();
-                        if (userEmail_ != email) {
-                            userEmail_ = email;
-                            emit userEmailChanged();
-                        }
-                    }
-                    if (responseObject.contains("product")) {
-                        QString subscription = responseObject.value("product").toString();
-                        if (userSubscription_ != subscription) {
-                            userSubscription_ = subscription;
-                            emit userSubscriptionChanged();
-                        }
-                    }
-                    if (responseObject.contains("images")) {
-                        // Only be concerned with the first image.
-                        QJsonArray imagesArray = responseObject.value("images").toArray();
-                        if (!imagesArray.isEmpty()) {
-                            QJsonObject imageObject = imagesArray.first().toObject();
-                            if (imageObject.contains("url")) {
-                                QUrl userImage(imageObject.value("url").toString());
-                                if (userImage_ != userImage) {
-                                    userImage_ = userImage;
-                                    emit userImageChanged();
-                                }
-                            }
+        if (searchResults_ != searchResultsModel) {
+            searchResults_ = searchResultsModel;
+            emit searchResultsChanged();
+        }
+    } else if (responseObject.contains("items")) {
+        // Playlists information.
+        QVariantList playlistsModel;
+        const QJsonArray playlistsArray = responseObject.value("items").toArray();
+        for (const auto& playlist : playlistsArray) {
+            QJsonObject playlistObject = playlist.toObject();
+            if (!playlistObject.isEmpty()) {
+                QVariantMap playlistItem{{"name", playlistObject.value("name").toString()},
+                                         {"uri", playlistObject.value("uri").toString()},
+                                         {"isPublic", playlistObject.value("public").toBool()}};
+                if (playlistObject.contains("tracks")) {
+                    QJsonObject tracksObject = playlistObject.value("tracks").toObject();
+                    playlistItem["trackCount"] = tracksObject.value("total").toInt();
+                }
+                if (playlistObject.contains("images")) {
+                    // Take the first image, which is the highest resolution.
+                    QJsonArray imagesArray = playlistObject.value("images").toArray();
+                    if (!imagesArray.isEmpty()) {
+                        QJsonObject imageObject = imagesArray.first().toObject();
+                        if (imageObject.contains("url")) {
+                            playlistItem["image"] = QUrl(imageObject.value("url").toString());
                         }
                     }
                 }
 
-            } else {
-                qDebug() << "Failed to parse reply from Spotify";
+                playlistsModel.append(playlistItem);
             }
-        } else if (statusCode == 204) {
-            // Success with no content in the response, ignore.
-        } else if (statusCode == 401) {
-            // Access token expired, invalidate the current one, stop making requests, and ask for a new one.
-            qDebug() << "Spotify access token expired, so requesting a new one";
-            accessTokenAuthorization_.clear();
-            updateTimer_.stop();
-            accessTokenRefreshTimer_.stop();
-            refreshAccessToken();
-        } else {
-            qDebug() << "Ignoring unsuccessful reply from Spotify with status code: " << statusCode;
+        }
+
+        if (playlists_ != playlistsModel) {
+            playlists_ = playlistsModel;
+            emit playlistsChanged();
+        }
+    } else if (responseObject.contains("devices")) {
+        // Devices information.
+        QVariantList devicesModel;
+        const QJsonArray devicesArray = responseObject.value("devices").toArray();
+        for (const auto& device : devicesArray) {
+            QJsonObject deviceObject = device.toObject();
+            if (!deviceObject.isEmpty()) {
+                QString name = deviceObject.value("name").toString();
+                QString id = deviceObject.value("id").toString();
+
+                // Is this the preferred device?
+                if (preferredDevice_ == name) {
+                    // Yes, store its ID.
+                    if (preferredDeviceID_ != id) {
+                        preferredDeviceID_ = id;
+                        qDebug() << "Received ID of preferred Spotify device: " << preferredDevice_;
+                    }
+                }
+
+                QVariantMap playlistItem{{"name", name}, {"id", id}};
+                devicesModel.append(playlistItem);
+            }
+        }
+
+        if (!devicesModel.isEmpty()) {
+            // Arrange alphabetically.
+            std::sort(devicesModel.begin(), devicesModel.end(), [](const QVariant& left, const QVariant& right) {
+                return left.toMap().value("name").toString() < right.toMap().value("name").toString();
+            });
+        }
+
+        if (devices_ != devicesModel) {
+            devices_ = devicesModel;
+            emit devicesChanged();
+        }
+    } else {
+        // Assume this is user profile information.
+        if (responseObject.contains("display_name")) {
+            QString userName = responseObject.value("display_name").toString();
+            if (userName_ != userName) {
+                userName_ = userName;
+                emit userNameChanged();
+            }
+        }
+        if (responseObject.contains("email")) {
+            QString email = responseObject.value("email").toString();
+            if (userEmail_ != email) {
+                userEmail_ = email;
+                emit userEmailChanged();
+            }
+        }
+        if (responseObject.contains("product")) {
+            QString subscription = responseObject.value("product").toString();
+            if (userSubscription_ != subscription) {
+                userSubscription_ = subscription;
+                emit userSubscriptionChanged();
+            }
+        }
+        if (responseObject.contains("images")) {
+            // Only be concerned with the first image.
+            QJsonArray imagesArray = responseObject.value("images").toArray();
+            if (!imagesArray.isEmpty()) {
+                QJsonObject imageObject = imagesArray.first().toObject();
+                if (imageObject.contains("url")) {
+                    QUrl userImage(imageObject.value("url").toString());
+                    if (userImage_ != userImage) {
+                        userImage_ = userImage;
+                        emit userImageChanged();
+                    }
+                }
+            }
         }
     }
 }

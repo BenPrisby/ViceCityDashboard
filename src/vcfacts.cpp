@@ -23,25 +23,28 @@ void VCFacts::refresh() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCFacts::handleNetworkReply(const int statusCode, QObject* const sender, const QJsonDocument& body) {
-    if (sender == this) {
-        if (statusCode == 200) {
-            if (body.isObject()) {
-                QJsonObject responseObject = body.object();
-                if (responseObject.contains("text")) {
-                    QString fact = responseObject.value("text").toString().simplified().replace('`', '\'');
-                    if (!fact.isEmpty()) {
-                        fact_ = fact;
-                        emit factChanged();
-                    } else {
-                        qDebug() << "No fact received in reply";
-                    }
-                }
-            }
-        } else {
-            qDebug() << "Ignoring bad reply when requesting fact";
-        }
-    } else {
+    if (sender != this) {
         // Not for us, ignore.
+        return;
+    }
+    if (statusCode != 200) {
+        qDebug() << "Ignoring bad reply when requesting fact";
+        return;
+    }
+    if (!body.isObject()) {
+        qDebug() << "Failed to parse facts response";
+        return;
+    }
+
+    QJsonObject responseObject = body.object();
+    if (responseObject.contains("text")) {
+        QString fact = responseObject.value("text").toString().simplified().replace('`', '\'');
+        if (!fact.isEmpty()) {
+            fact_ = fact;
+            emit factChanged();
+        } else {
+            qDebug() << "No fact received in reply";
+        }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
