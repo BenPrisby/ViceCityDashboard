@@ -77,7 +77,7 @@ Tile {
             VCButton {
                 id: playButton
 
-                readonly property bool isCurrentPlaylist: VCHub.spotify.playlistName === modelData["name"]
+                readonly property bool isCurrentPlaylist: modelData["name"] === VCHub.spotify.playlistName
 
                 Layout.preferredWidth: 80
                 Layout.preferredHeight: 40

@@ -40,7 +40,7 @@ void HueColorLight::commandColor(const QColor& color) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueColorLight::commandColor(const int hue) {
-    if ((0 <= hue) && (359 >= hue)) {
+    if ((hue >= 0) && (hue <= 359)) {
         commandColor(hueToColor(hue));
     } else {
         qDebug() << "Ignoring request to set invalid hue for light with ID: " << id_;
@@ -75,9 +75,9 @@ QColor HueColorLight::xyToColor(const double xIn, const double yIn) {
     double b = (x * 0.051713) - (y * 0.121364) + (z * 1.011530);
 
     // Apply reverse gamma correction.
-    r = (r <= 0.0031308) ? (12.92 * r) : ((1.0 + 0.055) * qPow(r, (1.0 / 2.4)) - 0.055);
-    g = (g <= 0.0031308) ? (12.92 * g) : ((1.0 + 0.055) * qPow(g, (1.0 / 2.4)) - 0.055);
-    b = (b <= 0.0031308) ? (12.92 * b) : ((1.0 + 0.055) * qPow(b, (1.0 / 2.4)) - 0.055);
+    r = (r <= 0.0031308) ? (r * 12.92) : ((1.0 + 0.055) * qPow(r, (1.0 / 2.4)) - 0.055);
+    g = (g <= 0.0031308) ? (g * 12.92) : ((1.0 + 0.055) * qPow(g, (1.0 / 2.4)) - 0.055);
+    b = (b <= 0.0031308) ? (b * 12.92) : ((1.0 + 0.055) * qPow(b, (1.0 / 2.4)) - 0.055);
 
     // Bring all negative components to 0.
     r = qMax(r, 0.0);
@@ -86,7 +86,7 @@ QColor HueColorLight::xyToColor(const double xIn, const double yIn) {
 
     // Scale the components to be in range if necessary.
     double maxComponent = qMax(r, qMax(g, b));
-    if (1.0 < maxComponent) {
+    if (maxComponent > 1.0) {
         r = r / maxComponent;
         g = g / maxComponent;
         b = b / maxComponent;
@@ -111,7 +111,7 @@ void HueColorLight::handleStateData(const QJsonObject& state) {
     //      opposed to HSV, where colors displayed and commanded may appear slightly different depending on the light.
     if (state.contains("xy")) {
         QJsonArray xy = state.value("xy").toArray();
-        if (2 == xy.size()) {
+        if (xy.size() == 2) {
             QColor color = xyToColor(xy.at(0).toDouble(), xy.at(1).toDouble());
             if (color_ != color) {
                 color_ = color;

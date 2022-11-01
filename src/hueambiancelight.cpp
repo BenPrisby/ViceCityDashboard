@@ -47,7 +47,7 @@ QColor HueAmbianceLight::ambientColor() const {
     // Take the nearest reference point.
     int remainder = colorTemperature_ % 100;
     int reference = colorTemperature_ - remainder;
-    if (50 <= remainder) {
+    if (remainder >= 50) {
         reference += 100;
     }
 
@@ -56,7 +56,7 @@ QColor HueAmbianceLight::ambientColor() const {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueAmbianceLight::commandColorTemperature(int colorTemperature) {
-    if ((minColorTemperature() <= colorTemperature) && (maxColorTemperature() >= colorTemperature)) {
+    if ((colorTemperature >= minColorTemperature()) && (colorTemperature <= maxColorTemperature())) {
         // If the light is not on, turn it on or else the command will fail.
         if (!isOn_) {
             commandPower(true);

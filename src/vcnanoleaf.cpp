@@ -88,8 +88,8 @@ void VCNanoleaf::handleZeroConfServiceFound(const QString& serviceType, const QS
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
-    if (this == sender) {
-        if (200 == statusCode) {
+    if (sender == this) {
+        if (statusCode == 200) {
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
                 if (responseObject.contains("name")) {
@@ -128,9 +128,9 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
                             bool on = onObject.value("value").toBool();
 
                             // BDP: Ensure the commanded power is applied.
-                            if (((0 == commandedPower_) && on) || ((1 == commandedPower_) && !on)) {
+                            if (((commandedPower_ == 0) && on) || ((commandedPower_ == 1) && !on)) {
                                 // Command again after a short delay.
-                                QTimer::singleShot(500, this, [this] { commandPower(1 == commandedPower_); });
+                                QTimer::singleShot(500, this, [this] { commandPower(commandedPower_ == 1); });
                             } else {
                                 commandedPower_ = -1;
 
@@ -168,7 +168,7 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
                                 QJsonObject optionObject = option.toObject();
                                 if (!optionObject.isEmpty()) {
                                     QString optionName = optionObject.value("name").toString();
-                                    if (("delayTime" == optionName) || ("transTime" == optionName)) {
+                                    if ((optionName == "delayTime") || (optionName == "transTime")) {
                                         // These values are presented in tenths of a second, convert.
                                         effect[optionName] = optionObject.value("value").toInt() / 10.0;
                                     }
@@ -194,7 +194,7 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
             } else {
                 qDebug() << "Failed to parse response from Nanoleaf";
             }
-        } else if (204 == statusCode) {
+        } else if (statusCode == 204) {
             // Successful ACK of effect selection, but no content in the response.
         } else {
             qDebug() << "Ignoring unsuccessful reply from Nanoleaf with status code: " << statusCode;

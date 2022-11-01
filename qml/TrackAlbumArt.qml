@@ -5,7 +5,7 @@ import com.benprisby.vc.vchub 1.0
 Rectangle {
     id: root
 
-    color: ("" == albumArt.source) ? VCColor.grayLight : VCColor.transparent
+    color: (albumArt.source == "") ? VCColor.grayLight : VCColor.transparent
 
     Image {
         id: placeholderImage
@@ -16,7 +16,7 @@ Rectangle {
         opacity: 0.7
         sourceSize: Qt.size(width, height)
         source: "qrc:/images/music.svg"
-        visible: "" == albumArt.source
+        visible: albumArt.source == ""
     }
 
     Image {

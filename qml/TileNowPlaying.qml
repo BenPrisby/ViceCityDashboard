@@ -58,8 +58,8 @@ Tile {
                 color: VCColor.white
                 wrapMode: Text.WordWrap
                 text: VCHub.spotify.isActive ? VCHub.spotify.trackAlbum : ""
-                visible: (trackName.implicitHeight < (2 * trackName.font.pixelSize))
-                         && (implicitHeight < (3 * font.pixelSize))  // Prevent spilling off the tile for longer text
+                visible: (trackName.implicitHeight < (trackName.font.pixelSize * 2))
+                         && (implicitHeight < (font.pixelSize * 3))  // Prevent spilling off the tile for longer text
             }
 
         }

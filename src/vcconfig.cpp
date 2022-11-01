@@ -18,7 +18,7 @@ VCConfig::VCConfig(QObject* parent) : QObject(parent) {
     const QMetaObject* meta = metaObject();
     for (int i = 0; i < meta->methodCount(); i++) {
         QMetaMethod method = meta->method(i);
-        if ("save" == method.name()) {
+        if (method.name() == "save") {
             saveMethod_ = method;
             break;
         }
@@ -162,7 +162,7 @@ KeyContext VCConfig::keyToContext(const QString& key) {
 
     // Keys are references into the Meta-Object system using object names, with the property to set at the end.
     QStringList parts = key.split('.');
-    if (2 == parts.size()) {
+    if (parts.size() == 2) {
         // Drop the property name.
         propertyName = parts.takeLast();
 

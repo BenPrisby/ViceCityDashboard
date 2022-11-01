@@ -107,7 +107,7 @@ void VCHub::setUse24HourClock(const bool value) {
             int propertyCount = childMeta->propertyCount();
             for (int i = 0; i < propertyCount; i++) {
                 QMetaProperty property = childMeta->property(i);
-                if ((QVariant::DateTime == property.type()) && property.hasNotifySignal()) {
+                if ((property.type() == QVariant::DateTime) && property.hasNotifySignal()) {
                     property.notifySignal().invoke(child);
                 }
             }
@@ -160,7 +160,7 @@ void VCHub::runScene(const QString& scene) {
                 QVariantMap state = step.value("state").toMap();
 
                 // Execute the actions of the step based on the device class.
-                if ("hue" == className) {
+                if (className == "hue") {
                     // Locate the Hue device by name.
                     const QList<HueDevice*>& hueDevices = hue_->devices();
                     HueDevice* hueDevice = nullptr;
@@ -241,7 +241,7 @@ void VCHub::runScene(const QString& scene) {
                         qDebug() << "Encountered unknown Hue device name " << name << " in step " << stepNumber
                                  << " when processing scene: " << scene;
                     }
-                } else if ("nanoleaf" == className) {
+                } else if (className == "nanoleaf") {
                     // Ensure this is the discovered Nanoleaf.
                     if (name == nanoleaf_->name()) {
                         qDebug() << "Executing step " << stepNumber << " on Nanoleaf: " << name;
@@ -296,7 +296,7 @@ QStringList VCHub::parseSceneColors(const QString& scene) {
             QVariantMap state = step.toMap().value("state").toMap();
             if (state.contains("xy")) {
                 QVariantList xy = state.value("xy").toList();
-                if (2 == xy.size()) {
+                if (xy.size() == 2) {
                     QColor color = HueColorLight::xyToColor(xy.at(0).toDouble(), xy.at(1).toDouble());
                     if (color.isValid()) {
                         colors.append(color.name());
@@ -372,16 +372,16 @@ void VCHub::refreshIPAddresses() {
     const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
     for (const auto& interface : interfaces) {
         // Avoid loopback, P2P, or otherwise virtual interfaces.
-        if ((QNetworkInterface::Ethernet == interface.type()) || (QNetworkInterface::Wifi == interface.type())) {
+        if ((interface.type() == QNetworkInterface::Ethernet) || (interface.type() == QNetworkInterface::Wifi)) {
             const QList<QNetworkAddressEntry> addressEntries = interface.addressEntries();
             for (const auto& addressEntry : addressEntries) {
                 QHostAddress address = addressEntry.ip();
-                if ((QAbstractSocket::IPv4Protocol == address.protocol()) && !address.isLoopback()) {
+                if ((address.protocol() == QAbstractSocket::IPv4Protocol) && !address.isLoopback()) {
                     QString ipAddress = address.toString();
-                    if ((QNetworkInterface::Ethernet == interface.type()) && (ethernetIPAddress_ != ipAddress)) {
+                    if ((interface.type() == QNetworkInterface::Ethernet) && (ethernetIPAddress_ != ipAddress)) {
                         ethernetIPAddress_ = ipAddress;
                         emit ethernetIPAddressChanged();
-                    } else if ((QNetworkInterface::Wifi == interface.type()) && (ethernetIPAddress_ != ipAddress)) {
+                    } else if ((interface.type() == QNetworkInterface::Wifi) && (ethernetIPAddress_ != ipAddress)) {
                         wifiIPAddress_ = ipAddress;
                         emit wifiIPAddressChanged();
                     }

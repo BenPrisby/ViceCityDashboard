@@ -53,7 +53,7 @@ Item {
             delegate: DeviceDot {
                 id: hueDeviceDot
 
-                selected: hueDevicesRepeater.selectedIndex == index
+                selected: index == hueDevicesRepeater.selectedIndex
                 color: {
                     if ((!modelData["isOn"]) || (!modelData["isReachable"])) {
                         return VCColor.grayLighter;
@@ -93,7 +93,7 @@ Item {
             readonly property var colors: {
                 for (var i = 0; i < VCHub.nanoleaf.effects.length; i++) {
                     var effect = VCHub.nanoleaf.effects[i];
-                    if ((VCHub.nanoleaf.selectedEffect === effect.name) && effect.colors) {
+                    if ((effect.name === VCHub.nanoleaf.selectedEffect) && effect.colors) {
                         return effect.colors;
                     }
                 }
@@ -104,7 +104,7 @@ Item {
             y: VCHub.nanoleaf.mapPoint[1] * floorPlanMap.height
             color: {
                 if (VCHub.nanoleaf.isOn) {
-                    if (0 <= colorsIndex) {
+                    if (colorsIndex >= 0) {
                         return colors[colorsIndex];
                     }
                     return VCColor.green;
@@ -127,11 +127,11 @@ Item {
             Timer {
                 id: nanoleafColorRotationTimer
 
-                running: visible && (0 < nanoleafDot.colors.length)
+                running: visible && (nanoleafDot.colors.length > 0)
                 repeat: true
                 interval: 5000
                 onTriggered: {
-                    if ((nanoleafDot.colors.length - 1) > nanoleafDot.colorsIndex) {
+                    if (nanoleafDot.colorsIndex < (nanoleafDot.colors.length - 1)) {
                         nanoleafDot.colorsIndex++;
                     } else {
                         nanoleafDot.colorsIndex = 0;
@@ -175,7 +175,7 @@ Item {
         font.pixelSize: VCFont.body
         color: VCColor.white
         text: qsTr("Tap a dot above for more information and controls.")
-        visible: (0 > hueDevicesRepeater.selectedIndex) && (!nanoleafDot.selected)
+        visible: (hueDevicesRepeater.selectedIndex < 0) && !nanoleafDot.selected
     }
 
     TileHueDevice {
@@ -185,7 +185,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: selectionPrompt.height
-        visible: (0 <= hueDevicesRepeater.selectedIndex) && (!nanoleafDot.selected)
+        visible: (hueDevicesRepeater.selectedIndex >= 0) && !nanoleafDot.selected
         device: visible ? VCHub.hue.devices[hueDevicesRepeater.selectedIndex] : null
     }
 

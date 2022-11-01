@@ -25,7 +25,7 @@ Button {
             Layout.alignment: control.text ? Qt.AlignLeft : Qt.AlignHCenter
             fillMode: Image.PreserveAspectFit
             sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-            visible: "" != source
+            visible: source != ""
         }
 
         Text {

@@ -21,7 +21,7 @@ Tile {
             Layout.preferredHeight: width
             fillMode: Image.PreserveAspectFit
             sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-            source: (0 < VCHub.hue.onDevicesCount) ? "qrc:/images/light-on.svg" : "qrc:/images/light-off.svg"
+            source: (VCHub.hue.onDevicesCount > 0) ? "qrc:/images/light-on.svg" : "qrc:/images/light-off.svg"
         }
 
         Text {

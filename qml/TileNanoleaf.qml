@@ -67,7 +67,7 @@ Tile {
         delegate: Rectangle {
             width: (effectsView.width / 4) - effectsView.spacing
             height: effectsView.height - (effectsView.interactive ? VCMargin.medium : 0)  // Leave room for the scrollbar
-            color: (VCHub.nanoleaf.selectedEffect === modelData["name"]) ? VCColor.green : VCColor.grayLight
+            color: (modelData["name"] === VCHub.nanoleaf.selectedEffect) ? VCColor.green : VCColor.grayLight
             radius: 4
 
             Text {
@@ -84,7 +84,7 @@ Tile {
                 wrapMode: Text.WordWrap
                 elide: Text.ElideRight
                 font.pixelSize: VCFont.paragraph
-                font.bold: (VCHub.nanoleaf.selectedEffect === modelData["name"])
+                font.bold: modelData["name"] === VCHub.nanoleaf.selectedEffect
                 color: VCColor.white
                 text: modelData["name"]
             }

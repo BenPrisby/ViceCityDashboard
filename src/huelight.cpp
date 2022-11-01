@@ -15,7 +15,7 @@ HueLight::HueLight(int id, QObject* parent) : HueDevice(id, parent) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueLight::commandBrightness(const double brightness) {
-    if (!qIsNaN(brightness) && (0.0 <= brightness) && (100.0 >= brightness)) {
+    if (!qIsNaN(brightness) && (brightness >= 0.0) && (brightness <= 100.0)) {
         // If the light is not on, turn it on or else the command will fail.
         if (!isOn_) {
             commandPower(true);

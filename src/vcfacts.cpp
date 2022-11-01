@@ -23,8 +23,8 @@ void VCFacts::refresh() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCFacts::handleNetworkReply(const int statusCode, QObject* const sender, const QJsonDocument& body) {
-    if (this == sender) {
-        if (200 == statusCode) {
+    if (sender == this) {
+        if (statusCode == 200) {
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
                 if (responseObject.contains("text")) {

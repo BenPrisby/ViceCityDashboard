@@ -131,7 +131,7 @@ Window {
             width: background.width
             // Force focus away when the keyboard dismisses.
             onStateChanged: {
-                if ("" == state) {
+                if (state == "") {
                     navBar.forceActiveFocus();
                 }
             }

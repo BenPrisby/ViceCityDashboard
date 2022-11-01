@@ -230,7 +230,7 @@ GridLayout {
                     enabled: VCHub.spotify.isActive
                     onClicked: {
                         // Restart the song if are at least 10 seconds in, otherwise go to the previous.
-                        if (10 <= VCHub.spotify.trackPosition) {
+                        if (VCHub.spotify.trackPosition >= 10) {
                             VCHub.spotify.seek(0);
                         } else {
                             VCHub.spotify.previous();
@@ -267,10 +267,10 @@ GridLayout {
 
                     Layout.preferredWidth: 100
                     Layout.fillHeight: true
-                    iconSource: (Qt.Checked == repeatHiddenCheckBox.checkState) ? "qrc:/images/repeat-one.svg"
+                    iconSource: (repeatHiddenCheckBox.checkState == Qt.Checked) ? "qrc:/images/repeat-one.svg"
                                                                                 : "qrc:/images/repeat.svg"
                     checkable: true
-                    checked: Qt.Unchecked != repeatHiddenCheckBox.checkState
+                    checked: repeatHiddenCheckBox.checkState != Qt.Unchecked
                     enabled: VCHub.spotify.isActive
 
                     // Map off to unchecked, repeat all to partially checked, and repeat one to fully checked.
@@ -290,8 +290,8 @@ GridLayout {
                         anchors.fill: parent
                         opacity: 0
                         tristate: true
-                        onClicked: VCHub.spotify.enableRepeat(Qt.Unchecked != checkState,
-                                                              Qt.PartiallyChecked == checkState)
+                        onClicked: VCHub.spotify.enableRepeat(checkState != Qt.Unchecked,
+                                                              checkState == Qt.PartiallyChecked)
 
                         Connections {
                             function onRepeatAllEnabledChanged() {
@@ -423,7 +423,7 @@ GridLayout {
             width: 40
             height: width
             iconSource: "qrc:/images/transfer.svg"
-            visible: VCHub.spotify.isActive && (0 < VCHub.spotify.devices.length)
+            visible: VCHub.spotify.isActive && (VCHub.spotify.devices.length > 0)
             onClicked: {
                 VCHub.spotify.refreshDevices();
                 selectionMask.visible = true;
@@ -470,7 +470,7 @@ GridLayout {
                         Layout.preferredWidth: height
                         iconSource: "qrc:/images/back.svg"
                         outline: true
-                        visible: 0 == index
+                        visible: index == 0
                         onClicked: selectionMask.visible = false
                     }
 
@@ -495,7 +495,7 @@ GridLayout {
                         fillMode: Image.PreserveAspectFit
                         sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
                         source: "qrc:/images/star.svg"
-                        visible: VCHub.spotify.preferredDevice === modelData["name"]
+                        visible: modelData["name"] === VCHub.spotify.preferredDevice
                     }
 
                     VCButton {
@@ -505,7 +505,7 @@ GridLayout {
                         Layout.preferredWidth: height
                         Layout.rightMargin: devicesList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
                         iconSource: "qrc:/images/transfer.svg"
-                        enabled: VCHub.spotify.deviceName !== modelData["name"]
+                        enabled: modelData["name"] !== VCHub.spotify.deviceName
                         onClicked: {
                             VCHub.spotify.transfer(modelData["id"]);
                             selectionMask.visible = false;

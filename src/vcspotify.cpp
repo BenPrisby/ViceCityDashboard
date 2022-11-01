@@ -183,7 +183,7 @@ void VCSpotify::transfer(const QString& deviceID) {
 QString VCSpotify::formatDuration(const int value) {
     int seconds = value % 60;
     QString secondsDisplay = QString::number(seconds);
-    if (10 > seconds) {
+    if (seconds < 10) {
         secondsDisplay = secondsDisplay.rightJustified(2, '0');
     }
     return QString("%1:%2").arg(value / 60).arg(secondsDisplay);
@@ -222,8 +222,8 @@ void VCSpotify::refreshPlaylists() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
-    if (this == sender) {
-        if (200 == statusCode) {
+    if (sender == this) {
+        if (statusCode == 200) {
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
 
@@ -235,7 +235,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                     // Ensure the refresh timer interval is still sufficient.
                     int expiresIn = responseObject.value("expires_in").toInt();
                     int interval = (expiresIn - 60) * 1000;
-                    if ((0 < interval) && (accessTokenRefreshTimer_.interval() > interval)) {
+                    if ((interval > 0) && (interval < accessTokenRefreshTimer_.interval())) {
                         // Bump the interval.
                         accessTokenRefreshTimer_.setInterval(interval);
                     } else {
@@ -306,8 +306,8 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                     }
                     if (responseObject.contains("repeat_state")) {
                         QString repeatState = responseObject.value("repeat_state").toString();
-                        bool repeatOneEnabled = ("track" == repeatState);
-                        bool repeatAllEnabled = ("context" == repeatState);
+                        bool repeatOneEnabled = (repeatState == "track");
+                        bool repeatAllEnabled = (repeatState == "context");
                         if (repeatOneEnabled_ != repeatOneEnabled) {
                             repeatOneEnabled_ = repeatOneEnabled;
                             emit repeatOneEnabledChanged();
@@ -328,7 +328,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                         QJsonObject contextObject = responseObject.value("context").toObject();
                         if (contextObject.contains("type") && contextObject.contains("uri")) {
                             QString contextType = contextObject.value("type").toString();
-                            if ("playlist" == contextType) {
+                            if (contextType == "playlist") {
                                 QString uri = contextObject.value("uri").toString();
                                 QString playlistID = uri.split(':').last();
 
@@ -413,7 +413,7 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
                             }
                         }
                     }
-                } else if ((2 == responseObject.size()) && responseObject.contains("name") &&
+                } else if ((responseObject.size() == 2) && responseObject.contains("name") &&
                            responseObject.contains("uri")) {
                     // Playlist name.
                     QString playlistName = responseObject.value("name").toString();
@@ -588,9 +588,9 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
             } else {
                 qDebug() << "Failed to parse reply from Spotify";
             }
-        } else if (204 == statusCode) {
+        } else if (statusCode == 204) {
             // Success with no content in the response, ignore.
-        } else if (401 == statusCode) {
+        } else if (statusCode == 401) {
             // Access token expired, invalidate the current one, stop making requests, and ask for a new one.
             qDebug() << "Spotify access token expired, so requesting a new one";
             accessTokenAuthorization_.clear();

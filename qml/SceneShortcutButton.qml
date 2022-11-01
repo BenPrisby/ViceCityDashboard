@@ -10,7 +10,7 @@ VCButton {
 
     text: (scene && scene["name"]) ? qsTr(scene["name"]) : ""
     iconSource: (scene && scene["icon"]) ? ("qrc:/images/" + scene["icon"] + ".svg") : ""
-    enabled: (!VCHub.isRunningScene) && ("" != text)
+    enabled: !VCHub.isRunningScene && (text != "")
     visible: scene
     onClicked: VCHub.runScene(text)
 }

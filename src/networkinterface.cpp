@@ -63,7 +63,7 @@ void NetworkInterface::sendRequest(const QUrl& destination,
         }
 
         // Were a body and corresponding content type supplied?
-        if ((!body.isEmpty() && !contentType.isEmpty()) || (QNetworkAccessManager::PostOperation == requestType)) {
+        if ((!body.isEmpty() && !contentType.isEmpty()) || (requestType == QNetworkAccessManager::PostOperation)) {
             request.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
         }
 

@@ -100,8 +100,8 @@ Tile {
             Layout.fillWidth: true
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
-            visible: root.device && (undefined !== root.device["brightness"])
-            enabled: root.device && (!notReachableWarning.visible)
+            visible: root.device && (root.device["brightness"] !== undefined)
+            enabled: root.device && !notReachableWarning.visible
             onCurrentValueChanged: {
                 if (!pressed) {
                     value = currentValue;
@@ -162,8 +162,8 @@ Tile {
             Layout.fillWidth: true
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
-            visible: root.device && (undefined !== root.device["colorTemperature"]) && (!colorSlider.visible)
-            enabled: root.device && (!notReachableWarning.visible)
+            visible: root.device && (root.device["colorTemperature"] !== undefined) && !colorSlider.visible
+            enabled: root.device && !notReachableWarning.visible
             from: visible ? root.device["minColorTemperature"] : 0
             to: visible ? root.device["maxColorTemperature"] : 0
             stepSize: 1
@@ -227,7 +227,7 @@ Tile {
             Layout.fillWidth: true
             Layout.preferredHeight: height
             Layout.alignment: Qt.AlignVCenter
-            visible: root.device && (undefined !== root.device["color"])
+            visible: root.device && (root.device["color"] !== undefined)
             enabled: root.device && (!notReachableWarning.visible)
             from: 0
             to: 359

@@ -39,10 +39,10 @@ void VCPiHole::refreshHistoricalData() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCPiHole::handleHostLookup(const QHostInfo& host) {
-    if (QHostInfo::NoError == host.error()) {
+    if (host.error() == QHostInfo::NoError) {
         const QList<QHostAddress> addresses = host.addresses();
         for (const auto& address : addresses) {
-            if (QAbstractSocket::IPv4Protocol == address.protocol()) {
+            if (address.protocol() == QAbstractSocket::IPv4Protocol) {
                 serverIPAddress_ = address.toString();
                 qDebug() << "Pi Hole server found at IP address: " << serverIPAddress_;
 
@@ -65,12 +65,12 @@ void VCPiHole::handleHostLookup(const QHostInfo& host) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCPiHole::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
-    if (this == sender) {
-        if (200 == statusCode) {
+    if (sender == this) {
+        if (statusCode == 200) {
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
                 if (responseObject.contains("status")) {
-                    bool enabled = ("enabled" == responseObject.value("status").toString());
+                    bool enabled = (responseObject.value("status").toString() == "enabled");
                     if (isEnabled_ != enabled) {
                         isEnabled_ = enabled;
                         emit isEnabledChanged();

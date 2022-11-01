@@ -80,8 +80,8 @@ void VCHue::handleZeroConfServiceFound(const QString& serviceType, const QString
 
 void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocument& body) {
     // Check if this is for us or should be dispatched to a device.
-    if (this == sender) {
-        if (200 == statusCode) {
+    if (sender == this) {
+        if (statusCode == 200) {
             // Query response for all light information.
             if (body.isObject()) {
                 QJsonObject responseObject = body.object();
@@ -99,9 +99,9 @@ void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocum
                                 if (!device) {
                                     // Inspect the device type to determine the correct object type.
                                     QString type = itemObject.value("type").toString().toLower();
-                                    if ("dimmable light" == type) {
+                                    if (type == "dimmable light") {
                                         device = new HueLight(id, this);
-                                    } else if ("color temperature light" == type) {
+                                    } else if (type == "color temperature light") {
                                         device = new HueAmbianceLight(id, this);
                                     } else if (type.endsWith("color light")) {
                                         device = new HueColorLight(id, this);
@@ -135,7 +135,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocum
                                 // Group information.
                                 QString name = itemObject.value("name").toString();
                                 QString type = itemObject.value("type").toString();
-                                if (!name.isEmpty() && ("room" == type.toLower())) {
+                                if (!name.isEmpty() && (type.toLower() == "room")) {
                                     const QJsonArray lights = itemObject.value("lights").toArray();
                                     for (const auto& light : lights) {
                                         bool ok = false;
@@ -171,7 +171,7 @@ void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocum
     } else {
         auto device = qobject_cast<HueDevice*>(sender);
         if (device) {
-            if (200 == statusCode) {
+            if (statusCode == 200) {
                 // Dispatch to the device.
                 device->handleResponse(body);
             } else {
