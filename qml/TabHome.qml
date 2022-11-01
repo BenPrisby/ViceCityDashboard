@@ -1,11 +1,11 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.12
 import VCStyles 1.0
-
 import com.benprisby.vc.vchub 1.0
 
 GridLayout {
     id: root
+
     columns: 4
     rows: 4
     columnSpacing: VCMargin.medium
@@ -85,4 +85,5 @@ GridLayout {
         Layout.columnSpan: 2
         introAnimationDelay: 250
     }
+
 }

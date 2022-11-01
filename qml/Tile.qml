@@ -3,26 +3,26 @@ import VCStyles 1.0
 
 Rectangle {
     id: root
-    radius: 6
-    opacity: 0
-    scale: 0.9
-    clip: true
-    color: VCColor.grayDark
 
     property bool introAnimationEnabled: true
     property int introAnimationDuration: 500
     property int introAnimationDelay: 0
 
+    radius: 6
+    opacity: 0
+    scale: 0.9
+    clip: true
+    color: VCColor.grayDark
     onVisibleChanged: {
-        if ( !visible )
-        {
-            opacity = 0
-            scale = 0.9
+        if (!visible) {
+            opacity = 0;
+            scale = 0.9;
         }
     }
 
     SequentialAnimation {
         id: introAnimation
+
         running: root.introAnimationEnabled && root.visible
 
         PauseAnimation {
@@ -46,6 +46,9 @@ Rectangle {
                 duration: root.introAnimationDuration
                 easing.type: Easing.InOutQuad
             }
+
         }
+
     }
+
 }

@@ -4,55 +4,54 @@ import VCStyles 1.0
 
 Button {
     id: root
-    width: 80
-    height: width
-    background: Rectangle {
-        color: VCColor.transparent
-    }
-    checkable: true
 
     property alias iconSource: icon.source
     property alias hasNotification: notificationIndicator.visible
 
+    width: 80
+    height: width
+    checkable: true
     onDownChanged: {
-        if ( down )
-        {
-            pressedIndicator.opacity = 0.2
-        }
-        else
-        {
-            outAnimation.start()
+        if (down) {
+            pressedIndicator.opacity = 0.2;
+        } else {
+            outAnimation.start();
         }
     }
 
     Rectangle {
         id: pressedIndicator
+
         anchors.fill: parent
         color: VCColor.white
         opacity: 0
 
         OpacityAnimator on opacity {
             id: outAnimation
+
             from: pressedIndicator.opacity
             to: 0
             duration: 200
             easing.type: Easing.InOutQuad
             running: false
         }
+
     }
 
     Image {
         id: icon
+
         anchors.centerIn: parent
         width: parent.width / 2
         height: width
         fillMode: Image.PreserveAspectFit
         opacity: parent.checked ? 1 : 0.3
-        sourceSize: Qt.size( width, height )
+        sourceSize: Qt.size(width, height)
     }
 
     Rectangle {
         id: notificationIndicator
+
         anchors.top: parent.top
         anchors.topMargin: 6
         anchors.right: parent.right
@@ -63,4 +62,9 @@ Button {
         color: VCColor.red
         visible: false
     }
+
+    background: Rectangle {
+        color: VCColor.transparent
+    }
+
 }

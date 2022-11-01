@@ -2,7 +2,6 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
 import VCStyles 1.0
-
 import com.benprisby.vc.vchub 1.0
 
 Item {
@@ -10,12 +9,16 @@ Item {
 
     GridView {
         id: contentLayout
+
         anchors.fill: parent
         anchors.rightMargin: interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
         cellWidth: width / 4
         cellHeight: height / 2
-        cacheBuffer: Math.max( 0, contentHeight )
+        cacheBuffer: Math.max(0, contentHeight)
         interactive: contentHeight > height
+        model: VCHub.scenes
+        clip: true
+
         ScrollBar.vertical: ScrollBar {
             parent: root
             anchors.top: contentLayout.top
@@ -24,8 +27,6 @@ Item {
             anchors.leftMargin: root.width - contentLayout.width - width  // Appear to be anchored to root.right
             policy: contentLayout.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
         }
-        model: VCHub.scenes
-        clip: true
 
         delegate: Item {
             width: contentLayout.cellWidth
@@ -34,7 +35,7 @@ Item {
             Tile {
                 anchors.fill: parent
                 anchors.margins: VCMargin.tiny
-                introAnimationDelay: ( index * 50 ) + ( ( index % 2 ) * 100 )  // Scatter
+                introAnimationDelay: (index * 50) + ((index % 2) * 100)  // Scatter
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -46,8 +47,8 @@ Item {
                         Layout.preferredHeight: width
                         Layout.alignment: Qt.AlignHCenter
                         Layout.topMargin: VCMargin.tiny
-                        sourceSize: Qt.size( Layout.preferredWidth, Layout.preferredHeight )
-                        source: "qrc:/images/" + modelData[ "icon" ] + ".svg"
+                        sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
+                        source: "qrc:/images/" + modelData["icon"] + ".svg"
                     }
 
                     Text {
@@ -59,7 +60,7 @@ Item {
                         elide: Text.ElideRight
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         color: VCColor.white
-                        text: modelData[ "name" ]
+                        text: modelData["name"]
                     }
 
                     Rectangle {
@@ -69,30 +70,39 @@ Item {
 
                         ListView {
                             id: colorsView
+
                             anchors.fill: parent
                             orientation: ListView.Horizontal
                             interactive: false
-                            model: VCHub.parseSceneColors( modelData[ "name" ] )
+                            model: VCHub.parseSceneColors(modelData["name"])
+
                             delegate: Rectangle {
                                 width: colorsView.width / colorsView.count
                                 height: colorsView.height
                                 color: modelData
                             }
+
                         }
+
                     }
 
                     VCButton {
                         id: playButton
+
                         Layout.preferredWidth: 80
                         Layout.preferredHeight: 40
                         Layout.alignment: Qt.AlignHCenter
                         iconSource: "qrc:/images/play.svg"
                         enabled: !VCHub.isRunningScene
-
-                        onClicked: VCHub.runScene( modelData[ "name" ] )
+                        onClicked: VCHub.runScene(modelData["name"])
                     }
+
                 }
+
             }
+
         }
+
     }
+
 }

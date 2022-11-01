@@ -4,15 +4,17 @@ import VCStyles 1.0
 
 Slider {
     id: control
-    from: 0
-    to: 100
 
     property alias backgroundImage: backgroundImage.source
 
+    from: 0
+    to: 100
+
     background: Rectangle {
         id: backgroundBase
+
         x: control.leftPadding
-        y: control.topPadding + ( control.availableHeight / 2 ) - ( height / 2 )
+        y: control.topPadding + (control.availableHeight / 2) - (height / 2)
         implicitWidth: 200
         implicitHeight: 6
         width: control.availableWidth
@@ -23,6 +25,7 @@ Slider {
 
         Rectangle {
             id: progressIndicator
+
             width: control.visualPosition * parent.width
             height: parent.height
             color: control.enabled ? VCColor.green : VCColor.grayLightest
@@ -31,18 +34,21 @@ Slider {
 
         Image {
             id: backgroundImage
+
             anchors.fill: parent
             fillMode: Image.Stretch
             visible: source
         }
+
     }
 
     handle: Rectangle {
-        x: control.leftPadding + ( control.visualPosition * ( control.availableWidth - width ) )
-        y: control.topPadding + ( control.availableHeight / 2 ) - ( height / 2 )
+        x: control.leftPadding + (control.visualPosition * (control.availableWidth - width))
+        y: control.topPadding + (control.availableHeight / 2) - (height / 2)
         implicitWidth: 26
         implicitHeight: implicitWidth
         radius: implicitWidth / 2
-        color: control.enabled ? ( control.pressed ? VCColor.grayLighter : VCColor.white ) : VCColor.grayLighter
+        color: control.enabled ? (control.pressed ? VCColor.grayLighter : VCColor.white) : VCColor.grayLighter
     }
+
 }
