@@ -44,14 +44,6 @@ VCWeather::VCWeather(const QString& name, QObject* parent)
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-void VCWeather::refresh() {
-#ifndef QT_DEBUG
-    // BDP: Be mindful of the API rate limits.
-    NetworkInterface::instance()->sendJSONRequest(destination_, this);
-#endif
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
 QString VCWeather::localHour(const QDateTime& dateTime) const {
     return dateTime.toString(VCHub::instance()->use24HourClock() ? "hh:00" : "h AP");
 }
@@ -63,6 +55,14 @@ QUrl VCWeather::iconURL(const QString& key) const {
         return QUrl(QString("qrc:/images/weather-%1.svg").arg(key));
     }
     return QUrl();
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+void VCWeather::refresh() {
+#ifndef QT_DEBUG
+    // BDP: Be mindful of the API rate limits.
+    NetworkInterface::instance()->sendJSONRequest(destination_, this);
+#endif
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

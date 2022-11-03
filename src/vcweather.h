@@ -115,10 +115,11 @@ class VCWeather final : public VCPlugin {
     double day5TemperatureMin() const { return day5TemperatureMin_; }
     double day5TemperatureMax() const { return day5TemperatureMax_; }
 
+    Q_INVOKABLE QString localHour(const QDateTime& dateTime) const;
+    Q_INVOKABLE QUrl iconURL(const QString& key) const;
+
  public slots:
     void refresh() override;
-    QString localHour(const QDateTime& dateTime) const;
-    QUrl iconURL(const QString& key) const;
 
  signals:
     void latitudeChanged();

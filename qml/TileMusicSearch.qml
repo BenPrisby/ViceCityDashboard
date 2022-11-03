@@ -134,7 +134,7 @@ Tile {
                     Layout.alignment: Qt.AlignVCenter
                     Layout.rightMargin: searchResultsList.interactive ? VCMargin.medium : 0  // Leave room for the scrollbar
                     text: qsTr("Queue")
-                    enabled: VCHub.spotify.isActive && !queued
+                    enabled: VCHub.spotify.isPlayerActive && !queued
                     onClicked: {
                         VCHub.spotify.queue(modelData["uri"]);
                         queued = true;

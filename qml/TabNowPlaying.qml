@@ -65,7 +65,7 @@ GridLayout {
                         font.pixelSize: VCFont.subHeader
                         color: VCColor.white
                         wrapMode: Text.WordWrap
-                        text: VCHub.spotify.isActive ? VCHub.spotify.trackName : ""
+                        text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackName : ""
                     }
 
                     Text {
@@ -75,7 +75,7 @@ GridLayout {
                         font.pixelSize: VCFont.body
                         color: VCColor.white
                         wrapMode: Text.WordWrap
-                        text: VCHub.spotify.isActive ? VCHub.spotify.trackArtist : ""
+                        text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackArtist : ""
                     }
 
                     Text {
@@ -85,7 +85,7 @@ GridLayout {
                         font.pixelSize: VCFont.body
                         color: VCColor.white
                         wrapMode: Text.WordWrap
-                        text: VCHub.spotify.isActive ? VCHub.spotify.trackAlbum : ""
+                        text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackAlbum : ""
                     }
 
                     Text {
@@ -118,7 +118,7 @@ GridLayout {
                     Layout.preferredHeight: height
                     from: 0
                     to: 1
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onTrackProgressChanged: {
                         if (!pressed) {
                             value = trackProgress;
@@ -204,7 +204,7 @@ GridLayout {
                     iconSource: "qrc:/images/shuffle.svg"
                     checkable: true
                     checked: true
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onClicked: VCHub.spotify.enableShuffle(checked)
 
                     Connections {
@@ -227,7 +227,7 @@ GridLayout {
                     Layout.preferredWidth: 100
                     Layout.fillHeight: true
                     iconSource: "qrc:/images/previous.svg"
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onClicked: {
                         // Restart the song if are at least 10 seconds in, otherwise go to the previous.
                         if (VCHub.spotify.trackPosition >= 10) {
@@ -244,7 +244,7 @@ GridLayout {
                     Layout.preferredWidth: 100
                     Layout.fillHeight: true
                     iconSource: VCHub.spotify.isPlaying ? "qrc:/images/pause.svg" : "qrc:/images/play.svg"
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onClicked: VCHub.spotify.isPlaying ? VCHub.spotify.pause() : VCHub.spotify.play()
                 }
 
@@ -254,7 +254,7 @@ GridLayout {
                     Layout.preferredWidth: 100
                     Layout.fillHeight: true
                     iconSource: "qrc:/images/next.svg"
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onClicked: VCHub.spotify.next()
                 }
 
@@ -271,7 +271,7 @@ GridLayout {
                                                                                 : "qrc:/images/repeat.svg"
                     checkable: true
                     checked: repeatHiddenCheckBox.checkState != Qt.Unchecked
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
 
                     // Map off to unchecked, repeat all to partially checked, and repeat one to fully checked.
                     CheckBox {
@@ -339,7 +339,7 @@ GridLayout {
                 font.pixelSize: VCFont.body
                 color: VCColor.white
                 text: VCHub.spotify.deviceName
-                opacity: VCHub.spotify.isActive ? 1 : deviceTile.inactiveOpacity
+                opacity: VCHub.spotify.isPlayerActive ? 1 : deviceTile.inactiveOpacity
             }
 
             Text {
@@ -349,7 +349,7 @@ GridLayout {
                 font.pixelSize: VCFont.label
                 color: VCColor.white
                 text: VCHub.spotify.deviceType
-                opacity: VCHub.spotify.isActive ? 1 : deviceTile.inactiveOpacity
+                opacity: VCHub.spotify.isPlayerActive ? 1 : deviceTile.inactiveOpacity
             }
 
             RowLayout {
@@ -367,7 +367,7 @@ GridLayout {
                     Layout.alignment: Qt.AlignVCenter
                     sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
                     source: "qrc:/images/volume.svg"
-                    opacity: VCHub.spotify.isActive ? 1 : deviceTile.inactiveOpacity
+                    opacity: VCHub.spotify.isPlayerActive ? 1 : deviceTile.inactiveOpacity
                 }
 
                 VCSlider {
@@ -376,7 +376,7 @@ GridLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: height
                     Layout.alignment: Qt.AlignVCenter
-                    enabled: VCHub.spotify.isActive
+                    enabled: VCHub.spotify.isPlayerActive
                     onPressedChanged: {
                         // Ensure the final chosen value is commanded.
                         if (!pressed) {
@@ -423,7 +423,7 @@ GridLayout {
             width: 40
             height: width
             iconSource: "qrc:/images/transfer.svg"
-            visible: VCHub.spotify.isActive && (VCHub.spotify.devices.length > 0)
+            visible: VCHub.spotify.isPlayerActive && (VCHub.spotify.devices.length > 0)
             onClicked: {
                 VCHub.spotify.refreshDevices();
                 selectionMask.visible = true;

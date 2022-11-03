@@ -24,7 +24,7 @@ Rectangle {
 
         anchors.fill: parent
         sourceSize: Qt.size(width, height)
-        source: VCHub.spotify.isActive ? VCHub.spotify.trackAlbumArt : ""
+        source: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackAlbumArt : ""
     }
 
 }

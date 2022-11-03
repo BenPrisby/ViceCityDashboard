@@ -18,7 +18,7 @@ class VCSpotify final : public VCPlugin {
     Q_PROPERTY(QString userEmail                                    READ userEmail         NOTIFY userEmailChanged)
     Q_PROPERTY(QString userSubscription                             READ userSubscription  NOTIFY userSubscriptionChanged)
     Q_PROPERTY(QUrl userImage                                       READ userImage         NOTIFY userImageChanged)
-    Q_PROPERTY(bool isActive                                        READ isActive          NOTIFY isActiveChanged)
+    Q_PROPERTY(bool isPlayerActive                                  READ isPlayerActive    NOTIFY isPlayerActiveChanged)
     Q_PROPERTY(bool isPlaying                                       READ isPlaying         NOTIFY isPlayingChanged)
     Q_PROPERTY(bool shuffleEnabled                                  READ shuffleEnabled    NOTIFY shuffleEnabledChanged)
     Q_PROPERTY(bool repeatOneEnabled                                READ repeatOneEnabled  NOTIFY repeatOneEnabledChanged)
@@ -49,7 +49,7 @@ class VCSpotify final : public VCPlugin {
     const QString& userEmail() const { return userEmail_; }
     const QString& userSubscription() const { return userSubscription_; }
     const QUrl& userImage() const { return userImage_; }
-    bool isActive() const { return isActive_; }
+    bool isPlayerActive() const { return isPlayerActive_; }
     bool isPlaying() const { return isPlaying_; }
     bool shuffleEnabled() const { return shuffleEnabled_; }
     bool repeatOneEnabled() const { return repeatOneEnabled_; }
@@ -88,7 +88,7 @@ class VCSpotify final : public VCPlugin {
     void userEmailChanged();
     void userSubscriptionChanged();
     void userImageChanged();
-    void isActiveChanged();
+    void isPlayerActiveChanged();
     void isPlayingChanged();
     void shuffleEnabledChanged();
     void repeatOneEnabledChanged();
@@ -126,7 +126,7 @@ class VCSpotify final : public VCPlugin {
     QString userEmail_;
     QString userSubscription_;
     QUrl userImage_;
-    bool isActive_;
+    bool isPlayerActive_;
     bool isPlaying_;
     bool shuffleEnabled_;
     bool repeatOneEnabled_;

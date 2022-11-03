@@ -14,7 +14,7 @@ constexpr const char* PLAYER_BASE_URL = "https://api.spotify.com/v1/me/player";
 
 VCSpotify::VCSpotify(const QString& name, QObject* parent)
     : VCPlugin(name, parent),
-      isActive_(false),
+      isPlayerActive_(false),
       isPlaying_(false),
       shuffleEnabled_(false),
       repeatOneEnabled_(false),
@@ -43,9 +43,9 @@ VCSpotify::VCSpotify(const QString& name, QObject* parent)
     inactivityTimer_.setInterval(5 * 1000);
     inactivityTimer_.setSingleShot(true);
     connect(&inactivityTimer_, &QTimer::timeout, this, [this] {
-        if (isActive_) {
-            isActive_ = false;
-            emit isActiveChanged();
+        if (isPlayerActive_) {
+            isPlayerActive_ = false;
+            emit isPlayerActiveChanged();
 
             // Clear some of the playback state.
             trackPosition_ = 0;
@@ -67,7 +67,7 @@ VCSpotify::VCSpotify(const QString& name, QObject* parent)
 
 void VCSpotify::play(const QString& uri) {
     QString destination = QString("%1/play").arg(PLAYER_BASE_URL);
-    if (!isActive_) {
+    if (!isPlayerActive_) {
         // Idle, so a device must be specified for playing to start.
         if (!preferredDeviceID_.isEmpty()) {
             qDebug() << "Spotify playback is not active, so defaulting to playing on device: " << preferredDevice_;
@@ -286,9 +286,9 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
         inactivityTimer_.start();
 
         // Indicate an active state.
-        if (!isActive_) {
-            isActive_ = true;
-            emit isActiveChanged();
+        if (!isPlayerActive_) {
+            isPlayerActive_ = true;
+            emit isPlayerActiveChanged();
         }
 
         bool isPlaying = responseObject.value("is_playing").toBool();

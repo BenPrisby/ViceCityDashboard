@@ -12,7 +12,7 @@ Tile {
         anchors.fill: parent
         anchors.margins: VCMargin.small
         spacing: VCMargin.medium
-        visible: VCHub.spotify.isActive
+        visible: VCHub.spotify.isPlayerActive
 
         TrackAlbumArt {
             id: albumArt
@@ -37,7 +37,7 @@ Tile {
                 font.pixelSize: VCFont.body
                 color: VCColor.white
                 wrapMode: Text.WordWrap
-                text: VCHub.spotify.isActive ? VCHub.spotify.trackName : ""
+                text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackName : ""
             }
 
             Text {
@@ -47,7 +47,7 @@ Tile {
                 font.pixelSize: VCFont.label
                 color: VCColor.white
                 wrapMode: Text.WordWrap
-                text: VCHub.spotify.isActive ? VCHub.spotify.trackArtist : ""
+                text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackArtist : ""
             }
 
             Text {
@@ -57,7 +57,7 @@ Tile {
                 font.pixelSize: VCFont.label
                 color: VCColor.white
                 wrapMode: Text.WordWrap
-                text: VCHub.spotify.isActive ? VCHub.spotify.trackAlbum : ""
+                text: VCHub.spotify.isPlayerActive ? VCHub.spotify.trackAlbum : ""
                 visible: (trackName.implicitHeight < (trackName.font.pixelSize * 2))
                          && (implicitHeight < (font.pixelSize * 3))  // Prevent spilling off the tile for longer text
             }
@@ -74,7 +74,7 @@ Tile {
         font.pixelSize: VCFont.body
         color: VCColor.grayLightest
         text: qsTr("Not Playing Music")
-        visible: !VCHub.spotify.isActive
+        visible: !VCHub.spotify.isPlayerActive
     }
 
 }
