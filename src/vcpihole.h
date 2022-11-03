@@ -11,6 +11,7 @@ class VCPiHole final : public VCPlugin {
 
     // clang-format off
     Q_PROPERTY(QString serverHostname      MEMBER serverHostname_  READ serverHostname   NOTIFY serverHostnameChanged)
+    Q_PROPERTY(quint16 serverPort          MEMBER serverPort_      READ serverPort       NOTIFY serverPortChanged )
     Q_PROPERTY(QString serverIPAddress                             READ serverIPAddress  NOTIFY serverIPAddressChanged)
     Q_PROPERTY(bool isEnabled                                      READ isEnabled        NOTIFY isEnabledChanged)
     Q_PROPERTY(int totalQueries                                    READ totalQueries     NOTIFY totalQueriesChanged)
@@ -24,6 +25,7 @@ class VCPiHole final : public VCPlugin {
     explicit VCPiHole(const QString& name, QObject* parent = nullptr);
 
     const QString& serverHostname() const { return serverHostname_; }
+    quint16 serverPort() const { return serverPort_; }
     const QString& serverIPAddress() const { return serverIPAddress_; }
     bool isEnabled() const { return isEnabled_; }
     int totalQueries() const { return totalQueries_; }
@@ -34,6 +36,7 @@ class VCPiHole final : public VCPlugin {
 
  signals:
     void serverHostnameChanged();
+    void serverPortChanged();
     void serverIPAddressChanged();
     void isEnabledChanged();
     void totalQueriesChanged();
@@ -52,6 +55,7 @@ class VCPiHole final : public VCPlugin {
 
  private:
     QString serverHostname_;
+    quint16 serverPort_;
     QString serverIPAddress_;
     bool isEnabled_;
     int totalQueries_;

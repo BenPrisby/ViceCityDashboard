@@ -9,6 +9,7 @@
     "Nanoleaf.mapPoint": [0.5, 0.5],
 
     "PiHole.serverHostname": "<HOSTNAME>",
+    "PiHole.serverPort": 80,
 
     "Weather.latitude": 42.0,
     "Weather.longitude": -71.0,

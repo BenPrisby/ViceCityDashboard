@@ -7,6 +7,7 @@
 
 VCPiHole::VCPiHole(const QString& name, QObject* parent)
     : VCPlugin(name, parent),
+      serverPort_(80),
       isEnabled_(false),
       totalQueries_(0),
       blockedQueries_(0),
@@ -47,7 +48,7 @@ void VCPiHole::handleHostLookup(const QHostInfo& host) {
                 qDebug() << "Pi-hole server found at IP address: " << serverIPAddress_;
 
                 // Update the destination URL and start refreshing information.
-                QString baseURL = QString("http://%1/admin/api.php").arg(serverIPAddress_);
+                QString baseURL = QString("http://%1:%2/admin/api.php").arg(serverIPAddress_).arg(serverPort_);
                 summaryDestination_ = QUrl(QString("%1?%2").arg(baseURL, "summaryRaw"));
                 historicalDataDestination_ = QUrl(QString("%1?%2").arg(baseURL, "overTimeData10mins"));
                 updateTimer_.start();
