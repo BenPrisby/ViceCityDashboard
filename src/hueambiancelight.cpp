@@ -56,18 +56,19 @@ QColor HueAmbianceLight::ambientColor() const {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueAmbianceLight::commandColorTemperature(int colorTemperature) {
-    if ((colorTemperature >= minColorTemperature()) && (colorTemperature <= maxColorTemperature())) {
-        // If the light is not on, turn it on or else the command will fail.
-        if (!isOn_) {
-            commandPower(true);
-        }
-
-        // Scale from kelvins to mirek.
-        colorTemperature = qRound(1.0e6 / colorTemperature);
-        VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"ct", colorTemperature}});
-    } else {
+    if ((colorTemperature < minColorTemperature()) || (colorTemperature > maxColorTemperature())) {
         qDebug() << "Ignoring request to set invalid color temperature for light with ID: " << id_;
+        return;
     }
+
+    // If the light is not on, turn it on or else the command will fail.
+    if (!isOn_) {
+        commandPower(true);
+    }
+
+    // Scale from kelvins to mirek.
+    colorTemperature = qRound(1.0e6 / colorTemperature);
+    VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"ct", colorTemperature}});
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

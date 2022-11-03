@@ -49,52 +49,53 @@ void NetworkInterface::sendRequest(const QUrl& destination,
                                    const QByteArray& body,
                                    const QByteArray& contentType,
                                    const QByteArray& authorization) {
-    if (destination.isValid()) {
-        QNetworkRequest request(destination);
-
-        // Attach the application information to the request.
-        static QByteArray applicationInfo =
-            QString("%1 %2").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion()).toUtf8();
-        request.setRawHeader("User-Agent", applicationInfo);
-
-        // Was a sender specified for context?
-        if (sender) {
-            request.setOriginatingObject(sender);
-        }
-
-        // Were a body and corresponding content type supplied?
-        if ((!body.isEmpty() && !contentType.isEmpty()) || (requestType == QNetworkAccessManager::PostOperation)) {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
-        }
-
-        // Was an authorization token supplied?
-        if (!authorization.isEmpty()) {
-            request.setRawHeader("Authorization", authorization);
-        }
-
-        switch (requestType) {
-            case QNetworkAccessManager::GetOperation:
-                manager_->get(request);
-                break;
-
-            case QNetworkAccessManager::PostOperation:
-                manager_->post(request, body);
-                break;
-
-            case QNetworkAccessManager::PutOperation:
-                manager_->put(request, body);
-                break;
-
-            case QNetworkAccessManager::DeleteOperation:
-                manager_->deleteResource(request);
-                break;
-
-            default:
-                qDebug() << "Ignoring unsupported request type";
-                break;
-        }
-    } else {
+    if (!destination.isValid()) {
         qDebug() << "Ignoring request with invalid URL";
+        return;
+    }
+
+    QNetworkRequest request(destination);
+
+    // Attach the application information to the request.
+    static QByteArray applicationInfo =
+        QString("%1 %2").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion()).toUtf8();
+    request.setRawHeader("User-Agent", applicationInfo);
+
+    // Was a sender specified for context?
+    if (sender) {
+        request.setOriginatingObject(sender);
+    }
+
+    // Were a body and corresponding content type supplied?
+    if ((!body.isEmpty() && !contentType.isEmpty()) || (requestType == QNetworkAccessManager::PostOperation)) {
+        request.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
+    }
+
+    // Was an authorization token supplied?
+    if (!authorization.isEmpty()) {
+        request.setRawHeader("Authorization", authorization);
+    }
+
+    switch (requestType) {
+        case QNetworkAccessManager::GetOperation:
+            manager_->get(request);
+            break;
+
+        case QNetworkAccessManager::PostOperation:
+            manager_->post(request, body);
+            break;
+
+        case QNetworkAccessManager::PutOperation:
+            manager_->put(request, body);
+            break;
+
+        case QNetworkAccessManager::DeleteOperation:
+            manager_->deleteResource(request);
+            break;
+
+        default:
+            qDebug() << "Ignoring unsupported request type";
+            break;
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -110,15 +111,16 @@ void NetworkInterface::sendJSONRequest(const QUrl& destination,
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void NetworkInterface::browseZeroConf(const QString& serviceType) {
-    if (!serviceType.isEmpty()) {
-        bool onlyRequest = zeroConfBrowseRequests_.isEmpty();
-        zeroConfBrowseRequests_.enqueue(serviceType);
-        if (onlyRequest) {
-            zeroConf_->startBrowser(serviceType, QAbstractSocket::IPv4Protocol);
-            zeroConfBrowseTimer_.start();
-        }
-    } else {
+    if (serviceType.isEmpty()) {
         qDebug() << "Ignoring request to browse for empty ZeroConf service";
+        return;
+    }
+
+    bool onlyRequest = zeroConfBrowseRequests_.isEmpty();
+    zeroConfBrowseRequests_.enqueue(serviceType);
+    if (onlyRequest) {
+        zeroConf_->startBrowser(serviceType, QAbstractSocket::IPv4Protocol);
+        zeroConfBrowseTimer_.start();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -139,21 +141,22 @@ void NetworkInterface::handleReply(QNetworkReply* reply) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void NetworkInterface::handleZeroConfServiceAdded(QZeroConfService service) {
-    if (!zeroConfBrowseRequests_.isEmpty() && service->type().startsWith(zeroConfBrowseRequests_.front())) {
-        emit zeroConfServiceFound(zeroConfBrowseRequests_.dequeue(), service->ip().toString());
-        zeroConf_->stopBrowser();
-
-        // Are there more requests pending?
-        if (!zeroConfBrowseRequests_.isEmpty()) {
-            // Yes, start looking for the next one.
-            zeroConf_->startBrowser(zeroConfBrowseRequests_.front(), QAbstractSocket::IPv4Protocol);
-            zeroConfBrowseTimer_.start();  // Restart
-        } else {
-            // No, stop looking.
-            zeroConfBrowseTimer_.stop();
-        }
-    } else {
+    if (zeroConfBrowseRequests_.isEmpty() || !service->type().startsWith(zeroConfBrowseRequests_.front())) {
         // Service does not match the next one we were looking for, ignore.
+        return;
+    }
+
+    emit zeroConfServiceFound(zeroConfBrowseRequests_.dequeue(), service->ip().toString());
+    zeroConf_->stopBrowser();
+
+    // Are there more requests pending?
+    if (!zeroConfBrowseRequests_.isEmpty()) {
+        // Yes, start looking for the next one.
+        zeroConf_->startBrowser(zeroConfBrowseRequests_.front(), QAbstractSocket::IPv4Protocol);
+        zeroConfBrowseTimer_.start();  // Restart
+    } else {
+        // No, stop looking.
+        zeroConfBrowseTimer_.stop();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

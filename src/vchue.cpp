@@ -49,13 +49,14 @@ int VCHue::onDevicesCount() const {
 
 void VCHue::commandDeviceState(const int id, const QJsonObject& parameters) {
     HueDevice* device = deviceTable_.value(id, nullptr);
-    if (device) {
-        QUrl url(QString("%1/%2/state").arg(lightsURL_.toString()).arg(id));
-        NetworkInterface::instance()->sendJSONRequest(
-            url, device, QNetworkAccessManager::PutOperation, QJsonDocument(parameters));
-    } else {
+    if (!device) {
         qDebug() << "Ignoring request to command state of unknown device: " << id;
+        return;
     }
+
+    QUrl url(QString("%1/%2/state").arg(lightsURL_.toString()).arg(id));
+    NetworkInterface::instance()->sendJSONRequest(
+        url, device, QNetworkAccessManager::PutOperation, QJsonDocument(parameters));
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -186,15 +187,18 @@ void VCHue::handleNetworkReply(int statusCode, QObject* sender, const QJsonDocum
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCHue::updateBaseURL() {
-    if (!bridgeIPAddress_.isEmpty() && !bridgeUsername_.isEmpty()) {
-        QString baseURL = QString("http://%1/api/%2").arg(bridgeIPAddress_, bridgeUsername_);
-        lightsURL_ = QUrl(QString("%1/lights").arg(baseURL));
-        groupsURL_ = QUrl(QString("%1/groups").arg(baseURL));
-
-        // With the IP address known, start the update timer and refesh immediately.
-        updateTimer_.start();
-        refresh();
-        refreshGroups();
+    if (bridgeIPAddress_.isEmpty() || bridgeUsername_.isEmpty()) {
+        // Not enough information to build the URL.
+        return;
     }
+
+    QString baseURL = QString("http://%1/api/%2").arg(bridgeIPAddress_, bridgeUsername_);
+    lightsURL_ = QUrl(QString("%1/lights").arg(baseURL));
+    groupsURL_ = QUrl(QString("%1/groups").arg(baseURL));
+
+    // With the IP address known, start the update timer and refesh immediately.
+    updateTimer_.start();
+    refresh();
+    refreshGroups();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

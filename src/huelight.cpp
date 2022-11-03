@@ -15,19 +15,20 @@ HueLight::HueLight(int id, QObject* parent) : HueDevice(id, parent) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueLight::commandBrightness(const double brightness) {
-    if (!qIsNaN(brightness) && (brightness >= 0.0) && (brightness <= 100.0)) {
-        // If the light is not on, turn it on or else the command will fail.
-        if (!isOn_) {
-            commandPower(true);
-        }
-
-        // Scale from a percentage into the capable range of the light.
-        int scaledBrightness =
-            qRound(((brightness / 100.0) * (MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS)) + MIN_CAPABLE_BRIGHTNESS);
-        VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"bri", scaledBrightness}});
-    } else {
+    if (qIsNaN(brightness) || (brightness < 0.0) || (brightness > 100.0)) {
         qDebug() << "Ignoring request to set invalid brightness for light with ID: " << id_;
+        return;
     }
+
+    // If the light is not on, turn it on or else the command will fail.
+    if (!isOn_) {
+        commandPower(true);
+    }
+
+    // Scale from a percentage into the capable range of the light.
+    int scaledBrightness =
+        qRound(((brightness / 100.0) * (MAX_CAPABLE_BRIGHTNESS - MIN_CAPABLE_BRIGHTNESS)) + MIN_CAPABLE_BRIGHTNESS);
+    VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"bri", scaledBrightness}});
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

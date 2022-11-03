@@ -12,54 +12,57 @@ HueColorLight::HueColorLight(int id, QObject* parent) : HueAmbianceLight(id, par
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueColorLight::commandColor(const QColor& color) {
-    if (color.isValid()) {
-        double rIn = color.redF();
-        double gIn = color.greenF();
-        double bIn = color.blueF();
-
-        // Apply gamma correction.
-        double r = (rIn > 0.04045) ? qPow(((rIn + 0.055) / (1.0 + 0.055)), 2.4) : (rIn / 12.92);
-        double g = (gIn > 0.04045) ? qPow(((gIn + 0.055) / (1.0 + 0.055)), 2.4) : (gIn / 12.92);
-        double b = (bIn > 0.04045) ? qPow(((bIn + 0.055) / (1.0 + 0.055)), 2.4) : (gIn / 12.92);
-
-        // Convert to XYZ using Wide RGB D65 conversion.
-        double x = (r * 0.664511) + (g * 0.154324) + (b * 0.162028);
-        double y = (r * 0.283881) + (g * 0.668433) + (b * 0.047685);
-        double z = (r * 0.000088) + (g * 0.072310) + (b * 0.986039);
-
-        // Calculate XY values.
-        double cx = x / (x + y + z);
-        double cy = y / (x + y + z);
-
-        // Package the values and send them out.
-        commandColor(cx, cy);
-    } else {
+    if (!color.isValid()) {
         qDebug() << "Ignoring request to set invalid color for light with ID: " << id_;
+        return;
     }
+
+    double rIn = color.redF();
+    double gIn = color.greenF();
+    double bIn = color.blueF();
+
+    // Apply gamma correction.
+    double r = (rIn > 0.04045) ? qPow(((rIn + 0.055) / (1.0 + 0.055)), 2.4) : (rIn / 12.92);
+    double g = (gIn > 0.04045) ? qPow(((gIn + 0.055) / (1.0 + 0.055)), 2.4) : (gIn / 12.92);
+    double b = (bIn > 0.04045) ? qPow(((bIn + 0.055) / (1.0 + 0.055)), 2.4) : (gIn / 12.92);
+
+    // Convert to XYZ using Wide RGB D65 conversion.
+    double x = (r * 0.664511) + (g * 0.154324) + (b * 0.162028);
+    double y = (r * 0.283881) + (g * 0.668433) + (b * 0.047685);
+    double z = (r * 0.000088) + (g * 0.072310) + (b * 0.986039);
+
+    // Calculate XY values.
+    double cx = x / (x + y + z);
+    double cy = y / (x + y + z);
+
+    // Package the values and send them out.
+    commandColor(cx, cy);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueColorLight::commandColor(const int hue) {
-    if ((hue >= 0) && (hue <= 359)) {
-        commandColor(hueToColor(hue));
-    } else {
+    if ((hue < 0) || (hue > 359)) {
         qDebug() << "Ignoring request to set invalid hue for light with ID: " << id_;
+        return;
     }
+
+    commandColor(hueToColor(hue));
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void HueColorLight::commandColor(const double x, const double y) {
-    if (!qIsNaN(x) && !qIsNaN(y)) {
-        // If the light is not on, turn it on or else the command will fail.
-        if (!isOn_) {
-            commandPower(true);
-        }
-
-        // BDP: Updated color temperature may not be reported back for several seconds.
-        VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"xy", QJsonArray{x, y}}});
-    } else {
+    if (qIsNaN(x) || qIsNaN(y)) {
         qDebug() << "Ignoring request to set invalid XY for light with ID: " << id_;
+        return;
     }
+
+    // If the light is not on, turn it on or else the command will fail.
+    if (!isOn_) {
+        commandPower(true);
+    }
+
+    // BDP: Updated color temperature may not be reported back for several seconds.
+    VCHub::instance()->hue()->commandDeviceState(id_, QJsonObject{{"xy", QJsonArray{x, y}}});
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

@@ -40,27 +40,27 @@ void VCPiHole::refreshHistoricalData() {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCPiHole::handleHostLookup(const QHostInfo& host) {
-    if (host.error() == QHostInfo::NoError) {
-        const QList<QHostAddress> addresses = host.addresses();
-        for (const auto& address : addresses) {
-            if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-                serverIPAddress_ = address.toString();
-                qDebug() << "Pi-hole server found at IP address: " << serverIPAddress_;
-
-                // Update the destination URL and start refreshing information.
-                QString baseURL = QString("http://%1:%2/admin/api.php").arg(serverIPAddress_).arg(serverPort_);
-                summaryDestination_ = QUrl(QString("%1?%2").arg(baseURL, "summaryRaw"));
-                historicalDataDestination_ = QUrl(QString("%1?%2").arg(baseURL, "overTimeData10mins"));
-                updateTimer_.start();
-                refresh();
-                refreshHistoricalData();
-                break;
-            } else {
-                // IPv6 is the protocol of the future and always will be.
-            }
-        }
-    } else {
+    if (host.error() != QHostInfo::NoError) {
         qDebug() << "Failed to find Pi-hole server on the local network with error: " << host.errorString();
+    }
+
+    const QList<QHostAddress> addresses = host.addresses();
+    for (const auto& address : addresses) {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol) {
+            serverIPAddress_ = address.toString();
+            qDebug() << "Pi-hole server found at IP address: " << serverIPAddress_;
+
+            // Update the destination URL and start refreshing information.
+            QString baseURL = QString("http://%1:%2/admin/api.php").arg(serverIPAddress_).arg(serverPort_);
+            summaryDestination_ = QUrl(QString("%1?%2").arg(baseURL, "summaryRaw"));
+            historicalDataDestination_ = QUrl(QString("%1?%2").arg(baseURL, "overTimeData10mins"));
+            updateTimer_.start();
+            refresh();
+            refreshHistoricalData();
+            break;
+        } else {
+            // IPv6 is the protocol of the future and always will be.
+        }
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

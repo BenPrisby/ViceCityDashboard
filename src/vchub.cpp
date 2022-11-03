@@ -141,148 +141,149 @@ bool VCHub::loadConfig(const QString& path) {
 
 void VCHub::runScene(const QString& scene) {
     QVariantList steps = extractSceneSteps(scene);
-    if (!steps.isEmpty()) {
-        // Indicate that execution is starting.
-        isRunningScene_ = true;
-        emit isRunningSceneChanged();
+    if (steps.isEmpty()) {
+        // No steps, assume this means the scene was not found.
+        qDebug() << "Ignoring request to run unknown scene: " << scene;
+        return;
+    }
 
-        // Scenes steps are constructed as a list of objects that contain device and state information.
-        qDebug() << "Processing scene " << scene << " with " << steps.size() << " steps";
-        for (int i = 0; i < steps.size(); i++) {
-            int stepNumber = i + 1;
-            QVariantMap step = steps.at(i).toMap();
+    // Indicate that execution is starting.
+    isRunningScene_ = true;
+    emit isRunningSceneChanged();
 
-            // Ensure the expected structure is present.
-            if (step.contains("device") && step.contains("state")) {
-                QVariantMap device = step.value("device").toMap();
-                QString name = device.value("name").toString();
-                QString className = device.value("class").toString();
-                QVariantMap state = step.value("state").toMap();
+    // Scenes steps are constructed as a list of objects that contain device and state information.
+    qDebug() << "Processing scene " << scene << " with " << steps.size() << " steps";
+    for (int i = 0; i < steps.size(); i++) {
+        int stepNumber = i + 1;
+        QVariantMap step = steps.at(i).toMap();
 
-                // Execute the actions of the step based on the device class.
-                if (className == "hue") {
-                    // Locate the Hue device by name.
-                    const QList<HueDevice*>& hueDevices = hue_->devices();
-                    HueDevice* hueDevice = nullptr;
-                    for (auto device : hueDevices) {
-                        if (name == device->name()) {
-                            hueDevice = device;
-                            break;
+        // Ensure the expected structure is present.
+        if (step.contains("device") && step.contains("state")) {
+            QVariantMap device = step.value("device").toMap();
+            QString name = device.value("name").toString();
+            QString className = device.value("class").toString();
+            QVariantMap state = step.value("state").toMap();
+
+            // Execute the actions of the step based on the device class.
+            if (className == "hue") {
+                // Locate the Hue device by name.
+                const QList<HueDevice*>& hueDevices = hue_->devices();
+                HueDevice* hueDevice = nullptr;
+                for (auto device : hueDevices) {
+                    if (name == device->name()) {
+                        hueDevice = device;
+                        break;
+                    }
+                }
+
+                // Check if the device has been discovered.
+                if (hueDevice) {
+                    qDebug() << "Executing step " << stepNumber << " on Hue device: " << name;
+
+                    // Apply state properties from most to least generic.
+                    if (state.contains("on")) {
+                        qDebug() << "\t=> Command power";
+                        hueDevice->commandPower(state.take("on").toBool());
+                    }
+                    if (state.contains("brightness")) {
+                        // This must be a light.
+                        auto hueLight = qobject_cast<HueLight*>(hueDevice);
+                        if (hueLight) {
+                            qDebug() << "\t=> Command brightness";
+                            hueLight->commandBrightness(state.take("brightness").toDouble());
+                        } else {
+                            state.remove("brightness");  // Still consume the value
+                            qDebug() << "Encountered brightness command for Hue device " << name
+                                     << " that is not a light in step " << stepNumber
+                                     << " when processing scene: " << scene;
                         }
                     }
-
-                    // Check if the device has been discovered.
-                    if (hueDevice) {
-                        qDebug() << "Executing step " << stepNumber << " on Hue device: " << name;
-
-                        // Apply state properties from most to least generic.
-                        if (state.contains("on")) {
-                            qDebug() << "\t=> Command power";
-                            hueDevice->commandPower(state.take("on").toBool());
+                    if (state.contains("colorTemperature")) {
+                        // This must be an ambiance light.
+                        auto hueLight = qobject_cast<HueAmbianceLight*>(hueDevice);
+                        if (hueLight) {
+                            qDebug() << "\t=> Command color temperature";
+                            hueLight->commandColorTemperature(state.take("colorTemperature").toInt());
+                        } else {
+                            state.remove("colorTemperature");  // Still consume the value
+                            qDebug() << "Encountered color temperature command for Hue device " << name
+                                     << " that is not an ambiance light in step " << stepNumber
+                                     << " when processing scene: " << scene;
                         }
-                        if (state.contains("brightness")) {
-                            // This must be a light.
-                            auto hueLight = qobject_cast<HueLight*>(hueDevice);
-                            if (hueLight) {
-                                qDebug() << "\t=> Command brightness";
-                                hueLight->commandBrightness(state.take("brightness").toDouble());
-                            } else {
-                                state.remove("brightness");  // Still consume the value
-                                qDebug() << "Encountered brightness command for Hue device " << name
-                                         << " that is not a light in step " << stepNumber
-                                         << " when processing scene: " << scene;
-                            }
-                        }
-                        if (state.contains("colorTemperature")) {
-                            // This must be an ambiance light.
-                            auto hueLight = qobject_cast<HueAmbianceLight*>(hueDevice);
-                            if (hueLight) {
-                                qDebug() << "\t=> Command color temperature";
-                                hueLight->commandColorTemperature(state.take("colorTemperature").toInt());
-                            } else {
-                                state.remove("colorTemperature");  // Still consume the value
-                                qDebug() << "Encountered color temperature command for Hue device " << name
-                                         << " that is not an ambiance light in step " << stepNumber
-                                         << " when processing scene: " << scene;
-                            }
-                        }
-                        if (state.contains("xy")) {
-                            // This must be a color light.
-                            auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
-                            if (hueLight) {
-                                qDebug() << "\t=> Command XY color";
-                                QVariantList xy = state.take("xy").toList();
-                                hueLight->commandColor(xy.at(0).toDouble(), xy.at(1).toDouble());
-                            } else {
-                                state.remove("xy");  // Still consume the value
-                                qDebug() << "Encountered XY color command for Hue device " << name
-                                         << " that is not a color light in step " << stepNumber
-                                         << " when processing scene: " << scene;
-                            }
-                        }
-                        if (state.contains("hue")) {
-                            // This must be a color light.
-                            auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
-                            if (hueLight) {
-                                qDebug() << "\t=> Command hue color";
-                                hueLight->commandColor(state.take("hue").toInt());
-                            } else {
-                                state.remove("hue");  // Still consume the value
-                                qDebug() << "Encountered hue color command for Hue device " << name
-                                         << " that is not a color light in step " << stepNumber
-                                         << " when processing scene: " << scene;
-                            }
-                        }
-                        if (!state.isEmpty()) {
-                            qDebug() << "Detected unsupported state properties " << state.keys() << " for Hue device "
-                                     << name << " in step " << stepNumber << " when processing scene: " << scene;
-                        }
-                    } else {
-                        qDebug() << "Encountered unknown Hue device name " << name << " in step " << stepNumber
-                                 << " when processing scene: " << scene;
                     }
-                } else if (className == "nanoleaf") {
-                    // Ensure this is the discovered Nanoleaf.
-                    if (name == nanoleaf_->name()) {
-                        qDebug() << "Executing step " << stepNumber << " on Nanoleaf: " << name;
-                        if (state.contains("on")) {
-                            qDebug() << "\t=> Command power";
-                            nanoleaf_->commandPower(state.take("on").toBool());
+                    if (state.contains("xy")) {
+                        // This must be a color light.
+                        auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
+                        if (hueLight) {
+                            qDebug() << "\t=> Command XY color";
+                            QVariantList xy = state.take("xy").toList();
+                            hueLight->commandColor(xy.at(0).toDouble(), xy.at(1).toDouble());
+                        } else {
+                            state.remove("xy");  // Still consume the value
+                            qDebug() << "Encountered XY color command for Hue device " << name
+                                     << " that is not a color light in step " << stepNumber
+                                     << " when processing scene: " << scene;
                         }
-                        if (state.contains("effect")) {
-                            qDebug() << "\t=> Select effect";
-                            nanoleaf_->selectEffect(state.take("effect").toString());
+                    }
+                    if (state.contains("hue")) {
+                        // This must be a color light.
+                        auto hueLight = qobject_cast<HueColorLight*>(hueDevice);
+                        if (hueLight) {
+                            qDebug() << "\t=> Command hue color";
+                            hueLight->commandColor(state.take("hue").toInt());
+                        } else {
+                            state.remove("hue");  // Still consume the value
+                            qDebug() << "Encountered hue color command for Hue device " << name
+                                     << " that is not a color light in step " << stepNumber
+                                     << " when processing scene: " << scene;
                         }
-                        if (!state.isEmpty()) {
-                            qDebug() << "Detected unsupported state properties " << state.keys() << " for Nanoleaf "
-                                     << name << " in step " << stepNumber << " when processing scene: " << scene;
-                        }
-                    } else {
-                        qDebug() << "Encountered unknown Nanoleaf name " << name << " in step " << stepNumber
-                                 << " when processing scene: " << scene;
+                    }
+                    if (!state.isEmpty()) {
+                        qDebug() << "Detected unsupported state properties " << state.keys() << " for Hue device "
+                                 << name << " in step " << stepNumber << " when processing scene: " << scene;
                     }
                 } else {
-                    qDebug() << "Encountered unsupported class " << className << " in step " << stepNumber
+                    qDebug() << "Encountered unknown Hue device name " << name << " in step " << stepNumber
+                             << " when processing scene: " << scene;
+                }
+            } else if (className == "nanoleaf") {
+                // Ensure this is the discovered Nanoleaf.
+                if (name == nanoleaf_->name()) {
+                    qDebug() << "Executing step " << stepNumber << " on Nanoleaf: " << name;
+                    if (state.contains("on")) {
+                        qDebug() << "\t=> Command power";
+                        nanoleaf_->commandPower(state.take("on").toBool());
+                    }
+                    if (state.contains("effect")) {
+                        qDebug() << "\t=> Select effect";
+                        nanoleaf_->selectEffect(state.take("effect").toString());
+                    }
+                    if (!state.isEmpty()) {
+                        qDebug() << "Detected unsupported state properties " << state.keys() << " for Nanoleaf " << name
+                                 << " in step " << stepNumber << " when processing scene: " << scene;
+                    }
+                } else {
+                    qDebug() << "Encountered unknown Nanoleaf name " << name << " in step " << stepNumber
                              << " when processing scene: " << scene;
                 }
             } else {
-                qDebug() << "Missing device and/or state for step " << stepNumber << " in scene: " << scene;
+                qDebug() << "Encountered unsupported class " << className << " in step " << stepNumber
+                         << " when processing scene: " << scene;
             }
-
-            // Insert a brief pause in between steps to prevent overloading the devices.
-            QTime future = QTime::currentTime().addMSecs(200);
-            while (future > QTime::currentTime()) {
-                QCoreApplication::processEvents(QEventLoop::AllEvents, 500);
-            }
+        } else {
+            qDebug() << "Missing device and/or state for step " << stepNumber << " in scene: " << scene;
         }
 
-        qDebug() << "Finished processing scene: " << scene;
-        isRunningScene_ = false;
-        emit isRunningSceneChanged();
-    } else {
-        // No steps, assume this means the scene was not found.
-        qDebug() << "Ignoring request to run unknown scene: " << scene;
+        // Insert a brief pause in between steps to prevent overloading the devices.
+        QTime future = QTime::currentTime().addMSecs(200);
+        while (future > QTime::currentTime()) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 500);
+        }
     }
+
+    qDebug() << "Finished processing scene: " << scene;
+    isRunningScene_ = false;
+    emit isRunningSceneChanged();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

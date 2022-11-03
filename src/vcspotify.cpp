@@ -609,19 +609,22 @@ void VCSpotify::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCSpotify::refreshAccessToken() {
-    if (!clientID_.isEmpty() && !clientSecret_.isEmpty() && !refreshToken_.isEmpty()) {
-        qDebug() << "Refreshing Spotify access token";
-        static QUrl destination("https://accounts.spotify.com/api/token");
-        QUrlQuery query{{"grant_type", "refresh_token"}, {"refresh_token", refreshToken_}};
-        QByteArray clientInfo = QString("%1:%2").arg(clientID_, clientSecret_).toUtf8().toBase64();
-        QByteArray authorization = clientInfo.prepend("Basic ");
-        NetworkInterface::instance()->sendRequest(destination,
-                                                  this,
-                                                  QNetworkAccessManager::PostOperation,
-                                                  query.toString(QUrl::FullyEncoded).toUtf8(),
-                                                  "application/x-www-form-urlencoded",
-                                                  authorization);
+    if (clientID_.isEmpty() || clientSecret_.isEmpty() || refreshToken_.isEmpty()) {
+        // Not enough information to make the request.
+        return;
     }
+
+    qDebug() << "Refreshing Spotify access token";
+    static QUrl destination("https://accounts.spotify.com/api/token");
+    QUrlQuery query{{"grant_type", "refresh_token"}, {"refresh_token", refreshToken_}};
+    QByteArray clientInfo = QString("%1:%2").arg(clientID_, clientSecret_).toUtf8().toBase64();
+    QByteArray authorization = clientInfo.prepend("Basic ");
+    NetworkInterface::instance()->sendRequest(destination,
+                                              this,
+                                              QNetworkAccessManager::PostOperation,
+                                              query.toString(QUrl::FullyEncoded).toUtf8(),
+                                              "application/x-www-form-urlencoded",
+                                              authorization);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

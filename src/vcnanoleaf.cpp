@@ -209,13 +209,16 @@ void VCNanoleaf::handleNetworkReply(int statusCode, QObject* sender, const QJson
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCNanoleaf::updateBaseURL() {
-    if (!ipAddress_.isEmpty() && !authToken_.isEmpty()) {
-        baseURL_ = QString("http://%1:16021/api/v1/%2").arg(ipAddress_, authToken_);
-
-        // With the IP address known, start the update timer and refesh immediately.
-        updateTimer_.start();
-        refresh();
-        refreshEffects();
+    if (ipAddress_.isEmpty() || authToken_.isEmpty()) {
+        // Not enough information to build the URL.
+        return;
     }
+
+    baseURL_ = QString("http://%1:16021/api/v1/%2").arg(ipAddress_, authToken_);
+
+    // With the IP address known, start the update timer and refesh immediately.
+    updateTimer_.start();
+    refresh();
+    refreshEffects();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/

@@ -5,18 +5,18 @@
 
 VCPlugin::VCPlugin(const QString& name, QObject* parent)
     : QObject(parent), pluginName_(name), updateInterval_(10 * 1000), isActive_(true) {
-    if (!pluginName_.isEmpty()) {
-        setObjectName(pluginName_);
-        qDebug() << "Initializing plugin: " << pluginName_;
-
-        // Configure the update timer for periodically refreshing any attached data.
-        updateTimer_.setInterval(updateInterval_);
-        updateTimer_.setSingleShot(false);
-        connect(&updateTimer_, &QTimer::timeout, this, &VCPlugin::refresh);
-        updateTimer_.start();
-    } else {
+    if (pluginName_.isEmpty()) {
         qFatal("Missing name for VCPlugin");
     }
+
+    setObjectName(pluginName_);
+    qDebug() << "Initializing plugin: " << pluginName_;
+
+    // Configure the update timer for periodically refreshing any attached data.
+    updateTimer_.setInterval(updateInterval_);
+    updateTimer_.setSingleShot(false);
+    connect(&updateTimer_, &QTimer::timeout, this, &VCPlugin::refresh);
+    updateTimer_.start();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

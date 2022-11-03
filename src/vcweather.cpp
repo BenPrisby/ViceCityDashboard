@@ -165,17 +165,20 @@ void VCWeather::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 void VCWeather::updateDestinationURL() {
-    if (!apiKey_.isEmpty() && !qIsNaN(latitude_) && !qIsNaN(longitude_)) {
-        destination_ = QUrl(QString("https://api.openweathermap.org/data/2.5/"
-                                    "onecall?lat=%1&lon=%2&appid=%3&units=imperial&exclude=minutely")
-                                .arg(latitude_)
-                                .arg(longitude_)
-                                .arg(apiKey_));
-
-        // With everything needed to make requests collected, start the update timer and refesh immediately.
-        updateTimer_.start();
-        refresh();
+    if (apiKey_.isEmpty() || qIsNaN(latitude_) || qIsNaN(longitude_)) {
+        // Not enough information to build the URL.
+        return;
     }
+
+    destination_ = QUrl(QString("https://api.openweathermap.org/data/2.5/"
+                                "onecall?lat=%1&lon=%2&appid=%3&units=imperial&exclude=minutely")
+                            .arg(latitude_)
+                            .arg(longitude_)
+                            .arg(apiKey_));
+
+    // With everything needed to make requests collected, start the update timer and refesh immediately.
+    updateTimer_.start();
+    refresh();
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
