@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
 import VCStyles 1.0
 import com.benprisby.vc.vchub 1.0
@@ -198,248 +199,53 @@ Tile {
             color: VCColor.grayLight
         }
 
-        RowLayout {
-            id: hourlyForecastLayout
+        ListView {
+            id: hourlyForecast
 
             Layout.fillWidth: true
-            Layout.maximumHeight: 80
+            Layout.preferredHeight: 80
+            orientation: ListView.Horizontal
             spacing: VCMargin.tiny
+            clip: true
+            interactive: false  // Not scrollable
+            model: VCHub.weather.hourlyForecast
 
-            ColumnLayout {
-                id: hour1Layout
+            delegate: ColumnLayout {
+                id: hourLayout
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                width: 63
+                height: hourlyForecast.height
 
                 Text {
-                    id: hour1Time
+                    id: hourTime
 
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: VCFont.label
                     color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour1Time)
+                    text: VCHub.weather.localHour(modelData["time"])
                 }
 
                 Image {
-                    id: hour1ConditionIcon
+                    id: hourConditionIcon
 
                     Layout.fillHeight: true
                     Layout.preferredWidth: height
                     Layout.alignment: Qt.AlignHCenter
                     fillMode: Image.PreserveAspectFit
                     sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour1IconKey)
+                    source: VCHub.weather.iconURL(modelData["iconKey"])
                 }
 
                 Text {
-                    id: hour1Temperature
+                    id: hourTemperature
 
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: VCFont.label
                     font.bold: true
                     color: VCColor.white
-                    text: Math.round(VCHub.weather.hour1Temperature) + "°F"
-                }
-
-            }
-
-            ColumnLayout {
-                id: hour2Layout
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                Text {
-                    id: hour2Time
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour2Time)
-                }
-
-                Image {
-                    id: hour2ConditionIcon
-
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
-                    Layout.alignment: Qt.AlignHCenter
-                    sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour2IconKey)
-                }
-
-                Text {
-                    id: hour2Temperature
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    font.bold: true
-                    color: VCColor.white
-                    text: Math.round(VCHub.weather.hour2Temperature) + "°F"
-                }
-
-            }
-
-            ColumnLayout {
-                id: hour3Layout
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                Text {
-                    id: hour3Time
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour3Time)
-                }
-
-                Image {
-                    id: hour3ConditionIcon
-
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
-                    Layout.alignment: Qt.AlignHCenter
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour3IconKey)
-                }
-
-                Text {
-                    id: hour3Temperature
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    font.bold: true
-                    color: VCColor.white
-                    text: Math.round(VCHub.weather.hour3Temperature) + "°F"
-                }
-
-            }
-
-            ColumnLayout {
-                id: hour4Layout
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                Text {
-                    id: hour4Time
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour4Time)
-                }
-
-                Image {
-                    id: hour4ConditionIcon
-
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
-                    Layout.alignment: Qt.AlignHCenter
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour4IconKey)
-                }
-
-                Text {
-                    id: hour4Temperature
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    font.bold: true
-                    color: VCColor.white
-                    text: Math.round(VCHub.weather.hour4Temperature) + "°F"
-                }
-
-            }
-
-            ColumnLayout {
-                id: hour5Layout
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                Text {
-                    id: hour5Time
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour5Time)
-                }
-
-                Image {
-                    id: hour5ConditionIcon
-
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
-                    Layout.alignment: Qt.AlignHCenter
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour5IconKey)
-                }
-
-                Text {
-                    id: hour5Temperature
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    font.bold: true
-                    color: VCColor.white
-                    text: Math.round(VCHub.weather.hour5Temperature) + "°F"
-                }
-
-            }
-
-            ColumnLayout {
-                id: hour6Layout
-
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                Text {
-                    id: hour6Time
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    color: VCColor.white
-                    text: VCHub.weather.localHour(VCHub.weather.hour6Time)
-                }
-
-                Image {
-                    id: hour6ConditionIcon
-
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: height
-                    Layout.alignment: Qt.AlignHCenter
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(width, height)
-                    source: VCHub.weather.iconURL(VCHub.weather.hour6IconKey)
-                }
-
-                Text {
-                    id: hour6Temperature
-
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: VCFont.label
-                    font.bold: true
-                    color: VCColor.white
-                    text: Math.round(VCHub.weather.hour6Temperature) + "°F"
+                    text: Math.round(modelData["temperature"]) + "°F"
                 }
 
             }
@@ -454,252 +260,64 @@ Tile {
             color: VCColor.grayLight
         }
 
-        GridLayout {
-            id: dailyForecastLayout
+        ListView {
+            id: dailyForecast
 
             Layout.fillWidth: true
-            columns: 6
-            columnSpacing: VCMargin.medium
-            rowSpacing: 0
+            Layout.fillHeight: true
+            clip: true
+            interactive: contentHeight > height
+            model: VCHub.weather.dailyForecast
 
-            Text {
-                id: day1Time
-
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: qsTr(VCHub.dayOfWeek(VCHub.weather.day1Time))
+            ScrollBar.vertical: ScrollBar {
+                policy: dailyForecast.interactive ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
             }
 
-            Item {
-                Layout.fillWidth: true
-            }
+            delegate: RowLayout {
+                width: dailyForecast.width - (dailyForecast.interactive ? VCMargin.medium : 0)  // Leave room for the scrollbar
+                spacing: VCMargin.medium
 
-            Image {
-                id: day1ConditionIcon
+                Text {
+                    id: dayTime
 
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: width
-                Layout.alignment: Qt.AlignVCenter
-                fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-                source: VCHub.weather.iconURL(VCHub.weather.day1IconKey)
-            }
+                    Layout.preferredWidth: 100
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: VCFont.paragraph
+                    color: VCColor.white
+                    text: qsTr(VCHub.dayOfWeek(modelData["time"]))
+                }
 
-            Item {
-                Layout.fillWidth: true
-            }
+                Image {
+                    id: dayConditionIcon
 
-            Text {
-                id: day1TemperatureMax
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    Layout.alignment: Qt.AlignVCenter
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
+                    source: VCHub.weather.iconURL(modelData["iconKey"])
+                }
 
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: Math.round(VCHub.weather.day1TemperatureMax) + "°F"
-            }
+                Text {
+                    id: dayTemperatureMax
 
-            Text {
-                id: day1TemperatureMin
+                    Layout.alignment: Qt.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: VCFont.paragraph
+                    color: VCColor.white
+                    text: Math.round(modelData["maxTemperature"]) + "°F"
+                }
 
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.grayLightest
-                text: Math.round(VCHub.weather.day1TemperatureMin) + "°F"
-            }
+                Text {
+                    id: dayTemperatureMin
 
-            Text {
-                id: day2Time
+                    Layout.alignment: Qt.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: VCFont.paragraph
+                    color: VCColor.grayLightest
+                    text: Math.round(modelData["minTemperature"]) + "°F"
+                }
 
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: qsTr(VCHub.dayOfWeek(VCHub.weather.day2Time))
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Image {
-                id: day2ConditionIcon
-
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: width
-                Layout.alignment: Qt.AlignVCenter
-                fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-                source: VCHub.weather.iconURL(VCHub.weather.day2IconKey)
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                id: day2TemperatureMax
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: Math.round(VCHub.weather.day2TemperatureMax) + "°F"
-            }
-
-            Text {
-                id: day2TemperatureMin
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.grayLightest
-                text: Math.round(VCHub.weather.day2TemperatureMin) + "°F"
-            }
-
-            Text {
-                id: day3Time
-
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: qsTr(VCHub.dayOfWeek(VCHub.weather.day3Time))
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Image {
-                id: day3ConditionIcon
-
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: width
-                Layout.alignment: Qt.AlignVCenter
-                fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-                source: VCHub.weather.iconURL(VCHub.weather.day3IconKey)
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                id: day3TemperatureMax
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: Math.round(VCHub.weather.day3TemperatureMax) + "°F"
-            }
-
-            Text {
-                id: day3TemperatureMin
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.grayLightest
-                text: Math.round(VCHub.weather.day3TemperatureMin) + "°F"
-            }
-
-            Text {
-                id: day4Time
-
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: qsTr(VCHub.dayOfWeek(VCHub.weather.day4Time))
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Image {
-                id: day4ConditionIcon
-
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: width
-                Layout.alignment: Qt.AlignVCenter
-                fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-                source: VCHub.weather.iconURL(VCHub.weather.day4IconKey)
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                id: day4TemperatureMax
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: Math.round(VCHub.weather.day4TemperatureMax) + "°F"
-            }
-
-            Text {
-                id: day4TemperatureMin
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.grayLightest
-                text: Math.round(VCHub.weather.day4TemperatureMin) + "°F"
-            }
-
-            Text {
-                id: day5Time
-
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: qsTr(VCHub.dayOfWeek(VCHub.weather.day5Time))
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Image {
-                id: day5ConditionIcon
-
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: width
-                Layout.alignment: Qt.AlignVCenter
-                fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(Layout.preferredWidth, Layout.preferredHeight)
-                source: VCHub.weather.iconURL(VCHub.weather.day5IconKey)
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Text {
-                id: day5TemperatureMax
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.white
-                text: Math.round(VCHub.weather.day5TemperatureMax) + "°F"
-            }
-
-            Text {
-                id: day5TemperatureMin
-
-                Layout.alignment: Qt.AlignRight
-                verticalAlignment: Text.AlignVCenter
-                font.pixelSize: VCFont.paragraph
-                color: VCColor.grayLightest
-                text: Math.round(VCHub.weather.day5TemperatureMin) + "°F"
             }
 
         }

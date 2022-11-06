@@ -7,6 +7,11 @@
 #include "vchub.h"
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+namespace {
+constexpr int MAX_FORECAST_HOURS = 6;
+}  // namespace
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 VCWeather::VCWeather(const QString& name, QObject* parent)
     : VCPlugin(name, parent),
       latitude_(qQNaN()),
@@ -14,23 +19,7 @@ VCWeather::VCWeather(const QString& name, QObject* parent)
       currentTemperature_(qQNaN()),
       currentFeelsLike_(qQNaN()),
       currentHumidity_(0),
-      currentWindSpeed_(qQNaN()),
-      hour1Temperature_(qQNaN()),
-      hour2Temperature_(qQNaN()),
-      hour3Temperature_(qQNaN()),
-      hour4Temperature_(qQNaN()),
-      hour5Temperature_(qQNaN()),
-      hour6Temperature_(qQNaN()),
-      day1TemperatureMin_(qQNaN()),
-      day1TemperatureMax_(qQNaN()),
-      day2TemperatureMin_(qQNaN()),
-      day2TemperatureMax_(qQNaN()),
-      day3TemperatureMin_(qQNaN()),
-      day3TemperatureMax_(qQNaN()),
-      day4TemperatureMin_(qQNaN()),
-      day4TemperatureMax_(qQNaN()),
-      day5TemperatureMin_(qQNaN()),
-      day5TemperatureMax_(qQNaN()) {
+      currentWindSpeed_(qQNaN()) {
     setUpdateInterval(5 * 60 * 1000);
     updateTimer_.stop();
 
@@ -148,18 +137,72 @@ void VCWeather::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
         }
     }
     if (responseObject.contains("hourly")) {
-        // Only be concerned with the first 6 hours of forecast.
-        QJsonArray hourlyArray = responseObject.value("hourly").toArray();
-        for (int i = 0; i < 6; i++) {
-            processHourlyObject(i + 1, hourlyArray.at(i).toObject());
+        hourlyForecast_.clear();
+
+        // Build the model with basic forecast information.
+        const QJsonArray hourlyArray = responseObject.value("hourly").toArray();
+        for (int i = 0, total = qMin(MAX_FORECAST_HOURS, hourlyArray.size()); i < total; i++) {
+            QJsonObject hourObject = hourlyArray.at(i).toObject();
+            QVariantMap hourForecast;
+
+            if (hourObject.contains("dt")) {
+                hourForecast.insert("time", QDateTime::fromSecsSinceEpoch(hourObject.value("dt").toInt()));
+            }
+            if (hourObject.contains("temp")) {
+                hourForecast.insert("temperature", hourObject.value("temp").toDouble());
+            }
+            if (hourObject.contains("weather")) {
+                QJsonArray weatherArray = hourObject.value("weather").toArray();
+                if (!weatherArray.isEmpty()) {
+                    QJsonObject weatherObject = weatherArray.first().toObject();
+                    if (weatherObject.contains("icon")) {
+                        hourForecast.insert("iconKey", weatherObject.value("icon").toString());
+                    }
+                }
+            }
+
+            hourlyForecast_.append(hourForecast);
         }
+
+        qDebug() << "Collected " << hourlyForecast_.size() << " hours of forecast data";
+        emit hourlyForecastChanged();
     }
     if (responseObject.contains("daily")) {
-        // Only be concerned with the first 5 days of forecast.
-        QJsonArray dailyArray = responseObject.value("daily").toArray();
-        for (int i = 0; i < 5; i++) {
-            processDailyObject(i + 1, dailyArray.at(i).toObject());
+        dailyForecast_.clear();
+
+        // Build the model with basic forecast information.
+        const QJsonArray dailyArray = responseObject.value("daily").toArray();
+        for (const auto& day : dailyArray) {
+            QJsonObject dayObject = day.toObject();
+            QVariantMap dayForecast;
+
+            if (dayObject.contains("dt")) {
+                dayForecast.insert("time", QDateTime::fromSecsSinceEpoch(dayObject.value("dt").toInt()));
+            }
+            if (dayObject.contains("temp")) {
+                QJsonObject tempObject = dayObject.value("temp").toObject();
+                if (tempObject.contains("min")) {
+                    dayForecast.insert("minTemperature", tempObject.value("min").toDouble());
+                }
+                if (tempObject.contains("max")) {
+                    dayForecast.insert("maxTemperature", tempObject.value("max").toDouble());
+                }
+            }
+            if (dayObject.contains("weather")) {
+                QJsonArray weatherArray = dayObject.value("weather").toArray();
+                if (!weatherArray.isEmpty()) {
+                    QJsonObject weatherObject = weatherArray.first().toObject();
+                    if (weatherObject.contains("icon")) {
+                        dayForecast.insert("iconKey", weatherObject.value("icon").toString());
+                    }
+                }
+            }
+
+            dailyForecast_.append(dayForecast);
         }
+
+        qDebug() << "Collected " << dailyForecast_.size() << " days of forecast data";
+        emit dailyForecastChanged();
     }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -179,61 +222,5 @@ void VCWeather::updateDestinationURL() {
     // With everything needed to make requests collected, start the update timer and refesh immediately.
     updateTimer_.start();
     refresh();
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCWeather::processHourlyObject(const int index, const QJsonObject& data) {
-    // Since the properties are named predictably, set them generically instead of being exhaustive and repetitive.
-    if (data.contains("dt")) {
-        QDateTime time = QDateTime::fromSecsSinceEpoch(data.value("dt").toInt());
-        QString propertyName = QString("hour%1Time").arg(index);
-        setProperty(propertyName.toStdString().c_str(), time);
-    }
-    if (data.contains("temp")) {
-        QString propertyName = QString("hour%1Temperature").arg(index);
-        setProperty(propertyName.toStdString().c_str(), data.value("temp").toDouble());
-    }
-    if (data.contains("weather")) {
-        QJsonArray weatherArray = data.value("weather").toArray();
-        if (!weatherArray.isEmpty()) {
-            QJsonObject weatherObject = weatherArray.first().toObject();
-            if (weatherObject.contains("icon")) {
-                QString propertyName = QString("hour%1IconKey").arg(index);
-                setProperty(propertyName.toStdString().c_str(), weatherObject.value("icon").toString());
-            }
-        }
-    }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-void VCWeather::processDailyObject(const int index, const QJsonObject& data) {
-    // Same rationale as the hourly object processing.
-    if (data.contains("dt")) {
-        QDateTime time = QDateTime::fromSecsSinceEpoch(data.value("dt").toInt());
-        QString propertyName = QString("day%1Time").arg(index);
-        setProperty(propertyName.toStdString().c_str(), time);
-    }
-    if (data.contains("temp")) {
-        QJsonObject tempObject = data.value("temp").toObject();
-        QString basePropertyName = QString("day%1Temperature").arg(index);
-        if (tempObject.contains("min")) {
-            setProperty(QString("%1Min").arg(basePropertyName).toStdString().c_str(),
-                        tempObject.value("min").toDouble());
-        }
-        if (tempObject.contains("max")) {
-            setProperty(QString("%1Max").arg(basePropertyName).toStdString().c_str(),
-                        tempObject.value("max").toDouble());
-        }
-    }
-    if (data.contains("weather")) {
-        QJsonArray weatherArray = data.value("weather").toArray();
-        if (!weatherArray.isEmpty()) {
-            QJsonObject weatherObject = weatherArray.first().toObject();
-            if (weatherObject.contains("icon")) {
-                QString propertyName = QString("day%1IconKey").arg(index);
-                setProperty(propertyName.toStdString().c_str(), weatherObject.value("icon").toString());
-            }
-        }
-    }
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
