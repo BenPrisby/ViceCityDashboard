@@ -164,7 +164,6 @@ void VCWeather::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
             hourlyForecast_.append(hourForecast);
         }
 
-        qDebug() << "Collected " << hourlyForecast_.size() << " hours of forecast data";
         emit hourlyForecastChanged();
     }
     if (responseObject.contains("daily")) {
@@ -201,7 +200,6 @@ void VCWeather::handleNetworkReply(int statusCode, QObject* sender, const QJsonD
             dailyForecast_.append(dayForecast);
         }
 
-        qDebug() << "Collected " << dailyForecast_.size() << " days of forecast data";
         emit dailyForecastChanged();
     }
 }
