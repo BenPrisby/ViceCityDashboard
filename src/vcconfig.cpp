@@ -169,6 +169,6 @@ KeyContext VCConfig::keyToContext(const QString& key) {
         }
     }
 
-    return KeyContext{object, propertyName};
+    return {object, propertyName};
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
