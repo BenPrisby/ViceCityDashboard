@@ -21,8 +21,8 @@ VCHub* instance_ = nullptr;
 }  // namespace
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-VCHub::VCHub(QObject* pParent)
-    : QObject(pParent),
+VCHub::VCHub(QObject* parent)
+    : QObject(parent),
       isActive_(true),
       currentDateTime_(QDateTime::currentDateTime()),
       hostname_(QHostInfo::localHostName()),
